@@ -37,8 +37,8 @@ FROM base AS final
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Force rebuild on version change - v0.1.2
-RUN echo "Building version 0.1.2"
+# Force rebuild on version change - v0.1.4
+RUN echo "Building version 0.1.4"
 
 # Copy application code
 COPY app/ /app/app/
