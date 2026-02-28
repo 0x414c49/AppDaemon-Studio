@@ -4,7 +4,7 @@
     "slug": "appdaemon-studio",
     "description": "IDE for AppDaemon apps with real-time log streaming and file management",
     "arch": ["amd64", "aarch64", "armv7"],
-    "url": "https://github.com/anomalyco/appdaemon-studio",
+    "url": "https://gitlab.com/0x414c49/appdaemon-studio",
     "startup": "application",
     "boot": "auto",
     "ingress": true,
@@ -24,6 +24,5 @@
     "schema": {
         "log_level": "list(debug|info|warning|error)?"
     },
-    "init": false,
-    "image": "ghcr.io/anomalyco/appdaemon-studio"
+    "init": false
 }
