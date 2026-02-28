@@ -4,7 +4,6 @@ import type {
   CreateAppData,
   LogEntry,
   VersionInfo,
-  FileContent,
   BottomPanelTab,
   LogFilter,
   FileType,
@@ -198,10 +197,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({ isSaving: true });
     try {
-      const fileData =
-        activeFileType === 'python'
-          ? await api.savePythonFile(activeApp, editorContent)
-          : await api.saveYamlFile(activeApp, { content: editorContent });
+      if (activeFileType === 'python') {
+        await api.savePythonFile(activeApp, editorContent);
+      } else {
+        await api.saveYamlFile(activeApp, { content: editorContent });
+      }
       set({
         originalContent: editorContent,
         isSaving: false,

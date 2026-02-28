@@ -4,6 +4,7 @@ import asyncio
 import os
 import sys
 from pathlib import Path
+from typing import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
@@ -13,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 @pytest.fixture(scope="session")
-def event_loop():
+def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """Create an instance of the default event loop for the test session."""
     policy = asyncio.get_event_loop_policy()
     loop = policy.new_event_loop()
@@ -22,16 +23,16 @@ def event_loop():
 
 
 @pytest_asyncio.fixture
-async def tmp_apps_dir(tmp_path):
+async def tmp_apps_dir(tmp_path: Path) -> AsyncGenerator[Path, None]:
     """Create a temporary apps directory for testing."""
     apps_dir = tmp_path / "apps"
     apps_dir.mkdir()
-    return apps_dir
+    yield apps_dir
 
 
 @pytest_asyncio.fixture
-async def tmp_logs_dir(tmp_path):
+async def tmp_logs_dir(tmp_path: Path) -> AsyncGenerator[Path, None]:
     """Create a temporary logs directory for testing."""
     logs_dir = tmp_path / "logs"
     logs_dir.mkdir()
-    return logs_dir
+    yield logs_dir

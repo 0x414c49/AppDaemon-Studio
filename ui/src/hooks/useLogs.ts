@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { logWebSocket } from '@/services/websocket';
-import type { LogEntry, LogFilter, LogLevel } from '@/types';
+import type { LogEntry, LogFilter } from '@/types';
 
 interface UseLogsReturn {
   logs: LogEntry[];

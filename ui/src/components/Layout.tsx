@@ -16,7 +16,6 @@ export const Layout: React.FC = () => {
     toggleBottomPanel,
     setBottomPanelTab,
     toasts,
-    removeToast,
   } = useAppStore();
 
   useEffect(() => {

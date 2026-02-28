@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAppStore } from '@/store/appStore';
 import type { AppInfo, CreateAppData } from '@/types';
 

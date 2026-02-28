@@ -14,13 +14,13 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     settings = get_settings()
-    
+
     # Ensure required directories exist
     settings.apps_path.mkdir(parents=True, exist_ok=True)
     settings.logs_path.mkdir(parents=True, exist_ok=True)
-    
+
     yield
-    
+
     # Shutdown
     # Clean up any resources if needed
 
@@ -28,14 +28,14 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     """Create FastAPI application."""
     settings = get_settings()
-    
+
     app = FastAPI(
         title="AppDaemon Studio",
         description="IDE for AppDaemon apps with version control and real-time logs",
         version="0.1.0",
-        lifespan=lifespan
+        lifespan=lifespan,
     )
-    
+
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -44,27 +44,23 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Include API routers
     app.include_router(apps.router, prefix=settings.api_prefix)
     app.include_router(files.router, prefix=settings.api_prefix)
     app.include_router(versions.router, prefix=settings.api_prefix)
     app.include_router(logs.router, prefix=settings.api_prefix)
-    
+
     @app.get("/")
     async def root():
         """Root endpoint."""
-        return {
-            "name": "AppDaemon Studio API",
-            "version": "0.1.0",
-            "docs": "/docs"
-        }
-    
+        return {"name": "AppDaemon Studio API", "version": "0.1.0", "docs": "/docs"}
+
     @app.get("/health")
     async def health():
         """Health check endpoint."""
         return {"status": "healthy"}
-    
+
     return app
 
 
