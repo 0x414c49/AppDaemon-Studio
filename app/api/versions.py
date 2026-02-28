@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from app.config import get_settings
-from app.services.version_control import VersionControl, VersionControlError, VersionInfo, VersionNotFoundError
+from app.services.version_control import (
+    VersionControl,
+    VersionControlError,
+    VersionInfo,
+    VersionNotFoundError,
+)
 
 router = APIRouter(prefix="/versions", tags=["versions"])
 

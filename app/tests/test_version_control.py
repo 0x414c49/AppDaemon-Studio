@@ -30,7 +30,7 @@ async def version_control_with_app(version_control: VersionControl) -> VersionCo
 
 
 @pytest.mark.asyncio
-async def test_create_version_success(version_control: VersionControl) -> None:
+async def test_create_version_success(version_control_with_app: VersionControl) -> None:
     """Test creating a new version."""
     vc = version_control_with_app
 
@@ -62,7 +62,7 @@ async def test_create_version_creates_directory(version_control: VersionControl)
 
 
 @pytest.mark.asyncio
-async def test_list_versions_empty(version_control: VersionControl) -> None:
+async def test_list_versions_empty(version_control_with_app: VersionControl) -> None:
     """Test listing versions when none exist."""
     vc = version_control_with_app
 
@@ -216,7 +216,9 @@ async def test_cleanup_old_versions(version_control_with_app: VersionControl) ->
 
 
 @pytest.mark.asyncio
-async def test_cleanup_old_versions_no_cleanup_needed(version_control_with_app: VersionControl) -> None:
+async def test_cleanup_old_versions_no_cleanup_needed(
+    version_control_with_app: VersionControl,
+) -> None:
     """Test cleanup when no versions need to be removed."""
     vc = version_control_with_app
 
@@ -276,7 +278,7 @@ async def test_generate_timestamp(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_multiple_files_same_version(version_control: VersionControl) -> None:
+async def test_multiple_files_same_version(version_control_with_app: VersionControl) -> None:
     """Test creating versions for multiple files."""
     vc = version_control_with_app
 
