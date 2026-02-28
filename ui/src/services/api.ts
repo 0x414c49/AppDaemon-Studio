@@ -7,8 +7,21 @@ import type {
   LogEntry,
 } from '@/types';
 
+// Detect base URL - works with both Ingress and add-on proxy
+// When served under a path (e.g., /app/56916952_appdaemon-studio/),
+// we need to make API calls relative to that path
+const getBaseUrl = () => {
+  const path = window.location.pathname;
+  // If we're under /app/<slug>/ or /hassio/ingress/<slug>/, use relative path
+  if (path.includes('/app/') || path.includes('/ingress/')) {
+    return './api';
+  }
+  // Otherwise use absolute path (direct access)
+  return '/api';
+};
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
