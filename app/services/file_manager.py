@@ -108,8 +108,8 @@ class FileManager:
         # Prevent path traversal
         try:
             app_path.resolve().relative_to(self.base_path.resolve())
-        except ValueError:
-            raise PathTraversalError(f"Invalid path: {name}")
+        except ValueError as e:
+            raise PathTraversalError(f"Invalid path: {name}") from e
 
         return app_path
 

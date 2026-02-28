@@ -98,7 +98,7 @@ async def restore_version(
 ) -> RestoreVersionResponse:
     """Restore a version."""
     try:
-        content = await version_control.restore_version(app, version)
+        await version_control.restore_version(app, version)
 
         return RestoreVersionResponse(
             status="success",
