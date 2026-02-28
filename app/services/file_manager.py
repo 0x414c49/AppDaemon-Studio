@@ -127,7 +127,7 @@ class FileManager:
         Returns:
             List of AppInfo objects.
         """
-        apps = []
+        apps: list[AppInfo] = []
 
         if not self.base_path.exists():
             return apps

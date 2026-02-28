@@ -1,20 +1,21 @@
 import { http, HttpResponse } from 'msw';
+import type { AppInfo, VersionInfo } from '@/types';
 
 // In-memory storage for mock data
-const mockApps = new Map();
-const mockFiles = new Map();
-const mockVersions = new Map();
-const mockYamlConfigs = new Map();
+const mockApps: Map<string, AppInfo> = new Map();
+const mockFiles: Map<string, { content: string; last_modified: string }> = new Map();
+const mockVersions: Map<string, VersionInfo[]> = new Map();
+const mockYamlConfigs: Map<string, Record<string, unknown>> = new Map();
 
 // Initialize with sample data
-function initializeMockData() {
+function initializeMockData(): void {
   mockApps.clear();
   mockFiles.clear();
   mockVersions.clear();
   mockYamlConfigs.clear();
   
   // Add sample app
-  mockApps.set('sample_app', {
+  const sampleApp: AppInfo = {
     name: 'sample_app',
     class_name: 'SampleApp',
     description: 'A sample app for testing',
@@ -22,7 +23,8 @@ function initializeMockData() {
     has_yaml: true,
     last_modified: new Date().toISOString(),
     version_count: 1,
-  });
+  };
+  mockApps.set('sample_app', sampleApp);
   
   mockFiles.set('sample_app', {
     content: `import appdaemon.plugins.hass.hassapi as hass
@@ -54,6 +56,20 @@ class SampleApp(hass.Hass):
 // Initialize on load
 initializeMockData();
 
+interface CreateAppBody {
+  name: string;
+  class_name: string;
+  description?: string;
+}
+
+interface UpdateFileBody {
+  content: string;
+}
+
+interface UpdateYamlBody {
+  config: Record<string, unknown>;
+}
+
 export const handlers = [
   // List all apps
   http.get('/api/apps', () => {
@@ -63,7 +79,7 @@ export const handlers = [
 
   // Create app
   http.post('/api/apps', async ({ request }) => {
-    const body = await request.json();
+    const body = (await request.json()) as CreateAppBody;
     const { name, class_name, description } = body;
     
     if (mockApps.has(name)) {
@@ -73,7 +89,7 @@ export const handlers = [
       );
     }
     
-    const newApp = {
+    const newApp: AppInfo = {
       name,
       class_name,
       description: description || '',
@@ -99,7 +115,7 @@ class ${class_name}(hass.Hass):
 
   // Get specific app
   http.get('/api/apps/:name', ({ params }) => {
-    const app = mockApps.get(params.name);
+    const app = mockApps.get(params.name as string);
     if (app) {
       return HttpResponse.json(app);
     }
@@ -111,22 +127,24 @@ class ${class_name}(hass.Hass):
 
   // Delete app
   http.delete('/api/apps/:name', ({ params }) => {
-    if (mockApps.has(params.name)) {
-      mockApps.delete(params.name);
-      mockFiles.delete(params.name);
-      mockVersions.delete(params.name);
-      mockYamlConfigs.delete(params.name);
+    const name = params.name as string;
+    if (mockApps.has(name)) {
+      mockApps.delete(name);
+      mockFiles.delete(name);
+      mockVersions.delete(name);
+      mockYamlConfigs.delete(name);
       return new HttpResponse(null, { status: 204 });
     }
     return HttpResponse.json(
-      { detail: `App '${params.name}' not found` },
+      { detail: `App '${name}' not found` },
       { status: 404 }
     );
   }),
 
   // Get Python file
   http.get('/api/files/:app/python', ({ params }) => {
-    const file = mockFiles.get(params.app);
+    const appName = params.app as string;
+    const file = mockFiles.get(appName);
     if (file) {
       return HttpResponse.json({
         content: file.content,
@@ -134,76 +152,84 @@ class ${class_name}(hass.Hass):
       });
     }
     return HttpResponse.json(
-      { detail: `App '${params.app}' not found` },
+      { detail: `App '${appName}' not found` },
       { status: 404 }
     );
   }),
 
   // Update Python file
   http.put('/api/files/:app/python', async ({ params, request }) => {
-    const body = await request.json();
+    const appName = params.app as string;
+    const body = (await request.json()) as UpdateFileBody;
     const { content } = body;
     
     // Save version before updating
-    const existingFile = mockFiles.get(params.app);
+    const existingFile = mockFiles.get(appName);
     if (existingFile) {
-      const versions = mockVersions.get(params.app) || [];
+      const versions = mockVersions.get(appName) || [];
       versions.unshift({
         version: new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14),
         timestamp: new Date().toISOString(),
         size: existingFile.content.length,
-        filename: `${params.app}.py`,
+        filename: `${appName}.py`,
       });
-      mockVersions.set(params.app, versions);
+      mockVersions.set(appName, versions);
       
-      const app = mockApps.get(params.app);
+      const app = mockApps.get(appName);
       if (app) {
         app.version_count = versions.length;
         app.last_modified = new Date().toISOString();
       }
     }
     
-    mockFiles.set(params.app, {
+    mockFiles.set(appName, {
       content,
       last_modified: new Date().toISOString(),
     });
     
     return HttpResponse.json({
       status: 'success',
-      message: `Python file for '${params.app}' updated`,
+      message: `Python file for '${appName}' updated`,
     });
   }),
 
   // Get YAML config
   http.get('/api/files/:app/yaml', ({ params }) => {
-    const config = mockYamlConfigs.get(params.app);
+    const appName = params.app as string;
+    const config = mockYamlConfigs.get(appName);
     return HttpResponse.json(config || {});
   }),
 
   // Update YAML config
   http.put('/api/files/:app/yaml', async ({ params, request }) => {
-    const body = await request.json();
-    mockYamlConfigs.set(params.app, body.config);
+    const appName = params.app as string;
+    const body = (await request.json()) as UpdateYamlBody;
+    if (body.config) {
+      mockYamlConfigs.set(appName, body.config);
+    }
+    
     return HttpResponse.json({
       status: 'success',
-      message: `YAML config for '${params.app}' updated`,
+      message: `YAML config for '${appName}' updated`,
     });
   }),
 
   // List versions
   http.get('/api/versions/:app', ({ params }) => {
-    const versions = mockVersions.get(params.app) || [];
+    const appName = params.app as string;
+    const versions = mockVersions.get(appName) || [];
     return HttpResponse.json({ versions, count: versions.length });
   }),
 
   // Get version content
   http.get('/api/versions/:app/:version', ({ params }) => {
-    const file = mockFiles.get(params.app);
+    const appName = params.app as string;
+    const file = mockFiles.get(appName);
     if (file) {
       return HttpResponse.json({
         content: file.content,
         version: params.version,
-        filename: `${params.app}.py`,
+        filename: `${appName}.py`,
       });
     }
     return HttpResponse.json(
@@ -223,11 +249,13 @@ class ${class_name}(hass.Hass):
 
   // Delete version
   http.delete('/api/versions/:app/:version', ({ params }) => {
-    const versions = mockVersions.get(params.app) || [];
-    const updatedVersions = versions.filter((v) => v.version !== params.version);
-    mockVersions.set(params.app, updatedVersions);
+    const appName = params.app as string;
+    const versionId = params.version as string;
+    const versions = mockVersions.get(appName) || [];
+    const updatedVersions = versions.filter((v: VersionInfo) => v.version !== versionId);
+    mockVersions.set(appName, updatedVersions);
     
-    const app = mockApps.get(params.app);
+    const app = mockApps.get(appName);
     if (app) {
       app.version_count = updatedVersions.length;
     }
@@ -254,6 +282,6 @@ class ${class_name}(hass.Hass):
 ];
 
 // Export function to reset mock data
-export function resetMockData() {
+export function resetMockData(): void {
   initializeMockData();
 }
