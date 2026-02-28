@@ -15,11 +15,11 @@ class Settings(BaseSettings):
         description="Path to AppDaemon apps directory",
     )
 
-    # Apps directory
+    # Apps directory (direct path, no nested 'apps' folder)
     @property
     def apps_path(self) -> Path:
         """Get the apps directory path."""
-        return self.appdaemon_config_path / "apps"
+        return self.appdaemon_config_path
 
     # Logs directory
     @property
