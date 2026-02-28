@@ -29,6 +29,11 @@ echo "App Directory: $APPDIR"
 
 # Create necessary directories
 mkdir -p /tmp/logs
+mkdir -p /tmp/nginx-client-body
+mkdir -p /tmp/nginx-proxy
+mkdir -p /tmp/nginx-fastcgi
+mkdir -p /tmp/nginx-uwsgi
+mkdir -p /tmp/nginx-scgi
 
 # Start nginx (runs as foreground for PID tracking)
 echo "Starting nginx..."
