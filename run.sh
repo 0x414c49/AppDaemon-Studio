@@ -5,8 +5,8 @@ set -e
 LOG_LEVEL=${LOG_LEVEL:-info}
 
 # AppDaemon Studio needs to access AppDaemon's config
-# AppDaemon stores apps in /config/appdaemon (Home Assistant config directory)
-CONFIG_DIR=/config/appdaemon
+# AppDaemon stores apps in /addon_configs/<slug>_appdaemon
+CONFIG_DIR=/addon_configs
 
 # Signal handling for graceful shutdown
 cleanup() {
@@ -41,12 +41,11 @@ echo "Addons directory:"
 ls -la /addons 2>/dev/null || echo "/addons not accessible"
 echo ""
 echo "=== Checking AppDaemon location ==="
-if [ -d "/config/appdaemon" ]; then
-    echo "AppDaemon config found at /config/appdaemon"
-    ls -la /config/appdaemon
-elif [ -d "/config" ]; then
-    echo "Contents of /config:"
-    ls -la /config
+if [ -d "/addon_configs" ]; then
+    echo "Addon configs found at /addon_configs"
+    ls -la /addon_configs
+else
+    echo "/addon_configs not found"
 fi
 echo ""
 echo "=== Current User ==="
