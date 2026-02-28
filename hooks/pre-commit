@@ -1,0 +1,114 @@
+#!/bin/bash
+#
+# Pre-commit hook to run linting checks
+# This ensures code quality before each commit
+#
+
+set -e
+
+echo "Running pre-commit checks..."
+echo ""
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Track if any checks fail
+FAILED=0
+
+# ==========================================
+# Python Linting
+# ==========================================
+echo "${YELLOW}▶ Checking Python code...${NC}"
+cd app
+
+# Check if ruff is installed
+if ! command -v ruff &> /dev/null; then
+    echo "${YELLOW}  Installing ruff...${NC}"
+    pip install ruff --quiet
+fi
+
+# Check if mypy is installed
+if ! command -v mypy &> /dev/null; then
+    echo "${YELLOW}  Installing mypy...${NC}"
+    pip install mypy types-PyYAML --quiet
+fi
+
+echo "  Running ruff format check..."
+if ! ruff format --check . ; then
+    echo "${RED}  ✗ Python formatting failed${NC}"
+    echo "    Run: ruff format ."
+    FAILED=1
+else
+    echo "${GREEN}  ✓ Python formatting passed${NC}"
+fi
+
+echo "  Running ruff lint..."
+if ! ruff check . ; then
+    echo "${RED}  ✗ Python linting failed${NC}"
+    FAILED=1
+else
+    echo "${GREEN}  ✓ Python linting passed${NC}"
+fi
+
+echo "  Running mypy type check..."
+if ! mypy . --ignore-missing-imports ; then
+    echo "${RED}  ✗ Python type checking failed${NC}"
+    FAILED=1
+else
+    echo "${GREEN}  ✓ Python type checking passed${NC}"
+fi
+
+cd ..
+
+# ==========================================
+# TypeScript Linting
+# ==========================================
+echo ""
+echo "${YELLOW}▶ Checking TypeScript code...${NC}"
+cd ui
+
+# Check if node_modules exists
+if [ ! -d "node_modules" ]; then
+    echo "${YELLOW}  Installing npm dependencies...${NC}"
+    npm install --silent
+fi
+
+echo "  Running ESLint..."
+if ! npm run lint ; then
+    echo "${RED}  ✗ ESLint failed${NC}"
+    FAILED=1
+else
+    echo "${GREEN}  ✓ ESLint passed${NC}"
+fi
+
+echo "  Running TypeScript compiler check..."
+if ! npm run typecheck ; then
+    echo "${RED}  ✗ TypeScript type checking failed${NC}"
+    FAILED=1
+else
+    echo "${GREEN}  ✓ TypeScript type checking passed${NC}"
+fi
+
+cd ..
+
+# ==========================================
+# Summary
+# ==========================================
+echo ""
+if [ $FAILED -eq 0 ]; then
+    echo "${GREEN}✓ All checks passed!${NC}"
+    echo ""
+    exit 0
+else
+    echo "${RED}✗ Some checks failed. Please fix the errors before committing.${NC}"
+    echo ""
+    echo "Quick fixes:"
+    echo "  cd app && ruff format .          # Auto-format Python"
+    echo "  cd app && ruff check . --fix     # Auto-fix some Python issues"
+    echo "  cd ui && npm run lint -- --fix   # Auto-fix some TypeScript issues"
+    echo ""
+    exit 1
+fi
