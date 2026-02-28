@@ -53,12 +53,12 @@ def create_app() -> FastAPI:
     app.include_router(logs.router, prefix=settings.api_prefix)
 
     @app.get("/")
-    async def root():
+    async def root() -> dict:
         """Root endpoint."""
         return {"name": "AppDaemon Studio API", "version": "0.1.0", "docs": "/docs"}
 
     @app.get("/health")
-    async def health():
+    async def health() -> dict:
         """Health check endpoint."""
         return {"status": "healthy"}
 

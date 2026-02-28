@@ -45,7 +45,7 @@ async def get_recent_logs(
 
 
 @router.websocket("/ws/logs")
-async def websocket_logs(websocket: WebSocket):
+async def websocket_logs(websocket: WebSocket) -> None:
     """WebSocket endpoint for real-time log streaming."""
     log_watcher = get_log_watcher()
 
