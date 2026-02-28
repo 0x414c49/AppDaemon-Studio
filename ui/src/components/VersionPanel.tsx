@@ -4,7 +4,7 @@ import {
   HardDrive,
   RotateCcw,
   Trash2,
-  Broom,
+  Sparkles,
   Loader2,
   AlertCircle,
 } from 'lucide-react';
@@ -168,7 +168,7 @@ export const VersionPanel: React.FC = () => {
             {isCleaning ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Broom className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5" />
             )}
             Clean Old (keep 10)
           </button>

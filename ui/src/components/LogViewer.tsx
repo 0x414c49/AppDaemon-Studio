@@ -71,9 +71,9 @@ export const LogViewer: React.FC = () => {
 
         <div className="flex items-center gap-2">
           {wsConnected ? (
-            <Wifi className="w-4 h-4 text-green-500" title="Connected" />
+            <Wifi className="w-4 h-4 text-green-500" aria-label="Connected" />
           ) : (
-            <WifiOff className="w-4 h-4 text-red-500" title="Disconnected" />
+            <WifiOff className="w-4 h-4 text-red-500" aria-label="Disconnected" />
           )}
 
           <button

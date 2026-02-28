@@ -153,7 +153,7 @@ export const EditorPanel: React.FC = () => {
             readOnly: false,
             automaticLayout: true,
             padding: { top: 16 },
-            scrollbars: {
+            scrollbar: {
               useShadows: false,
               verticalHasArrows: false,
               horizontalHasArrows: false,

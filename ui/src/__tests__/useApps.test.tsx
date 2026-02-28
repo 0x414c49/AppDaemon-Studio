@@ -35,7 +35,7 @@ describe('useApps', () => {
 
   it('createApp calls API', async () => {
     const mockCreateApp = vi.fn().mockResolvedValue({ name: 'new_app' });
-    vi.mocked(api).createApp = mockCreateApp;
+    vi.mocked(api.createApp).mockImplementation(mockCreateApp);
 
     const { result } = renderHook(() => useApps());
     await result.current.createApp({
