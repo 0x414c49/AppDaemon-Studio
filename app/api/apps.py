@@ -1,7 +1,6 @@
 """Apps API endpoints."""
 
 from datetime import datetime
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -13,7 +12,6 @@ from app.services.file_manager import (
     FileManagerError,
     InvalidAppNameError,
 )
-
 
 router = APIRouter(prefix="/apps", tags=["apps"])
 
@@ -41,7 +39,7 @@ class AppResponse(BaseModel):
 class AppsListResponse(BaseModel):
     """List of apps response."""
 
-    apps: List[AppResponse]
+    apps: list[AppResponse]
     count: int
 
 

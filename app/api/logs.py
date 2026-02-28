@@ -1,11 +1,10 @@
 """Logs API endpoints."""
 
+
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 from pydantic import BaseModel
-from typing import List
 
 from app.services.log_watcher import LogWatcher
-
 
 router = APIRouter(prefix="/logs", tags=["logs"])
 
@@ -13,7 +12,7 @@ router = APIRouter(prefix="/logs", tags=["logs"])
 class LogsResponse(BaseModel):
     """Recent logs response."""
 
-    lines: List[str]
+    lines: list[str]
     count: int
 
 

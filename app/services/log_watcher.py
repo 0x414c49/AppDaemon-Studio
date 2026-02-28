@@ -1,8 +1,8 @@
 """Log watcher service for real-time log streaming."""
 
 import asyncio
+import contextlib
 from pathlib import Path
-from typing import Callable, Optional, Set
 
 from fastapi import WebSocket
 
@@ -18,16 +18,16 @@ class LogWatcherError(Exception):
 class LogWatcher:
     """Watches AppDaemon log file and streams to WebSocket clients."""
 
-    def __init__(self, log_path: Optional[Path] = None):
+    def __init__(self, log_path: Path | None = None):
         """Initialize log watcher.
 
         Args:
             log_path: Path to log file. Defaults to config setting.
         """
         self.log_path = log_path or get_settings().appdaemon_log_path
-        self._subscribers: Set[WebSocket] = set()
+        self._subscribers: set[WebSocket] = set()
         self._running = False
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
         self._file_position = 0
         self._lock = asyncio.Lock()
 
@@ -45,10 +45,8 @@ class LogWatcher:
 
         if self._task:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
             self._task = None
 
     async def subscribe(self, websocket: WebSocket) -> None:
@@ -148,7 +146,7 @@ class LogWatcher:
             loop = asyncio.get_event_loop()
 
             def read_file():
-                with open(self.log_path, "r", encoding="utf-8", errors="replace") as f:
+                with open(self.log_path, encoding="utf-8", errors="replace") as f:
                     f.seek(self._file_position)
                     content = f.read()
                     new_position = f.tell()
@@ -183,7 +181,7 @@ class LogWatcher:
             loop = asyncio.get_event_loop()
 
             def read_logs():
-                with open(self.log_path, "r", encoding="utf-8", errors="replace") as f:
+                with open(self.log_path, encoding="utf-8", errors="replace") as f:
                     all_lines = f.readlines()
                     return all_lines[-lines:] if len(all_lines) > lines else all_lines
 

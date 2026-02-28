@@ -1,15 +1,14 @@
 """Tests for VersionControl service."""
 
-import os
 import asyncio
-import pytest
-import pytest_asyncio
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+import pytest_asyncio
+
 from app.services.version_control import (
     VersionControl,
-    VersionControlError,
     VersionNotFoundError,
 )
 

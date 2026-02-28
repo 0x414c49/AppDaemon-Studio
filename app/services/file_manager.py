@@ -4,7 +4,6 @@ import asyncio
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 import yaml
 
@@ -61,7 +60,7 @@ class PathTraversalError(FileManagerError):
 class FileManager:
     """Manages AppDaemon app files."""
 
-    def __init__(self, base_path: Optional[Path] = None):
+    def __init__(self, base_path: Path | None = None):
         """Initialize file manager.
 
         Args:
@@ -122,7 +121,7 @@ class FileManager:
         """Get YAML file path for an app."""
         return self._get_app_path(name) / f"{name}.yaml"
 
-    async def list_apps(self) -> List[AppInfo]:
+    async def list_apps(self) -> list[AppInfo]:
         """List all apps in the apps directory.
 
         Returns:

@@ -1,9 +1,7 @@
 """Tests for FileManager service."""
 
-import os
 import pytest
 import pytest_asyncio
-from pathlib import Path
 
 from app.services.file_manager import (
     AppNotFoundError,

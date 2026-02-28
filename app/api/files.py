@@ -1,7 +1,6 @@
 """Files API endpoints."""
 
 from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -12,7 +11,6 @@ from app.services.file_manager import (
     FileManagerError,
     InvalidAppNameError,
 )
-
 
 router = APIRouter(prefix="/files", tags=["files"])
 

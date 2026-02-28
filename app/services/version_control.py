@@ -4,7 +4,7 @@ import asyncio
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import List, NamedTuple, Optional
+from typing import NamedTuple
 
 
 class VersionInfo(NamedTuple):
@@ -65,7 +65,7 @@ class VersionControl:
         now = datetime.now()
         return now.strftime("%Y%m%d_%H%M%S_") + f"{now.microsecond // 1000:03d}"
 
-    def _parse_version_filename(self, filename: str) -> Optional[tuple]:
+    def _parse_version_filename(self, filename: str) -> tuple | None:
         """Parse version filename to extract timestamp and original filename.
 
         Args:
@@ -109,7 +109,7 @@ class VersionControl:
 
             return timestamp
 
-    async def list_versions(self, app: str) -> List[VersionInfo]:
+    async def list_versions(self, app: str) -> list[VersionInfo]:
         """List all versions for an app.
 
         Args:

@@ -1,14 +1,12 @@
 """Versions API endpoints."""
 
 from datetime import datetime
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from app.config import get_settings
 from app.services.version_control import VersionControl, VersionControlError, VersionNotFoundError
-
 
 router = APIRouter(prefix="/versions", tags=["versions"])
 
@@ -25,7 +23,7 @@ class VersionInfoResponse(BaseModel):
 class VersionsListResponse(BaseModel):
     """List of versions response."""
 
-    versions: List[VersionInfoResponse]
+    versions: list[VersionInfoResponse]
     count: int
 
 
