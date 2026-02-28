@@ -1,0 +1,17 @@
+# Playwright
+node_modules/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Screenshots (keep structure, ignore generated)
+screenshots/ci/**/*.png
+screenshots/mobile/**/*.png
+screenshots/test-results/
+!screenshots/.gitkeep
+
+# Logs
+*.log
+
+# OS
+.DS_Store

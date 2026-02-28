@@ -1,0 +1,16 @@
+{
+  "name": "appdaemon-studio-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "screenshots": "playwright test --grep @screenshot",
+    "screenshots:docs": "playwright test --grep @docs",
+    "screenshots:ci": "playwright test --grep @ci"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.41.0"
+  }
+}

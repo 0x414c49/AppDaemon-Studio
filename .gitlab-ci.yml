@@ -150,6 +150,6 @@ release:
       --name "Release $CI_COMMIT_TAG"
       --description "AppDaemon Studio $CI_COMMIT_TAG"
       --tag-name $CI_COMMIT_TAG
-      --assets-link "{\"name\":\"Docker Image\",\"url\":\"$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG\"}"
+      --assets-link "{\"name\":\"Docker Image\",\"url":"$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG\"}"
   only:
     - tags
