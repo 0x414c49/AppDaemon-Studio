@@ -127,7 +127,7 @@ class VersionControl:
 
         loop = asyncio.get_event_loop()
 
-        def scan_versions():
+        def scan_versions() -> list[VersionInfo]:
             for item in versions_path.iterdir():
                 if item.is_file():
                     parsed = self._parse_version_filename(item.name)
@@ -252,7 +252,7 @@ class VersionControl:
 
             loop = asyncio.get_event_loop()
 
-            def delete_old():
+            def delete_old() -> None:
                 for version_info in versions_to_delete:
                     version_path = (
                         self._get_versions_path(app)

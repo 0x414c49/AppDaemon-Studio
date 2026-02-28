@@ -111,7 +111,7 @@ async def restore_version(
 
 
 @router.delete("/{app}/{version}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_version(
+async def delete_version(version: str) -> VersionResponse:
     app: str, version: str, version_control: VersionControl = Depends(get_version_control)
 ) -> None:
     """Delete a version."""

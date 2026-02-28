@@ -3,7 +3,7 @@
 import pytest
 import pytest_asyncio
 
-from app.services.file_manager import (
+from app.services.file_manager import FileManager, (
     AppNotFoundError,
     FileManager,
     FileManagerError,
@@ -21,7 +21,7 @@ async def file_manager(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_create_app_success(file_manager):
+async def test_create_app_success(file_manager: FileManager) -> None:
     """Test creating a new app."""
     await file_manager.create_app("test_app", "TestApp", "Test description")
 
@@ -32,7 +32,7 @@ async def test_create_app_success(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_create_app_invalid_name(file_manager):
+async def test_create_app_invalid_name(file_manager: FileManager) -> None:
     """Test creating an app with invalid name."""
     with pytest.raises(InvalidAppNameError):
         await file_manager.create_app("", "TestClass", "")
@@ -48,7 +48,7 @@ async def test_create_app_invalid_name(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_create_app_already_exists(file_manager):
+async def test_create_app_already_exists(file_manager: FileManager) -> None:
     """Test creating an app that already exists."""
     await file_manager.create_app("existing_app", "ExistingApp", "")
 
@@ -57,7 +57,7 @@ async def test_create_app_already_exists(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_app_exists(file_manager):
+async def test_app_exists(file_manager: FileManager) -> None:
     """Test app_exists method."""
     assert not await file_manager.app_exists("nonexistent")
 
@@ -66,7 +66,7 @@ async def test_app_exists(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_read_python_success(file_manager):
+async def test_read_python_success(file_manager: FileManager) -> None:
     """Test reading Python file."""
     await file_manager.create_app("read_test", "ReadTest", "Test app")
 
@@ -77,7 +77,7 @@ async def test_read_python_success(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_read_python_not_found(file_manager):
+async def test_read_python_not_found(file_manager: FileManager) -> None:
     """Test reading Python file that doesn't exist."""
     with pytest.raises(AppNotFoundError):
         await file_manager.read_python("nonexistent")
@@ -91,7 +91,7 @@ async def test_read_python_not_found(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_write_python_success(file_manager):
+async def test_write_python_success(file_manager: FileManager) -> None:
     """Test writing Python file."""
     await file_manager.create_app("write_test", "WriteTest", "")
 
@@ -102,7 +102,7 @@ async def test_write_python_success(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_write_python_creates_backup(file_manager):
+async def test_write_python_creates_backup(file_manager: FileManager) -> None:
     """Test that writing Python creates a backup."""
     await file_manager.create_app("backup_test", "BackupTest", "")
 
@@ -119,7 +119,7 @@ async def test_write_python_creates_backup(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_read_yaml_success(file_manager):
+async def test_read_yaml_success(file_manager: FileManager) -> None:
     """Test reading YAML config."""
     await file_manager.create_app("yaml_test", "YamlTest", "")
 
@@ -130,7 +130,7 @@ async def test_read_yaml_success(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_write_yaml_success(file_manager):
+async def test_write_yaml_success(file_manager: FileManager) -> None:
     """Test writing YAML config."""
     await file_manager.create_app("yaml_write", "YamlWrite", "")
 
@@ -142,7 +142,7 @@ async def test_write_yaml_success(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_list_apps(file_manager):
+async def test_list_apps(file_manager: FileManager) -> None:
     """Test listing all apps."""
     # Create some apps
     await file_manager.create_app("app1", "App1", "First app")
@@ -159,14 +159,14 @@ async def test_list_apps(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_list_apps_empty(file_manager):
+async def test_list_apps_empty(file_manager: FileManager) -> None:
     """Test listing apps when none exist."""
     apps = await file_manager.list_apps()
     assert len(apps) == 0
 
 
 @pytest.mark.asyncio
-async def test_delete_app(file_manager):
+async def test_delete_app(file_manager: FileManager) -> None:
     """Test deleting an app."""
     await file_manager.create_app("to_delete", "ToDelete", "")
     assert await file_manager.app_exists("to_delete")
@@ -177,14 +177,14 @@ async def test_delete_app(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_delete_app_not_found(file_manager):
+async def test_delete_app_not_found(file_manager: FileManager) -> None:
     """Test deleting a non-existent app."""
     with pytest.raises(AppNotFoundError):
         await file_manager.delete_app("nonexistent")
 
 
 @pytest.mark.asyncio
-async def test_path_traversal_protection(file_manager):
+async def test_path_traversal_protection(file_manager: FileManager) -> None:
     """Test that path traversal attacks are blocked."""
     # Try various path traversal attempts
     with pytest.raises((InvalidAppNameError, PathTraversalError)):
@@ -198,7 +198,7 @@ async def test_path_traversal_protection(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_app_info_extraction(file_manager):
+async def test_app_info_extraction(file_manager: FileManager) -> None:
     """Test that app info is correctly extracted from Python file."""
     await file_manager.create_app("info_test", "CustomClassName", "Custom description")
 
@@ -213,7 +213,7 @@ async def test_app_info_extraction(file_manager):
 
 
 @pytest.mark.asyncio
-async def test_version_count(file_manager):
+async def test_version_count(file_manager: FileManager) -> None:
     """Test that version count is tracked correctly."""
     await file_manager.create_app("version_count", "VersionCount", "")
 

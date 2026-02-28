@@ -30,7 +30,7 @@ async def version_control_with_app(version_control):
 
 
 @pytest.mark.asyncio
-async def test_create_version_success(version_control_with_app):
+async def test_create_version_success(version_control: VersionControl) -> None:
     """Test creating a new version."""
     vc = version_control_with_app
 
@@ -48,7 +48,7 @@ async def test_create_version_success(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_create_version_creates_directory(version_control):
+async def test_create_version_creates_directory(version_control: VersionControl) -> None:
     """Test that create_version creates the versions directory."""
     vc = version_control
     app_path = vc.base_path / "new_app"
@@ -62,7 +62,7 @@ async def test_create_version_creates_directory(version_control):
 
 
 @pytest.mark.asyncio
-async def test_list_versions_empty(version_control_with_app):
+async def test_list_versions_empty(version_control: VersionControl) -> None:
     """Test listing versions when none exist."""
     vc = version_control_with_app
 
@@ -72,7 +72,7 @@ async def test_list_versions_empty(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_list_versions_multiple(version_control_with_app):
+async def test_list_versions_multiple(version_control_with_app: VersionControl) -> None:
     """Test listing multiple versions."""
     vc = version_control_with_app
 
@@ -93,7 +93,7 @@ async def test_list_versions_multiple(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_list_versions_returns_correct_info(version_control_with_app):
+async def test_list_versions_returns_correct_info(version_control_with_app: VersionControl) -> None:
     """Test that list_versions returns correct information."""
     vc = version_control_with_app
 
@@ -112,7 +112,7 @@ async def test_list_versions_returns_correct_info(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_get_version_success(version_control_with_app):
+async def test_get_version_success(version_control_with_app: VersionControl) -> None:
     """Test getting version content."""
     vc = version_control_with_app
 
@@ -125,7 +125,7 @@ async def test_get_version_success(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_get_version_not_found(version_control_with_app):
+async def test_get_version_not_found(version_control_with_app: VersionControl) -> None:
     """Test getting a version that doesn't exist."""
     vc = version_control_with_app
 
@@ -134,7 +134,7 @@ async def test_get_version_not_found(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_get_version_app_not_found(version_control):
+async def test_get_version_app_not_found(version_control: VersionControl) -> None:
     """Test getting a version for non-existent app."""
     vc = version_control
 
@@ -143,7 +143,7 @@ async def test_get_version_app_not_found(version_control):
 
 
 @pytest.mark.asyncio
-async def test_restore_version_success(version_control_with_app):
+async def test_restore_version_success(version_control_with_app: VersionControl) -> None:
     """Test restoring a version."""
     vc = version_control_with_app
 
@@ -156,7 +156,7 @@ async def test_restore_version_success(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_restore_version_not_found(version_control_with_app):
+async def test_restore_version_not_found(version_control_with_app: VersionControl) -> None:
     """Test restoring a version that doesn't exist."""
     vc = version_control_with_app
 
@@ -165,7 +165,7 @@ async def test_restore_version_not_found(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_delete_version_success(version_control_with_app):
+async def test_delete_version_success(version_control_with_app: VersionControl) -> None:
     """Test deleting a version."""
     vc = version_control_with_app
 
@@ -185,7 +185,7 @@ async def test_delete_version_success(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_delete_version_not_found(version_control_with_app):
+async def test_delete_version_not_found(version_control_with_app: VersionControl) -> None:
     """Test deleting a version that doesn't exist."""
     vc = version_control_with_app
 
@@ -194,7 +194,7 @@ async def test_delete_version_not_found(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_cleanup_old_versions(version_control_with_app):
+async def test_cleanup_old_versions(version_control_with_app: VersionControl) -> None:
     """Test cleaning up old versions."""
     vc = version_control_with_app
 
@@ -216,7 +216,7 @@ async def test_cleanup_old_versions(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_cleanup_old_versions_no_cleanup_needed(version_control_with_app):
+async def test_cleanup_old_versions_no_cleanup_needed(version_control_with_app: VersionControl) -> None:
     """Test cleanup when no versions need to be removed."""
     vc = version_control_with_app
 
@@ -234,7 +234,9 @@ async def test_cleanup_old_versions_no_cleanup_needed(version_control_with_app):
 
 
 @pytest.mark.asyncio
-async def test_parse_version_filename():
+async def test_parse_version_filename(tmp_path: Path) -> None:
+    """Test parsing version filename."""
+    vc = VersionControl(base_path=tmp_path)
     """Test parsing version filenames."""
     vc = VersionControl(Path("/tmp"))
 
@@ -255,7 +257,9 @@ async def test_parse_version_filename():
 
 
 @pytest.mark.asyncio
-async def test_generate_timestamp():
+async def test_generate_timestamp(tmp_path: Path) -> None:
+    """Test timestamp generation."""
+    vc = VersionControl(base_path=tmp_path)
     """Test timestamp generation."""
     vc = VersionControl(Path("/tmp"))
 
@@ -272,7 +276,7 @@ async def test_generate_timestamp():
 
 
 @pytest.mark.asyncio
-async def test_multiple_files_same_version(version_control_with_app):
+async def test_multiple_files_same_version(version_control: VersionControl) -> None:
     """Test creating versions for multiple files."""
     vc = version_control_with_app
 

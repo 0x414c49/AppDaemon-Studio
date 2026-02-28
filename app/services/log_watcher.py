@@ -145,7 +145,7 @@ class LogWatcher:
             # Read new content
             loop = asyncio.get_event_loop()
 
-            def read_file():
+            def read_file() -> tuple[str, int]:
                 with open(self.log_path, encoding="utf-8", errors="replace") as f:
                     f.seek(self._file_position)
                     content = f.read()
