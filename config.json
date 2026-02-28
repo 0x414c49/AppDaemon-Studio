@@ -16,7 +16,8 @@
     "host_network": false,
     "ports": {},
     "map": [
-        "config:rw"
+        "config:rw",
+        "share:rw"
     ],
     "options": {
         "log_level": "info"

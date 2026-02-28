@@ -4,9 +4,9 @@ set -e
 # Configuration
 LOG_LEVEL=${LOG_LEVEL:-info}
 
-# Home Assistant add-ons have /config mounted automatically
-# This is the add-on's own config directory, isolated from other add-ons
-CONFIG_DIR=/config
+# AppDaemon Studio needs to access AppDaemon's config
+# AppDaemon stores apps in /config/appdaemon (Home Assistant config directory)
+CONFIG_DIR=/config/appdaemon
 
 # Signal handling for graceful shutdown
 cleanup() {
