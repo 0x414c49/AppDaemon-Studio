@@ -3,7 +3,7 @@
 import pytest
 import pytest_asyncio
 
-from app.services.file_manager import FileManager, (
+from app.services.file_manager import (
     AppNotFoundError,
     FileManager,
     FileManagerError,

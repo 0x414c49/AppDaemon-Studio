@@ -1,4 +1,4 @@
-# Lesson: Pre-commit Linting and Testing
+# Lesson: Pre-commit Linting and Type Safety
 
 ## Why This Matters
 
@@ -34,10 +34,9 @@ ruff check .
 ```
 
 #### 3. MyPy Type Errors
-```bash
-# Error: "Function is missing a return type annotation"
-# Fix: Add type annotations
 
+**Error: "Function is missing a return type annotation"**
+```python
 # Bad:
 def my_function():
     pass
@@ -45,18 +44,66 @@ def my_function():
 # Good:
 def my_function() -> None:
     pass
+```
 
+**Error: "Function is missing a type annotation for one or more arguments"**
+```python
 # Bad:
-async def test_something(tmp_path):
+async def logs_endpoint(lines=100):
     pass
 
 # Good:
-async def test_something(tmp_path: Path) -> None:
+async def logs_endpoint(lines: int = 100) -> dict:
     pass
 ```
 
+**Error: "Function is missing a type annotation" (test functions)**
+```python
+# Bad:
+async def test_create_app(tmp_path):
+    pass
+
+# Good:
+async def test_create_app(tmp_path: Path) -> None:
+    pass
+
+# With fixtures:
+async def test_create_app(file_manager: FileManager) -> None:
+    pass
+```
+
+**Error: "Returning Any from function declared to return 'str'"**
+```python
+# Bad:
+def process(data: dict) -> str:
+    return data["key"]  # mypy doesn't know data["key"] is str
+
+# Good:
+from typing import Any
+
+def process(data: dict[str, Any]) -> str:
+    return str(data["key"])
+```
+
+**Error: Nested functions need types too**
+```python
+# Bad:
+def scan_versions():
+    for item in versions_path.iterdir():
+        ...
+
+# Good:
+from typing import TypeVar
+
+def scan_versions() -> list[VersionInfo]:
+    for item in versions_path.iterdir():
+        ...
+```
+
 #### 4. Test Function Types
-Test functions MUST have type annotations:
+
+All test functions MUST have type annotations:
+
 ```python
 # Required for all test functions
 async def test_create_app(file_manager: FileManager) -> None:
@@ -98,6 +145,56 @@ const fileData = await api.savePythonFile(...);  // fileData never used
 
 // Good:
 await api.savePythonFile(...);
+```
+
+#### 4. ImportMetaEnv Type Error
+```typescript
+// Error: Property 'env' does not exist on type 'ImportMeta'
+// Fix: Create vite-env.d.ts
+
+// ui/src/vite-env.d.ts
+interface ImportMetaEnv {
+  readonly VITE_ENABLE_MOCKS: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+```
+
+## Pre-commit Hook
+
+### Why Use a Pre-commit Hook?
+
+- **Catches errors before they reach CI/CD**
+- **Saves time** - fix locally instead of waiting for pipeline
+- **Ensures consistent code quality**
+
+### Installation
+
+```bash
+# Copy the hook to your local git hooks
+cp hooks/pre-commit .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+
+# Or install with pre-commit framework (optional)
+pip install pre-commit
+pre-commit install
+```
+
+### What the Hook Checks
+
+1. **Python Formatting** (`ruff format --check`)
+2. **Python Linting** (`ruff check`)
+3. **Python Type Checking** (`mypy`)
+4. **TypeScript Linting** (`eslint`)
+5. **TypeScript Type Checking** (`tsc --noEmit`)
+
+### Bypassing the Hook (Emergency Only)
+
+```bash
+# Skip pre-commit checks
+ git commit --no-verify
 ```
 
 ## Recommended Workflow
@@ -156,25 +253,33 @@ cd ui
 npm run lint -- --fix  # Auto-fix some ESLint issues
 ```
 
-## CI/CD Pipeline Stages
+## CI/CD Pipeline Configuration
 
+### Required Dependencies for CI
+
+```yaml
+# .gitlab-ci.yml
+lint-python:
+  before_script:
+    - pip install ruff mypy types-PyYAML --quiet
+  script:
+    - cd app
+    - ruff check .
+    - ruff format --check .
+    - mypy . --ignore-missing-imports
 ```
-lint-python     → Format check, lint, type check
-lint-typescript → ESLint, type check
-test-backend    → pytest with coverage
-build-ui        → Vite build
-test-frontend   → (if you add this)
-build-docker    → Only on main branch
-push-registry   → Only on tags
-```
+
+**Note**: Install `types-PyYAML` for mypy to type-check yaml module usage.
 
 ## Definition of Done
 
 A task is **complete** when:
 - [ ] All linting passes (backend + frontend)
+- [ ] All type checks pass (mypy + tsc)
 - [ ] All tests pass
 - [ ] Frontend builds successfully
 - [ ] Docker builds successfully (if applicable)
+- [ ] Pre-commit hook runs successfully
 - [ ] Changes committed and pushed
 - [ ] CI/CD pipeline is green
 
@@ -182,4 +287,6 @@ A task is **complete** when:
 
 - [Ruff Documentation](https://docs.astral.sh/ruff/)
 - [MyPy Documentation](https://mypy.readthedocs.io/)
+- [MyPy Common Issues](https://mypy.readthedocs.io/en/stable/common_issues.html)
 - [ESLint Documentation](https://eslint.org/docs/)
+- [Pre-commit Framework](https://pre-commit.com/)
