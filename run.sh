@@ -4,9 +4,9 @@ set -e
 # Configuration
 LOG_LEVEL=${LOG_LEVEL:-info}
 
-# AppDaemon Studio needs to access AppDaemon's config
-# AppDaemon stores apps in /addon_configs/<slug>_appdaemon
-CONFIG_DIR=/addon_configs
+# AppDaemon stores apps in /config/appdaemon
+# This matches Home Assistant's structure (like /config/zigbee2mqtt)
+APPDIR=/config/appdaemon
 
 # Signal handling for graceful shutdown
 cleanup() {
@@ -22,35 +22,10 @@ trap cleanup SIGTERM SIGINT
 
 echo "Starting AppDaemon Studio..."
 echo "Log level: $LOG_LEVEL"
-echo "Config directory: $CONFIG_DIR"
-echo ""
-echo "=== Available Directories ==="
-echo "Root directories:"
-ls -la / 2>/dev/null | head -20 || echo "Cannot list root"
-echo ""
-echo "Config directory contents:"
-ls -la /config 2>/dev/null || echo "/config not accessible"
-echo ""
-echo "Data directory:"
-ls -la /data 2>/dev/null || echo "/data not accessible"
-echo ""
-echo "Share directory:"
-ls -la /share 2>/dev/null || echo "/share not accessible"
-echo ""
-echo "Addons directory:"
-ls -la /addons 2>/dev/null || echo "/addons not accessible"
-echo ""
-echo "=== Checking AppDaemon location ==="
-if [ -d "/addon_configs" ]; then
-    echo "Addon configs found at /addon_configs"
-    ls -la /addon_configs
-else
-    echo "/addon_configs not found"
-fi
-echo ""
-echo "=== Current User ==="
-id
-echo ""
+echo "App Directory: $APPDIR"
+
+# Config directory is provided by Home Assistant at /config
+# Each add-on is isolated and cannot access other add-ons' configs
 
 # Create necessary directories
 mkdir -p /tmp/logs

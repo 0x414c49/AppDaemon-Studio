@@ -16,7 +16,7 @@
     "host_network": false,
     "ports": {},
     "map": [
-        "addon_configs:rw"
+        "config:rw"
     ],
     "options": {
         "log_level": "info"
