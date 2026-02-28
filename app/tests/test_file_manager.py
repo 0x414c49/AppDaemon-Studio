@@ -1,5 +1,7 @@
 """Tests for FileManager service."""
 
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
 
@@ -13,7 +15,7 @@ from app.services.file_manager import (
 
 
 @pytest_asyncio.fixture
-async def file_manager(tmp_path):
+async def file_manager(tmp_path: Path) -> FileManager:
     """Create a FileManager with temporary base path."""
     base_path = tmp_path / "apps"
     base_path.mkdir()
@@ -229,4 +231,5 @@ async def test_version_count(file_manager: FileManager) -> None:
     # Check version count increased
     apps = await file_manager.list_apps()
     app = next((a for a in apps if a.name == "version_count"), None)
+    assert app is not None
     assert app.version_count >= 1  # At least 1 version created

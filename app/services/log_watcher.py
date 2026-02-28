@@ -180,7 +180,7 @@ class LogWatcher:
         try:
             loop = asyncio.get_event_loop()
 
-            def read_logs():
+            def read_logs() -> list[str]:
                 with open(self.log_path, encoding="utf-8", errors="replace") as f:
                     all_lines = f.readlines()
                     return all_lines[-lines:] if len(all_lines) > lines else all_lines

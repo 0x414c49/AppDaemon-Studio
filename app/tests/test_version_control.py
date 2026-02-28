@@ -14,7 +14,7 @@ from app.services.version_control import (
 
 
 @pytest_asyncio.fixture
-async def version_control(tmp_path):
+async def version_control(tmp_path: Path) -> VersionControl:
     """Create a VersionControl with temporary base path."""
     base_path = tmp_path / "apps"
     base_path.mkdir()
@@ -22,7 +22,7 @@ async def version_control(tmp_path):
 
 
 @pytest_asyncio.fixture
-async def version_control_with_app(version_control):
+async def version_control_with_app(version_control: VersionControl) -> VersionControl:
     """Create VersionControl with a test app directory."""
     app_path = version_control.base_path / "test_app"
     app_path.mkdir()

@@ -249,9 +249,10 @@ class FileManager:
         template_content = template_path.read_text(encoding="utf-8")
 
         template = Template(template_content)
-        return template.render(
+        result: str = template.render(
             name=name, class_name=class_name, description=description or f"AppDaemon app: {name}"
         )
+        return result
 
     def _render_yaml_template(self, name: str, class_name: str) -> str:
         """Render YAML configuration template."""

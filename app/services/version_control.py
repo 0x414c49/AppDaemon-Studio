@@ -127,7 +127,7 @@ class VersionControl:
 
         loop = asyncio.get_event_loop()
 
-        def scan_versions() -> list[VersionInfo]:
+        def scan_versions() -> None:
             for item in versions_path.iterdir():
                 if item.is_file():
                     parsed = self._parse_version_filename(item.name)
