@@ -1,0 +1,15 @@
+import appdaemon.plugins.hass.hassapi as hass
+
+
+class {{ class_name }}(hass.Hass):
+    """
+    {{ description }}
+    """
+
+    def initialize(self):
+        """Initialize the app."""
+        self.log(f"Initializing {{ class_name }}")
+        
+    def terminate(self):
+        """Clean up when app is terminated."""
+        self.log(f"Terminating {{ class_name }}")

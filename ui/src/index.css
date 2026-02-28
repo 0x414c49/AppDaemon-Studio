@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply h-full;
+  }
+  
+  body {
+    @apply h-full bg-slate-950 text-slate-200 antialiased;
+  }
+  
+  #root {
+    @apply h-full;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900;
+  }
+  
+  .btn-primary {
+    @apply btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-slate-700 text-slate-200 hover:bg-slate-600 focus:ring-slate-500;
+  }
+  
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+  
+  .btn-ghost {
+    @apply btn bg-transparent text-slate-300 hover:bg-slate-800 hover:text-slate-100;
+  }
+  
+  .input {
+    @apply block w-full rounded-md bg-slate-800 border-slate-700 text-slate-200 placeholder-slate-500 focus:border-blue-500 focus:ring-blue-500 sm:text-sm;
+  }
+  
+  .panel {
+    @apply bg-slate-900 border border-slate-800 rounded-lg;
+  }
+  
+  .tab {
+    @apply inline-flex items-center px-3 py-2 text-sm font-medium border-b-2 transition-colors;
+  }
+  
+  .tab-active {
+    @apply tab border-blue-500 text-blue-400;
+  }
+  
+  .tab-inactive {
+    @apply tab border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-600;
+  }
+}
+
+/* Monaco Editor overrides */
+.monaco-editor {
+  @apply rounded-md;
+}
