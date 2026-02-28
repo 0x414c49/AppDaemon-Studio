@@ -42,6 +42,9 @@ COPY app/ /app/app/
 COPY run.sh /app/
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Copy built UI from ui-builder stage
+COPY --from=ui-builder /app/ui/dist /app/ui/dist
+
 # Create necessary directories
 RUN mkdir -p /app/ui/dist && \
     mkdir -p /run/nginx && \

@@ -91,17 +91,22 @@ fi
 
 # Install development dependencies (matching CI exactly)
 echo "${YELLOW}Installing development dependencies...${NC}"
-pip install \
-    pytest \
-    pytest-asyncio==0.21.1 \
-    pytest-cov \
-    httpx \
-    types-PyYAML \
-    ruff \
-    mypy \
-    --quiet
-
-echo "${GREEN}✓ Development dependencies installed${NC}"
+if [ -f "requirements-dev.txt" ]; then
+    pip install -r requirements-dev.txt --quiet
+    echo "${GREEN}✓ Development dependencies installed${NC}"
+else
+    echo "${YELLOW}⚠ requirements-dev.txt not found, installing manually...${NC}"
+    pip install \
+        pytest==8.0.0 \
+        pytest-asyncio==0.21.1 \
+        pytest-cov \
+        httpx \
+        types-PyYAML \
+        ruff \
+        mypy \
+        --quiet
+    echo "${GREEN}✓ Development dependencies installed${NC}"
+fi
 
 echo ""
 echo "${GREEN}✅ Setup complete!${NC}"
