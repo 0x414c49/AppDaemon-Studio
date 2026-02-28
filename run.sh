@@ -4,15 +4,9 @@ set -e
 # Configuration
 LOG_LEVEL=${LOG_LEVEL:-info}
 
-# Use /config which is standard for Home Assistant add-ons
-# Fallback to /data/config if /config is not available
-if [ -d "/config" ]; then
-    CONFIG_DIR=/config/appdaemon
-elif [ -d "/data" ]; then
-    CONFIG_DIR=/data/config
-else
-    CONFIG_DIR=/tmp/config
-fi
+# Home Assistant add-ons have /config mounted automatically
+# This is the add-on's own config directory, isolated from other add-ons
+CONFIG_DIR=/config
 
 # Signal handling for graceful shutdown
 cleanup() {
@@ -30,8 +24,8 @@ echo "Starting AppDaemon Studio..."
 echo "Log level: $LOG_LEVEL"
 echo "Config directory: $CONFIG_DIR"
 
-# Create config directory if it doesn't exist
-mkdir -p "$CONFIG_DIR"
+# Config directory is provided by Home Assistant at /config
+# Each add-on is isolated and cannot access other add-ons' configs
 
 # Create necessary directories
 mkdir -p /tmp/logs
