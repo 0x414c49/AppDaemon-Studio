@@ -7,10 +7,8 @@ import type {
   LogEntry,
 } from '@/types';
 
-// Use relative URL for API calls to work with Home Assistant Ingress
-// Ingress serves the app at /hassio/ingress/<slug>/, so we need relative paths
 const api = axios.create({
-  baseURL: './api',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
