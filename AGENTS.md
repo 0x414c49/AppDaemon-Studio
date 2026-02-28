@@ -1,5 +1,25 @@
 # AGENTS.md
 
+## Agent Instructions (CRITICAL - READ FIRST)
+
+**Always document new learnings in the `lessons/` folder.**
+
+When you encounter:
+- New error patterns and their solutions
+- CI/CD pipeline failures and fixes
+- Dependency compatibility issues
+- Type checking nuances
+- Testing best practices
+- Any "gotchas" or non-obvious behaviors
+
+**Create or update a lesson file** (e.g., `lessons/006-pre-commit-linting.md`) with:
+1. The exact error message
+2. Why it happened (root cause)
+3. The solution (with code examples)
+4. How to prevent it in the future
+
+This creates a knowledge base for future agents and prevents repeating the same mistakes.
+
 ## Project: AppDaemon Studio
 
 A Home Assistant add-on providing an IDE for AppDaemon apps with AI-powered assistance.
