@@ -32,7 +32,7 @@ lint-python:
   stage: lint
   image: python:3.11-alpine
   before_script:
-    - pip install ruff mypy --quiet
+    - pip install ruff mypy types-PyYAML --quiet
   script:
     - cd app
     - ruff check . --output-format=gitlab > ruff-report.json || true
