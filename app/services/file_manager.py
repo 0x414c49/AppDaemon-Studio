@@ -154,7 +154,6 @@ class FileManager:
         Returns:
             AppInfo object.
         """
-        app_path = self._get_app_path(name)
         python_path = self._get_python_path(name)
         yaml_path = self._get_yaml_path(name)
 
@@ -343,7 +342,7 @@ class FileManager:
         try:
             return yaml.safe_load(content) or {}
         except yaml.YAMLError as e:
-            raise FileManagerError(f"Invalid YAML: {e}")
+            raise FileManagerError(f"Invalid YAML: {e}") from e
 
     async def write_yaml(self, name: str, config: dict) -> None:
         """Write YAML configuration with automatic backup.
