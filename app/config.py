@@ -9,10 +9,10 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings."""
 
-    # AppDaemon configuration path (Home Assistant add-on path)
+    # AppDaemon apps path (matches AppDaemon addon configuration)
     appdaemon_config_path: Path = Field(
-        default_factory=lambda: Path("/addon_configs/a0d7b954_appdaemon"),
-        description="Path to AppDaemon configuration directory",
+        default_factory=lambda: Path("/config/apps"),
+        description="Path to AppDaemon apps directory",
     )
 
     # Apps directory

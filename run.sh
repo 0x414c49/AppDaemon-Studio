@@ -4,9 +4,9 @@ set -e
 # Configuration
 LOG_LEVEL=${LOG_LEVEL:-info}
 
-# AppDaemon stores apps in /config/appdaemon
-# This matches Home Assistant's structure (like /config/zigbee2mqtt)
-APPDIR=/config/appdaemon
+# AppDaemon stores apps in /config/apps
+# This matches AppDaemon's default configuration
+APPDIR=/config/apps
 
 # Signal handling for graceful shutdown
 cleanup() {
