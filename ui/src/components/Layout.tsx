@@ -42,6 +42,7 @@ export const Layout: React.FC = () => {
             onClick={toggleSidebar}
             className="p-2 hover:bg-slate-800 rounded-md lg:hidden"
             aria-label="Toggle sidebar"
+            data-testid="menu-button"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -53,6 +54,7 @@ export const Layout: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <button
+            data-testid="logs-tab"
             onClick={() => setBottomPanelTab('logs')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
               bottomPanelOpen && bottomPanelTab === 'logs'
@@ -64,6 +66,7 @@ export const Layout: React.FC = () => {
             <span className="hidden sm:inline">Logs</span>
           </button>
           <button
+            data-testid="versions-tab"
             onClick={() => setBottomPanelTab('versions')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
               bottomPanelOpen && bottomPanelTab === 'versions'
@@ -90,6 +93,7 @@ export const Layout: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <aside
+          data-testid="sidebar"
           className={`${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-40 w-64 bg-slate-900 border-r border-slate-800 transition-transform duration-200 ease-in-out lg:block`}

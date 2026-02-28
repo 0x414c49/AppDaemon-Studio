@@ -23,6 +23,7 @@ export const Sidebar: React.FC = () => {
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
             <button
+              data-testid="create-app-button"
               onClick={() => setShowCreateModal(true)}
               className="p-1.5 hover:bg-slate-800 rounded-md text-slate-400 hover:text-slate-200 transition-colors"
               aria-label="Create new app"

@@ -39,7 +39,7 @@ const VersionItem: React.FC<VersionItemProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 hover:bg-slate-800/50 border-b border-slate-800/50 last:border-0">
+    <div data-testid="version-item" className="flex items-center justify-between px-4 py-3 hover:bg-slate-800/50 border-b border-slate-800/50 last:border-0">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
         <div className="min-w-0">
@@ -152,7 +152,7 @@ export const VersionPanel: React.FC = () => {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div data-testid="version-panel" className="h-full flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
         <h3 className="font-medium text-slate-200 flex items-center gap-2">
           <Clock className="w-4 h-4" />

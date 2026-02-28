@@ -115,7 +115,7 @@ export const CreateAppModal: React.FC<CreateAppModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div data-testid="create-app-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-xl max-w-md w-full">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
@@ -139,6 +139,7 @@ export const CreateAppModal: React.FC<CreateAppModalProps> = ({
               App Name
             </label>
             <input
+              data-testid="app-name-input"
               id="app-name"
               type="text"
               value={formData.name}
@@ -168,6 +169,7 @@ export const CreateAppModal: React.FC<CreateAppModalProps> = ({
               Class Name
             </label>
             <input
+              data-testid="class-name-input"
               id="class-name"
               type="text"
               value={formData.class_name}
@@ -196,6 +198,7 @@ export const CreateAppModal: React.FC<CreateAppModalProps> = ({
               Description <span className="text-slate-500">(optional)</span>
             </label>
             <textarea
+              data-testid="app-description-input"
               id="description"
               value={formData.description}
               onChange={(e) =>
@@ -218,6 +221,7 @@ export const CreateAppModal: React.FC<CreateAppModalProps> = ({
               Cancel
             </button>
             <button
+              data-testid="create-app-submit"
               type="submit"
               disabled={isSubmitting}
               className="btn-primary flex items-center gap-2"

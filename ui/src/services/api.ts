@@ -37,8 +37,8 @@ const handleError = (error: unknown): never => {
 // Apps API
 export const getApps = async (): Promise<AppInfo[]> => {
   try {
-    const response = await api.get<AppInfo[]>('/apps');
-    return response.data;
+    const response = await api.get<{ apps: AppInfo[]; count: number }>('/apps');
+    return response.data.apps;
   } catch (error) {
     return handleError(error);
   }
@@ -109,8 +109,8 @@ export const saveYamlFile = async (
 // Versions API
 export const getVersions = async (app: string): Promise<VersionInfo[]> => {
   try {
-    const response = await api.get<VersionInfo[]>(`/versions/${app}`);
-    return response.data;
+    const response = await api.get<{ versions: VersionInfo[]; count: number }>(`/versions/${app}`);
+    return response.data.versions;
   } catch (error) {
     return handleError(error);
   }

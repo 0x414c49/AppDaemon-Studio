@@ -47,7 +47,7 @@ export const LogViewer: React.FC = () => {
   }, [filteredLogs, paused]);
 
   return (
-    <div className="h-full flex flex-col">
+    <div data-testid="log-viewer" className="h-full flex flex-col">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800">
         <div className="flex items-center gap-2">

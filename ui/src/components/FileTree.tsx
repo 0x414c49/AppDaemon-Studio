@@ -35,7 +35,7 @@ const AppTreeItem: React.FC<AppTreeItemProps> = ({ app }) => {
   };
 
   return (
-    <div className="select-none">
+    <div data-testid={`app-${app.name}`} className="select-none">
       <div
         className={`flex items-center px-2 py-1.5 cursor-pointer group ${
           isActive ? 'bg-blue-600/20 text-blue-400' : 'hover:bg-slate-800 text-slate-300'

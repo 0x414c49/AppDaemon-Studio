@@ -84,3 +84,13 @@ home-assistant.log
 
 # GitLab CI artifacts (if any)
 artifacts/
+
+# E2E test screenshots and results
+e2e/screenshots/
+e2e/test-results/
+e2e/playwright-report/
+e2e/.cache/
+
+# Playwright browser downloads
+.playwright/
+
