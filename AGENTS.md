@@ -151,9 +151,42 @@ npm run test
 npm run build
 ```
 
+## Python Version Requirement (CRITICAL)
+
+**You MUST use Python 3.11 locally - same as CI.**
+
+CI uses `python:3.11-alpine` Docker image. Using different Python versions causes:
+- Type checking differences (mypy behavior varies by version)
+- pytest-asyncio compatibility issues
+- Different dependency behaviors
+
+### Setup Python 3.11 with pyenv
+
+```bash
+# Run the setup script (installs pyenv if needed, creates venv)
+./setup-python-3.11.sh
+
+# Or manually:
+brew install pyenv
+pyenv install 3.11.11
+pyenv local 3.11.11
+python -m venv venv
+source venv/bin/activate
+pip install -r app/requirements.txt
+pip install pytest pytest-asyncio==0.21.1 pytest-cov httpx types-PyYAML ruff mypy
+```
+
+**Always activate the venv before working:**
+```bash
+source venv/bin/activate
+python --version  # Should show 3.11.x
+```
+
 ## Pre-commit Checks (Required)
 
 **A task is not complete until linting passes and tests run successfully.**
+
+**CRITICAL: Only commit AFTER local checks pass with Python 3.11**
 
 Always run these before committing:
 
