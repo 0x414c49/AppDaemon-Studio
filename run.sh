@@ -23,9 +23,35 @@ trap cleanup SIGTERM SIGINT
 echo "Starting AppDaemon Studio..."
 echo "Log level: $LOG_LEVEL"
 echo "Config directory: $CONFIG_DIR"
-
-# Config directory is provided by Home Assistant at /config
-# Each add-on is isolated and cannot access other add-ons' configs
+echo ""
+echo "=== Available Directories ==="
+echo "Root directories:"
+ls -la / 2>/dev/null | head -20 || echo "Cannot list root"
+echo ""
+echo "Config directory contents:"
+ls -la /config 2>/dev/null || echo "/config not accessible"
+echo ""
+echo "Data directory:"
+ls -la /data 2>/dev/null || echo "/data not accessible"
+echo ""
+echo "Share directory:"
+ls -la /share 2>/dev/null || echo "/share not accessible"
+echo ""
+echo "Addons directory:"
+ls -la /addons 2>/dev/null || echo "/addons not accessible"
+echo ""
+echo "=== Checking AppDaemon location ==="
+if [ -d "/config/appdaemon" ]; then
+    echo "AppDaemon config found at /config/appdaemon"
+    ls -la /config/appdaemon
+elif [ -d "/config" ]; then
+    echo "Contents of /config:"
+    ls -la /config
+fi
+echo ""
+echo "=== Current User ==="
+id
+echo ""
 
 # Create necessary directories
 mkdir -p /tmp/logs
