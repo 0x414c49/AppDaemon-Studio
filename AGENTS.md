@@ -151,6 +151,74 @@ npm run test
 npm run build
 ```
 
+## Pre-commit Checks (Required)
+
+**A task is not complete until linting passes and tests run successfully.**
+
+Always run these before committing:
+
+### Backend Linting
+```bash
+cd app
+
+# Install linting tools (one-time)
+pip install ruff mypy types-PyYAML
+
+# Format code
+ruff format .
+
+# Check linting
+ruff check .
+
+# Type checking
+mypy . --ignore-missing-imports
+
+# Run tests
+pytest tests/ -v
+```
+
+### Frontend Linting
+```bash
+cd ui
+
+# Install dependencies
+npm install
+
+# Run linter
+npm run lint
+
+# Type checking
+npm run typecheck
+
+# Run tests
+npm run test
+
+# Build (catches build errors)
+npm run build
+```
+
+### Quick Check Script
+```bash
+#!/bin/bash
+# save as check.sh in project root
+
+echo "=== Backend Checks ==="
+cd app
+ruff format . --check || { echo "Backend formatting failed"; exit 1; }
+ruff check . || { echo "Backend linting failed"; exit 1; }
+mypy . --ignore-missing-imports || { echo "Backend type checking failed"; exit 1; }
+pytest tests/ -v || { echo "Backend tests failed"; exit 1; }
+
+echo "=== Frontend Checks ==="
+cd ../ui
+npm run lint || { echo "Frontend linting failed"; exit 1; }
+npm run typecheck || { echo "Frontend type checking failed"; exit 1; }
+npm run test || { echo "Frontend tests failed"; exit 1; }
+npm run build || { echo "Frontend build failed"; exit 1; }
+
+echo "=== All checks passed! ==="
+```
+
 ## Resources
 
 - [FastAPI Docs](https://fastapi.tiangolo.com/)
