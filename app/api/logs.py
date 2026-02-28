@@ -1,5 +1,6 @@
 """Logs API endpoints."""
 
+import contextlib
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 from pydantic import BaseModel
@@ -79,10 +80,8 @@ async def websocket_logs(websocket: WebSocket):
                 break
 
     except Exception as e:
-        try:
+        with contextlib.suppress(Exception):
             await websocket.send_json({"type": "error", "message": str(e)})
-        except:
-            pass
 
     finally:
         # Unsubscribe from log updates
