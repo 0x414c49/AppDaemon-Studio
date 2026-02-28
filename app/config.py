@@ -21,11 +21,11 @@ class Settings(BaseSettings):
         """Get the apps directory path."""
         return self.appdaemon_config_path
 
-    # Logs directory
+    # Logs directory (use /tmp for add-on logs, not /config/apps)
     @property
     def logs_path(self) -> Path:
         """Get the logs directory path."""
-        return self.appdaemon_config_path / "logs"
+        return Path("/tmp/logs")
 
     # AppDaemon log file
     @property
