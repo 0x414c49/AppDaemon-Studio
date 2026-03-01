@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { AppInfo, CreateAppData, FileContent } from '../types';
+import { generatePythonTemplate, generateYamlTemplate } from './templates';
 
 const APPS_DIR = '/config/apps';
 
@@ -200,28 +201,6 @@ export async function writeYamlFile(appName: string, content: string): Promise<v
   }
   
   await fs.writeFile(filePath, content);
-}
-
-function generatePythonTemplate(name: string, className: string, description?: string): string {
-  return `import appdaemon.plugins.hass.hassapi as hass
-
-class ${className}(hass.Hass):
-    """${description || `AppDaemon app: ${name}`}"""
-    
-    def initialize(self):
-        """Initialize the app."""
-        self.log("${className} initialized")
-        
-        # Add your app logic here
-        pass
-`;
-}
-
-function generateYamlTemplate(name: string, className: string): string {
-  return `${name}:
-  module: ${name}
-  class: ${className}
-`;
 }
 
 function parseYaml(content: string): unknown {
