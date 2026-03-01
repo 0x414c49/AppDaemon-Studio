@@ -1,30 +1,42 @@
 import { NextResponse } from 'next/server';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 
 const SUPERVISOR_URL = 'http://supervisor';
 
 // Try to read token from env, fallback to file (for child processes)
-function getToken(): string | undefined {
+function getToken(): { token: string | undefined; source: 'env' | 'file' | 'none'; fileExists: boolean } {
   // First try env vars (parent process)
   const envToken = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
-  if (envToken) return envToken;
+  if (envToken) {
+    return { token: envToken, source: 'env', fileExists: false };
+  }
   
   // Fallback: read from file (child processes don't inherit env)
-  try {
-    const supervisorToken = readFileSync('/tmp/.supervisor_token', 'utf8').trim();
-    if (supervisorToken) return supervisorToken;
-  } catch {
-    // File doesn't exist
+  const supervisorFile = '/tmp/.supervisor_token';
+  const hassioFile = '/tmp/.hassio_token';
+  
+  const supervisorExists = existsSync(supervisorFile);
+  const hassioExists = existsSync(hassioFile);
+  
+  if (supervisorExists) {
+    try {
+      const token = readFileSync(supervisorFile, 'utf8').trim();
+      if (token) return { token, source: 'file', fileExists: true };
+    } catch (e) {
+      console.error('Failed to read supervisor token file:', e);
+    }
   }
   
-  try {
-    const hassioToken = readFileSync('/tmp/.hassio_token', 'utf8').trim();
-    if (hassioToken) return hassioToken;
-  } catch {
-    // File doesn't exist
+  if (hassioExists) {
+    try {
+      const token = readFileSync(hassioFile, 'utf8').trim();
+      if (token) return { token, source: 'file', fileExists: true };
+    } catch (e) {
+      console.error('Failed to read hassio token file:', e);
+    }
   }
   
-  return undefined;
+  return { token: undefined, source: 'none', fileExists: supervisorExists || hassioExists };
 }
 
 export interface HAEntity {
@@ -50,37 +62,27 @@ export interface EntitiesResponse {
   error?: string;
   debug?: {
     hasEnvToken: boolean;
-    hasFileToken: boolean;
+    fileExists: boolean;
     tokenLength: number;
     pid: number;
     source: 'env' | 'file' | 'none';
+    workingDir: string;
   };
 }
 
 export async function GET() {
   // Try to get token from env or file
   const envToken = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
-  let fileToken: string | undefined;
-  
-  if (!envToken) {
-    try {
-      fileToken = readFileSync('/tmp/.supervisor_token', 'utf8').trim() || 
-                  readFileSync('/tmp/.hassio_token', 'utf8').trim();
-    } catch {
-      // Files don't exist
-    }
-  }
-  
-  const token = envToken || fileToken;
-  const source: 'env' | 'file' | 'none' = envToken ? 'env' : fileToken ? 'file' : 'none';
+  const { token, source, fileExists } = getToken();
   
   // Debug info
   const debug = {
     hasEnvToken: !!envToken,
-    hasFileToken: !!fileToken,
+    fileExists,
     tokenLength: token?.length || 0,
     pid: process.pid,
     source,
+    workingDir: process.cwd(),
   };
   
   if (!token) {
