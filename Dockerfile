@@ -20,8 +20,8 @@ WORKDIR /app
 # Stage 2: Build UI
 FROM base AS ui-builder
 
-# Force rebuild - v0.1.4-fix
-RUN echo "Building UI for v0.1.4"
+# Force rebuild - v0.1.6
+RUN echo "Building UI for v0.1.6"
 
 # Copy UI source
 COPY ui/ /app/ui/
@@ -40,8 +40,8 @@ FROM base AS final
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Force rebuild on version change - v0.1.5
-RUN echo "Building version 0.1.5"
+# Force rebuild on version change - v0.1.6
+RUN echo "Building version 0.1.6"
 
 # Copy application code
 COPY app/ /app/app/

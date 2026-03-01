@@ -7,9 +7,20 @@ import type {
   LogEntry,
 } from '@/types';
 
-// Always use relative API paths
-// This works regardless of how the app is served (root, /app/<slug>/, /ingress/<slug>/)
-const getBaseUrl = () => './api';
+// Detect base URL - handles Ingress, proxy, and direct access
+const getBaseUrl = () => {
+  const { protocol, hostname, port } = window.location;
+  
+  // Check if we're in Home Assistant Ingress
+  if (window.location.pathname.includes('/api/hassio_ingress/')) {
+    // For Ingress, we need the full URL with port
+    const base = port ? `${protocol}//${hostname}:${port}` : `${protocol}//${hostname}`;
+    return `${base}/api`;
+  }
+  
+  // For add-on proxy or direct access, use relative path
+  return './api';
+};
 
 const api = axios.create({
   baseURL: getBaseUrl(),
