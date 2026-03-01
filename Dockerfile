@@ -31,7 +31,6 @@ RUN apk add --no-cache libc6-compat
 # Copy built application and dependencies
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.js ./
 COPY --from=builder /app/node_modules ./node_modules
 

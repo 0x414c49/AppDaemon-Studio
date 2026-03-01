@@ -2,9 +2,8 @@
 const path = require('path');
 
 const nextConfig = {
-  // Use server mode instead of standalone for proper env var access
-  // Standalone inlines env vars at build time, server mode reads at runtime
-  output: 'server',
+  // NOTE: Do NOT use 'standalone' output - it inlines env vars at build time
+  // Default server mode reads env vars at runtime
   // Use relative paths for static assets to work with HA Ingress
   assetPrefix: './',
   // NOTE: Do NOT add env vars here - they get inlined at build time
