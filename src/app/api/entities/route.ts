@@ -1,13 +1,30 @@
 import { NextResponse } from 'next/server';
+import { readFileSync } from 'fs';
 
 const SUPERVISOR_URL = 'http://supervisor';
 
-// Read env vars at module load time - but also check on each request
-let cachedToken: string | undefined = undefined;
-
+// Try to read token from env, fallback to file (for child processes)
 function getToken(): string | undefined {
-  // Always read fresh from process.env
-  return process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
+  // First try env vars (parent process)
+  const envToken = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
+  if (envToken) return envToken;
+  
+  // Fallback: read from file (child processes don't inherit env)
+  try {
+    const supervisorToken = readFileSync('/tmp/.supervisor_token', 'utf8').trim();
+    if (supervisorToken) return supervisorToken;
+  } catch {
+    // File doesn't exist
+  }
+  
+  try {
+    const hassioToken = readFileSync('/tmp/.hassio_token', 'utf8').trim();
+    if (hassioToken) return hassioToken;
+  } catch {
+    // File doesn't exist
+  }
+  
+  return undefined;
 }
 
 export interface HAEntity {
@@ -32,27 +49,38 @@ export interface EntitiesResponse {
   available: boolean;
   error?: string;
   debug?: {
-    hasSupervisorToken: boolean;
-    hasHassioToken: boolean;
+    hasEnvToken: boolean;
+    hasFileToken: boolean;
     tokenLength: number;
-    allEnvVars: string[];
     pid: number;
+    source: 'env' | 'file' | 'none';
   };
 }
 
 export async function GET() {
-  // Read env vars FRESH on every request
-  const hasSupervisorToken = !!process.env.SUPERVISOR_TOKEN;
-  const hasHassioToken = !!process.env.HASSIO_TOKEN;
-  const token = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
+  // Try to get token from env or file
+  const envToken = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
+  let fileToken: string | undefined;
+  
+  if (!envToken) {
+    try {
+      fileToken = readFileSync('/tmp/.supervisor_token', 'utf8').trim() || 
+                  readFileSync('/tmp/.hassio_token', 'utf8').trim();
+    } catch {
+      // Files don't exist
+    }
+  }
+  
+  const token = envToken || fileToken;
+  const source: 'env' | 'file' | 'none' = envToken ? 'env' : fileToken ? 'file' : 'none';
   
   // Debug info
   const debug = {
-    hasSupervisorToken,
-    hasHassioToken,
+    hasEnvToken: !!envToken,
+    hasFileToken: !!fileToken,
     tokenLength: token?.length || 0,
-    allEnvVars: Object.keys(process.env).filter(k => k.includes('TOKEN') || k.includes('HASSIO') || k.includes('SUPERVISOR')),
     pid: process.pid,
+    source,
   };
   
   if (!token) {
@@ -63,7 +91,7 @@ export async function GET() {
       domains: [],
       timestamp: new Date().toISOString(),
       available: false,
-      error: 'No Home Assistant credentials. Set SUPERVISOR_TOKEN (add-on) or HA_URL + HA_TOKEN (standalone).',
+      error: 'No Home Assistant credentials.',
       debug,
     });
   }
