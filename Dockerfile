@@ -1,5 +1,5 @@
-# Multi-stage Dockerfile for Next.js standalone output
-# Smaller, faster builds with only production dependencies
+# Dockerfile for Next.js server mode
+# Server mode allows runtime env var access (unlike standalone)
 
 # Stage 1: Build the application
 FROM node:20-alpine AS builder
@@ -17,10 +17,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the Next.js app (creates standalone output)
+# Build the Next.js app (server mode - NOT standalone)
 RUN npm run build
 
-# Stage 2: Production image (smaller, no build tools)
+# Stage 2: Production image
 FROM node:20-alpine AS runner
 
 WORKDIR /app
@@ -28,11 +28,14 @@ WORKDIR /app
 # Install libc6-compat for Alpine compatibility
 RUN apk add --no-cache libc6-compat
 
-# Copy only the standalone output and necessary files
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Copy built application and dependencies
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/node_modules ./node_modules
 
-# Copy startup script that reads env vars at runtime
+# Copy startup script
 COPY scripts/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
@@ -48,5 +51,5 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
-# Start using wrapper script (config.json has init: true, so tini is PID 1)
+# Start using wrapper script
 CMD ["/app/start.sh"]

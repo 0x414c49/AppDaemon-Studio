@@ -23,35 +23,11 @@ export interface EntitiesResponse {
   timestamp: string;
   available: boolean;
   error?: string;
-  debug?: {
-    hasEnvToken: boolean;
-    tokenLength: number;
-    pid: number;
-    nodeEnv: string;
-    envKeys: string[];
-    allEnvCount: number;
-  };
 }
 
 export async function GET() {
-  // Next.js standalone inlines env vars at build time
-  // Use dynamic access to bypass static analysis
-  const envKeys = Object.keys(process.env);
-  const supervisorToken = process.env['SUPERVISOR_TOKEN'] || process.env['HASSIO_TOKEN'];
-  const token = supervisorToken;
-  
-  // Debug: check all env vars containing TOKEN
-  const tokenKeys = envKeys.filter(k => k.includes('TOKEN') || k.includes('HASSIO') || k.includes('SUPERVISOR'));
-  
-  // Debug info
-  const debug = {
-    hasEnvToken: !!token,
-    tokenLength: token?.length || 0,
-    pid: process.pid,
-    nodeEnv: process.env.NODE_ENV,
-    envKeys: tokenKeys,
-    allEnvCount: envKeys.length,
-  };
+  // Server mode reads env vars at runtime (not build time)
+  const token = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
   
   if (!token) {
     return NextResponse.json({
@@ -62,7 +38,6 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       available: false,
       error: 'No Home Assistant credentials.',
-      debug,
     });
   }
   
@@ -85,7 +60,6 @@ export async function GET() {
         timestamp: new Date().toISOString(),
         available: false,
         error: `HA API error: ${response.status} - ${errorText}`,
-        debug,
       });
     }
 
@@ -99,7 +73,6 @@ export async function GET() {
       domains: Object.keys(grouped),
       timestamp: new Date().toISOString(),
       available: true,
-      debug,
     });
   } catch (error) {
     const message = error instanceof Error && error.name === 'TimeoutError'
@@ -114,7 +87,6 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       available: false,
       error: message,
-      debug,
     });
   }
 }

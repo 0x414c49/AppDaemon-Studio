@@ -2,11 +2,12 @@
 const path = require('path');
 
 const nextConfig = {
-  output: 'standalone',
+  // Use server mode instead of standalone for proper env var access
+  // Standalone inlines env vars at build time, server mode reads at runtime
+  output: 'server',
   // Use relative paths for static assets to work with HA Ingress
   assetPrefix: './',
   // NOTE: Do NOT add env vars here - they get inlined at build time
-  // Runtime env vars like SUPERVISOR_TOKEN are accessed via process.env directly
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
