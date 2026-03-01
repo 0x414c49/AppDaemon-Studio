@@ -2,6 +2,12 @@
 
 ## Agent Instructions (CRITICAL - READ FIRST)
 
+**NEVER push code unless explicitly asked by the user.**
+- Only commit and push when the user specifically requests it
+- It's okay to stage changes and prepare commits
+- Wait for explicit confirmation before pushing to remote
+- This prevents unexpected changes in the repository
+
 **Always document new learnings in the `lessons/` folder.**
 
 When you encounter:
