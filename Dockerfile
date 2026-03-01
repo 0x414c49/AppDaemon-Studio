@@ -44,5 +44,8 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
-# Start the standalone server (running as root for /config access)
-CMD ["node", "server.js"]
+# Pass through Supervisor token if available
+ENV SUPERVISOR_TOKEN=${SUPERVISOR_TOKEN}
+
+# Start the standalone server
+CMD node server.js

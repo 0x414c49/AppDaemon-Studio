@@ -5,6 +5,10 @@ const nextConfig = {
   output: 'standalone',
   // Use relative paths for static assets to work with HA Ingress
   assetPrefix: './',
+  // Pass through environment variables
+  env: {
+    SUPERVISOR_TOKEN: process.env.SUPERVISOR_TOKEN,
+  },
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
