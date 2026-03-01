@@ -20,7 +20,7 @@ export function Editor({ appName }: EditorProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof import('monaco-editor') | null>(null);
   
-  const { entities, loading: entitiesLoading, error: entitiesError, refresh, lastUpdated } = useEntities();
+  const { entities, loading: entitiesLoading, error: entitiesError, available: entitiesAvailable, refresh, lastUpdated } = useEntities();
 
   useEffect(() => {
     loadFile();
@@ -210,9 +210,18 @@ export function Editor({ appName }: EditorProps) {
                   <RefreshCw className="w-3 h-3 animate-spin" />
                   Loading entities...
                 </>
+              ) : !entitiesAvailable ? (
+                <button 
+                  onClick={refresh}
+                  className="text-yellow-400 hover:text-yellow-300 flex items-center gap-1"
+                  title="Click to retry"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Entities unavailable (click to retry)
+                </button>
               ) : entitiesError ? (
                 <span className="text-red-400" title={entitiesError}>
-                  Entities unavailable
+                  Entities error
                 </span>
               ) : (
                 <>

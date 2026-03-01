@@ -8,5 +8,6 @@ export interface EntitiesResponse {
   count: number;
   domains: string[];
   timestamp: string;
+  available: boolean;
   error?: string;
 }

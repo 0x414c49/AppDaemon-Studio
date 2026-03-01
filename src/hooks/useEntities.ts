@@ -8,6 +8,7 @@ interface UseEntitiesReturn {
   domains: string[];
   loading: boolean;
   error: string | null;
+  available: boolean;
   refresh: () => Promise<void>;
   lastUpdated: Date | null;
 }
@@ -26,8 +27,10 @@ export function useEntities(): UseEntitiesReturn {
       const response = await fetch('/api/entities');
       const result: EntitiesResponse = await response.json();
       
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch entities');
+      // API always returns 200, check available flag
+      if (!result.available && result.error) {
+        // This is expected during build or when HA API is unavailable
+        console.log('HA entities not available:', result.error);
       }
       
       setData(result);
@@ -49,6 +52,7 @@ export function useEntities(): UseEntitiesReturn {
     domains: data?.domains || [],
     loading,
     error,
+    available: data?.available ?? false,
     refresh: fetchEntities,
     lastUpdated,
   };

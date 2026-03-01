@@ -17,11 +17,22 @@ export interface EntitiesByDomain {
 
 const SUPERVISOR_URL = 'http://supervisor';
 
-export async function fetchHomeAssistantEntities(): Promise<HAEntity[]> {
+export interface FetchResult {
+  entities: HAEntity[];
+  error?: string;
+  available: boolean;
+}
+
+export async function fetchHomeAssistantEntities(): Promise<FetchResult> {
   const token = process.env.SUPERVISOR_TOKEN;
   
+  // During build or when not running in HA, token won't be available
   if (!token) {
-    throw new Error('SUPERVISOR_TOKEN not available. Is hassio_api enabled?');
+    return {
+      entities: [],
+      available: false,
+      error: 'SUPERVISOR_TOKEN not available. Entities will be available at runtime.',
+    };
   }
   
   try {
@@ -36,16 +47,28 @@ export async function fetchHomeAssistantEntities(): Promise<HAEntity[]> {
     
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`HA API error: ${response.status} - ${errorText}`);
+      return {
+        entities: [],
+        available: false,
+        error: `HA API error: ${response.status} - ${errorText}`,
+      };
     }
     
     const entities: HAEntity[] = await response.json();
-    return entities;
+    return {
+      entities,
+      available: true,
+    };
   } catch (error) {
-    if (error instanceof Error && error.name === 'TimeoutError') {
-      throw new Error('Timeout fetching entities from Home Assistant');
-    }
-    throw error;
+    const message = error instanceof Error && error.name === 'TimeoutError'
+      ? 'Timeout fetching entities from Home Assistant'
+      : error instanceof Error ? error.message : 'Failed to fetch entities';
+    
+    return {
+      entities: [],
+      available: false,
+      error: message,
+    };
   }
 }
 

@@ -8,39 +8,22 @@ export interface EntitiesResponse {
   count: number;
   domains: string[];
   timestamp: string;
+  available: boolean;
   error?: string;
 }
 
 export async function GET() {
-  try {
-    const entities = await fetchHomeAssistantEntities();
-    const grouped = groupEntitiesByDomain(entities);
-    
-    return NextResponse.json({
-      entities,
-      grouped,
-      count: entities.length,
-      domains: Object.keys(grouped),
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch entities';
-    console.error('Error fetching HA entities:', error);
-    
-    // Return 503 if it's a connection issue
-    const status = message.includes('Timeout') || message.includes('ECONNREFUSED') 
-      ? 503 
-      : 500;
-    
-    return NextResponse.json(
-      { 
-        error: message,
-        entities: [],
-        grouped: {},
-        count: 0,
-        domains: [],
-      },
-      { status }
-    );
-  }
+  const result = await fetchHomeAssistantEntities();
+  const grouped = groupEntitiesByDomain(result.entities);
+  
+  // Always return 200 - client will handle unavailable state
+  return NextResponse.json({
+    entities: result.entities,
+    grouped,
+    count: result.entities.length,
+    domains: Object.keys(grouped),
+    timestamp: new Date().toISOString(),
+    available: result.available,
+    error: result.error,
+  });
 }

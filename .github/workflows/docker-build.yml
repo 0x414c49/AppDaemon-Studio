@@ -21,17 +21,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Verify files exist
-      run: |
-        echo "Checking src/lib directory..."
-        ls -la src/lib/
-        echo "Checking src/lib/monaco directory..."
-        ls -la src/lib/monaco/
-        echo "Checking Editor.tsx imports..."
-        head -10 src/app/components/Editor.tsx
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -60,7 +49,10 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        platforms: linux/amd64,linux/arm64,linux/arm/v7
+        # Building only arm64 for Home Assistant Green initially
+        # TODO: Enable other architectures once arm64 is working
+        # platforms: linux/amd64,linux/arm64,linux/arm/v7
+        platforms: linux/arm64
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
