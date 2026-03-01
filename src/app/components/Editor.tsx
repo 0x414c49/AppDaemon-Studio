@@ -72,7 +72,7 @@ export function Editor({ appName }: EditorProps) {
     };
   }, [entities, entitiesLoading]);
 
-  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')) => {
+  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: any) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
   };
