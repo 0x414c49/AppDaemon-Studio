@@ -64,7 +64,9 @@ class ${className}(hass.Hass):
 }
 
 export function generateYamlTemplate(name: string, className: string): string {
-  return `${name}:
+  const timestamp = new Date().toISOString();
+  return `# Created: ${timestamp}
+${name}:
   module: ${name}
   class: ${className}
 `;
