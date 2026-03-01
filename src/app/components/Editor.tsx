@@ -81,7 +81,7 @@ export function Editor({ appName }: EditorProps) {
     try {
       setLoading(true);
       const fileType = activeTab === 'python' ? 'python' : 'yaml';
-      const response = await fetch(`/api/files/${appName}/${fileType}`);
+      const response = await fetch(`api/files/${appName}/${fileType}`);
       if (!response.ok) throw new Error('Failed to load file');
       const data = await response.json();
       setContent(data.content);
@@ -98,7 +98,7 @@ export function Editor({ appName }: EditorProps) {
     try {
       setSaving(true);
       const fileType = activeTab === 'python' ? 'python' : 'yaml';
-      const response = await fetch(`/api/files/${appName}/${fileType}`, {
+      const response = await fetch(`api/files/${appName}/${fileType}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),

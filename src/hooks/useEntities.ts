@@ -24,7 +24,7 @@ export function useEntities(): UseEntitiesReturn {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/entities');
+      const response = await fetch('api/entities');
       const result: EntitiesResponse = await response.json();
       
       // API always returns 200, check available flag

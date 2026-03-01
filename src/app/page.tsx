@@ -18,7 +18,7 @@ export default function Home() {
   const fetchApps = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/apps');
+      const response = await fetch('api/apps');
       if (!response.ok) throw new Error('Failed to fetch apps');
       const data = await response.json();
       setApps(data.apps);
@@ -34,7 +34,7 @@ export default function Home() {
 
   const handleCreateApp = async (name: string, className: string) => {
     try {
-      const response = await fetch('/api/apps', {
+      const response = await fetch('api/apps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, class_name: className }),
@@ -50,7 +50,7 @@ export default function Home() {
   const handleDeleteApp = async (name: string) => {
     if (!confirm(`Delete app "${name}"?`)) return;
     try {
-      const response = await fetch(`/api/files/${name}`, {
+      const response = await fetch(`api/files/${name}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete app');
