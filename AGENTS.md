@@ -172,6 +172,28 @@ curl http://localhost:3000/api/health
 curl http://localhost:3000/api/apps
 ```
 
+## Documentation Standards
+
+### README.md
+Keep README.md concise and user-focused:
+- ✅ Core features and capabilities
+- ✅ Installation and quick start
+- ✅ Screenshots and visuals
+- ✅ Links to detailed documentation
+- ❌ Marketing language ("lightning fast", "small footprint")
+- ❌ Technical implementation details
+- ❌ Architecture diagrams
+- ❌ API endpoints (use docs/ instead)
+- ❌ "What's New" sections (use CHANGELOG.md)
+
+### CHANGELOG.md
+- ✅ Version history and release notes
+- ✅ Breaking changes
+- ✅ Migration guides
+- ✅ New features by version
+
+**Rule**: README sells the product, CHANGELOG documents changes.
+
 ## Pre-commit Checks (Required)
 
 **A task is not complete until the build passes.**
