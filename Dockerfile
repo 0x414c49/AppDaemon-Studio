@@ -25,17 +25,24 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install libc6-compat for Alpine compatibility
-RUN apk add --no-cache libc6-compat
+# Install libc6-compat for Alpine compatibility and wget for s6-overlay download
+RUN apk add --no-cache libc6-compat wget
 
 # Install s6-overlay for proper process management with init: true
 ARG S6_OVERLAY_VERSION=3.1.6.2
+ARG TARGETARCH
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
 
-# Architecture-specific s6-overlay (handled by Docker buildx)
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay.tar.xz /tmp
-RUN tar -C / -Jxpf /tmp/s6-overlay.tar.xz && rm -f /tmp/*.tar.xz
+# Architecture-specific s6-overlay (TARGETARCH: amd64->x86_64, arm64->aarch64)
+RUN case "${TARGETARCH}" in \
+    amd64) S6_ARCH=x86_64 ;; \
+    arm64) S6_ARCH=aarch64 ;; \
+    *) S6_ARCH=${TARGETARCH} ;; \
+esac && \
+wget -O /tmp/s6-overlay-arch.tar.xz https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_ARCH}.tar.xz && \
+tar -C / -Jxpf /tmp/s6-overlay-arch.tar.xz && \
+rm -f /tmp/*.tar.xz
 
 # Copy only the standalone output and necessary files
 COPY --from=builder /app/.next/standalone ./
