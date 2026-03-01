@@ -128,6 +128,46 @@ except Exception as e:
   },
 ];
 
+// Python imports for AppDaemon
+export const PYTHON_IMPORTS = [
+  {
+    label: 'import appdaemon',
+    insertText: "import appdaemon.plugins.hass.hassapi as hass",
+    documentation: 'AppDaemon HassAPI - required base import',
+    detail: 'Import',
+  },
+  {
+    label: 'import json',
+    insertText: "import json",
+    documentation: 'JSON handling for data serialization',
+    detail: 'Import',
+  },
+  {
+    label: 'import os',
+    insertText: "import os",
+    documentation: 'OS module for file system operations',
+    detail: 'Import',
+  },
+  {
+    label: 'import datetime',
+    insertText: "from datetime import datetime, timedelta",
+    documentation: 'Date and time utilities',
+    detail: 'Import',
+  },
+  {
+    label: 'import math',
+    insertText: "import math",
+    documentation: 'Math functions and constants',
+    detail: 'Import',
+  },
+  {
+    label: 'import requests',
+    insertText: "import requests",
+    documentation: 'HTTP requests for API calls',
+    detail: 'Import',
+  },
+];
+
 export interface CompletionItem {
   label: string;
   kind: number;
@@ -137,10 +177,11 @@ export interface CompletionItem {
 }
 
 export function createAppDaemonCompletions(): CompletionItem[] {
-  return [...APPDAEMON_METHODS, ...PYTHON_SNIPPETS].map(item => ({
-    ...item,
-    kind: 1, // Function completion
-  }));
+  return [
+    ...APPDAEMON_METHODS.map(item => ({ ...item, kind: 1 })), // Function
+    ...PYTHON_SNIPPETS.map(item => ({ ...item, kind: 1 })), // Function/Snippet  
+    ...PYTHON_IMPORTS.map(item => ({ ...item, kind: 17 })), // Keyword (for imports)
+  ];
 }
 
 export function createEntityCompletions(entities: HAEntity[]): CompletionItem[] {
@@ -189,6 +230,16 @@ export function shouldTriggerMethodCompletion(
   
   // Trigger after 'self.'
   if (/self\.$/.test(textBeforeCursor)) {
+    return true;
+  }
+  
+  // Trigger at start of line (for imports, class definitions, etc.)
+  if (/^\s*$/.test(textBeforeCursor)) {
+    return true;
+  }
+  
+  // Trigger when typing 'import' or 'from'
+  if (/\b(impo|from|clas|def|if|for|whil|try)\b/.test(textBeforeCursor)) {
     return true;
   }
   
