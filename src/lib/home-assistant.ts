@@ -24,7 +24,8 @@ export interface FetchResult {
 }
 
 export async function fetchHomeAssistantEntities(): Promise<FetchResult> {
-  const token = process.env.SUPERVISOR_TOKEN;
+  // Check for both old (HASSIO_TOKEN) and new (SUPERVISOR_TOKEN) env var names
+  const token = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
   
   // During build or when not running in HA, token won't be available
   if (!token) {
