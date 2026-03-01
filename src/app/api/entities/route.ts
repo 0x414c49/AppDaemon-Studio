@@ -12,8 +12,8 @@ function getToken(): { token: string | undefined; source: 'env' | 'file' | 'none
   }
   
   // Fallback: read from file (child processes don't inherit env)
-  const supervisorFile = '/tmp/.supervisor_token';
-  const hassioFile = '/tmp/.hassio_token';
+  const supervisorFile = '/app/.supervisor_token';
+  const hassioFile = '/app/.hassio_token';
   
   const supervisorExists = existsSync(supervisorFile);
   const hassioExists = existsSync(hassioFile);

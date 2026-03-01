@@ -7,21 +7,21 @@ echo "Working directory: $(pwd)"
 echo "SUPERVISOR_TOKEN present: $([ -n "$SUPERVISOR_TOKEN" ] && echo 'yes' || echo 'no')"
 echo "HASSIO_TOKEN present: $([ -n "$HASSIO_TOKEN" ] && echo 'yes' || echo 'no')"
 
-# Write tokens to file for child processes to read
-# Next.js creates child processes for API routes that don't inherit env properly
+# Write tokens to WORKING DIRECTORY for child processes to read
+# /tmp may not be shared between parent and child processes
 if [ -n "$SUPERVISOR_TOKEN" ]; then
-    echo "$SUPERVISOR_TOKEN" > /tmp/.supervisor_token
-    chmod 600 /tmp/.supervisor_token
-    echo "Written SUPERVISOR_TOKEN to /tmp/.supervisor_token"
-    ls -la /tmp/.supervisor_token
+    echo "$SUPERVISOR_TOKEN" > /app/.supervisor_token
+    chmod 600 /app/.supervisor_token
+    echo "Written SUPERVISOR_TOKEN to /app/.supervisor_token"
+    ls -la /app/.supervisor_token
 else
     echo "No SUPERVISOR_TOKEN to write"
 fi
 
 if [ -n "$HASSIO_TOKEN" ]; then
-    echo "$HASSIO_TOKEN" > /tmp/.hassio_token
-    chmod 600 /tmp/.hassio_token
-    echo "Written HASSIO_TOKEN to /tmp/.hassio_token"
+    echo "$HASSIO_TOKEN" > /app/.hassio_token
+    chmod 600 /app/.hassio_token
+    echo "Written HASSIO_TOKEN to /app/.hassio_token"
 fi
 
 echo "=================================="
