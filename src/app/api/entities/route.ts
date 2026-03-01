@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 
 const SUPERVISOR_URL = 'http://supervisor';
 
+// Read env vars at module load time - but also check on each request
+let cachedToken: string | undefined = undefined;
+
+function getToken(): string | undefined {
+  // Always read fresh from process.env
+  return process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
+}
+
 export interface HAEntity {
   entity_id: string;
   state: string;
@@ -27,13 +35,13 @@ export interface EntitiesResponse {
     hasSupervisorToken: boolean;
     hasHassioToken: boolean;
     tokenLength: number;
-    envCheck: string;
+    allEnvVars: string[];
+    pid: number;
   };
 }
 
 export async function GET() {
-  // MUST read env vars directly here - not in a separate module
-  // Next.js inlines env vars at build time for imported modules
+  // Read env vars FRESH on every request
   const hasSupervisorToken = !!process.env.SUPERVISOR_TOKEN;
   const hasHassioToken = !!process.env.HASSIO_TOKEN;
   const token = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
@@ -43,7 +51,8 @@ export async function GET() {
     hasSupervisorToken,
     hasHassioToken,
     tokenLength: token?.length || 0,
-    envCheck: Object.keys(process.env).filter(k => k.includes('TOKEN')).join(','),
+    allEnvVars: Object.keys(process.env).filter(k => k.includes('TOKEN') || k.includes('HASSIO') || k.includes('SUPERVISOR')),
+    pid: process.pid,
   };
   
   if (!token) {

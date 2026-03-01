@@ -25,32 +25,16 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install libc6-compat for Alpine compatibility and wget for s6-overlay download
-RUN apk add --no-cache libc6-compat wget
-
-# Install s6-overlay for proper process management with init: true
-ARG S6_OVERLAY_VERSION=3.1.6.2
-ARG TARGETARCH
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
-RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
-
-# Architecture-specific s6-overlay (TARGETARCH: amd64->x86_64, arm64->aarch64)
-RUN case "${TARGETARCH}" in \
-    amd64) S6_ARCH=x86_64 ;; \
-    arm64) S6_ARCH=aarch64 ;; \
-    *) S6_ARCH=${TARGETARCH} ;; \
-esac && \
-wget -O /tmp/s6-overlay-arch.tar.xz https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_ARCH}.tar.xz && \
-tar -C / -Jxpf /tmp/s6-overlay-arch.tar.xz && \
-rm -f /tmp/*.tar.xz
+# Install libc6-compat for Alpine compatibility
+RUN apk add --no-cache libc6-compat
 
 # Copy only the standalone output and necessary files
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Copy s6 service scripts
-COPY rootfs/etc/services.d/appdaemon-studio /etc/services.d/appdaemon-studio/
-RUN chmod +x /etc/services.d/appdaemon-studio/run /etc/services.d/appdaemon-studio/finish || true
+# Copy startup script that reads env vars at runtime
+COPY scripts/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Expose port
 EXPOSE 3000
@@ -64,5 +48,5 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
-# Use s6-overlay as init system (config.json has init: true)
-ENTRYPOINT ["/init"]
+# Start using wrapper script (config.json has init: true, so tini is PID 1)
+CMD ["/app/start.sh"]
