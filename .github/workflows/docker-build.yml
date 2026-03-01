@@ -21,6 +21,17 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Verify files exist
+      run: |
+        echo "Checking src/lib directory..."
+        ls -la src/lib/
+        echo "Checking src/lib/monaco directory..."
+        ls -la src/lib/monaco/
+        echo "Checking Editor.tsx imports..."
+        head -10 src/app/components/Editor.tsx
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
