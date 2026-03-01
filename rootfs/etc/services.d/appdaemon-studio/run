@@ -4,12 +4,25 @@
 
 cd /app
 
-# Export the supervisor token if available
+# Debug: print all env vars containing TOKEN (values hidden)
+echo "=== Environment Check ==="
+env | grep -i token | sed 's/=.*$/=***REDACTED***/' || echo "No TOKEN vars found"
+echo "========================"
+
+# Export tokens explicitly
+export SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN}"
+export HASSIO_TOKEN="${HASSIO_TOKEN}"
+
 if [ -n "$SUPERVISOR_TOKEN" ]; then
-    export SUPERVISOR_TOKEN="$SUPERVISOR_TOKEN"
-    echo "SUPERVISOR_TOKEN is set (length: ${#SUPERVISOR_TOKEN})"
+    echo "SUPERVISOR_TOKEN is available (length: ${#SUPERVISOR_TOKEN})"
 else
     echo "WARNING: SUPERVISOR_TOKEN not available"
+fi
+
+if [ -n "$HASSIO_TOKEN" ]; then
+    echo "HASSIO_TOKEN is available (length: ${#HASSIO_TOKEN})"
+else
+    echo "HASSIO_TOKEN not available"
 fi
 
 # Start the Next.js standalone server
