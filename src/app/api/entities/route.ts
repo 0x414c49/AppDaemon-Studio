@@ -4,23 +4,30 @@ import { readFileSync, existsSync, readdirSync } from 'fs';
 const SUPERVISOR_URL = 'http://supervisor';
 
 // Try to read token from env, fallback to file (for child processes)
-function getToken(): { token: string | undefined; source: 'env' | 'file' | 'none'; fileExists: boolean; dirListing: string[]; readError?: string | null } {
+function getToken(): { token: string | undefined; source: 'env' | 'file' | 'none'; fileExists: boolean; appDirListing: string[]; configDirListing: string[]; readError?: string | null } {
   // First try env vars (parent process)
   const envToken = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
   if (envToken) {
-    return { token: envToken, source: 'env', fileExists: false, dirListing: [], readError: null };
+    return { token: envToken, source: 'env', fileExists: false, appDirListing: [], configDirListing: [], readError: null };
   }
   
-  // Fallback: read from file (child processes don't inherit env)
-  const supervisorFile = '/app/.supervisor_token';
-  const hassioFile = '/app/.hassio_token';
+  // Fallback: read from file in /config (accessible from all processes)
+  const TOKEN_DIR = '/config/.appdaemon-studio';
+  const supervisorFile = `${TOKEN_DIR}/.supervisor_token`;
+  const hassioFile = `${TOKEN_DIR}/.hassio_token`;
   
-  // List directory to debug
-  let dirListing: string[] = [];
+  // List directories to debug
+  let appDirListing: string[] = [];
+  let configDirListing: string[] = [];
   try {
-    dirListing = readdirSync('/app');
+    appDirListing = readdirSync('/app').slice(0, 10); // limit output
   } catch (e) {
-    dirListing = [`Error listing /app: ${e}`];
+    appDirListing = [`Error listing /app: ${e}`];
+  }
+  try {
+    configDirListing = readdirSync('/config').slice(0, 10); // limit output
+  } catch (e) {
+    configDirListing = [`Error listing /config: ${e}`];
   }
   
   const supervisorExists = existsSync(supervisorFile);
@@ -31,7 +38,7 @@ function getToken(): { token: string | undefined; source: 'env' | 'file' | 'none
   if (supervisorExists) {
     try {
       const token = readFileSync(supervisorFile, 'utf8').trim();
-      if (token) return { token, source: 'file', fileExists: true, dirListing, readError: null };
+       if (token) return { token, source: 'file', fileExists: true, appDirListing, configDirListing, readError: null };
     } catch (e: any) {
       readError = `Read error: ${e.message}`;
     }
@@ -40,13 +47,13 @@ function getToken(): { token: string | undefined; source: 'env' | 'file' | 'none
   if (hassioExists) {
     try {
       const token = readFileSync(hassioFile, 'utf8').trim();
-      if (token) return { token, source: 'file', fileExists: true, dirListing, readError: null };
+       if (token) return { token, source: 'file', fileExists: true, appDirListing, configDirListing, readError: null };
     } catch (e: any) {
       readError = readError || `Hassio read error: ${e.message}`;
     }
   }
   
-  return { token: undefined, source: 'none', fileExists: supervisorExists || hassioExists, dirListing, readError };
+  return { token: undefined, source: 'none', fileExists: supervisorExists || hassioExists, appDirListing, configDirListing, readError };
 }
 
 export interface HAEntity {
@@ -77,7 +84,8 @@ export interface EntitiesResponse {
     pid: number;
     source: 'env' | 'file' | 'none';
     workingDir: string;
-    dirListing: string[];
+    appDirListing: string[];
+    configDirListing: string[];
     readError?: string | null;
   };
 }
@@ -85,7 +93,7 @@ export interface EntitiesResponse {
 export async function GET() {
   // Try to get token from env or file
   const envToken = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
-  const { token, source, fileExists, dirListing, readError } = getToken();
+  const { token, source, fileExists, appDirListing, configDirListing, readError } = getToken();
   
   // Debug info
   const debug = {
@@ -95,7 +103,8 @@ export async function GET() {
     pid: process.pid,
     source,
     workingDir: process.cwd(),
-    dirListing,
+    appDirListing,
+    configDirListing,
     readError,
   };
   

@@ -7,21 +7,24 @@ echo "Working directory: $(pwd)"
 echo "SUPERVISOR_TOKEN present: $([ -n "$SUPERVISOR_TOKEN" ] && echo 'yes' || echo 'no')"
 echo "HASSIO_TOKEN present: $([ -n "$HASSIO_TOKEN" ] && echo 'yes' || echo 'no')"
 
-# Write tokens to WORKING DIRECTORY for child processes to read
-# /tmp may not be shared between parent and child processes
+# Write tokens to /config instead of /app
+# Next.js API routes run in a sandbox that doesn't share /app with the main process
+# but /config is mounted from the host and accessible to all processes
+TOKEN_DIR="/config/.appdaemon-studio"
+mkdir -p "$TOKEN_DIR"
+
 if [ -n "$SUPERVISOR_TOKEN" ]; then
-    echo "$SUPERVISOR_TOKEN" > /app/.supervisor_token
-    chmod 600 /app/.supervisor_token
-    echo "Written SUPERVISOR_TOKEN to /app/.supervisor_token"
-    ls -la /app/.supervisor_token
+    echo "$SUPERVISOR_TOKEN" > "$TOKEN_DIR/.supervisor_token"
+    chmod 600 "$TOKEN_DIR/.supervisor_token"
+    echo "Written SUPERVISOR_TOKEN to $TOKEN_DIR/.supervisor_token"
 else
     echo "No SUPERVISOR_TOKEN to write"
 fi
 
 if [ -n "$HASSIO_TOKEN" ]; then
-    echo "$HASSIO_TOKEN" > /app/.hassio_token
-    chmod 600 /app/.hassio_token
-    echo "Written HASSIO_TOKEN to /app/.hassio_token"
+    echo "$HASSIO_TOKEN" > "$TOKEN_DIR/.hassio_token"
+    chmod 600 "$TOKEN_DIR/.hassio_token"
+    echo "Written HASSIO_TOKEN to $TOKEN_DIR/.hassio_token"
 fi
 
 echo "=================================="
