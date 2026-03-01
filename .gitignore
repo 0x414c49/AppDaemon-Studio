@@ -1,4 +1,4 @@
-# Python
+# Python (legacy - kept for migration period)
 __pycache__/
 *.py[cod]
 *$py.class
@@ -10,7 +10,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ - REMOVED: was ignoring src/lib/ directory
 lib64/
 parts/
 sdist/
