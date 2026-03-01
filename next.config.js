@@ -3,7 +3,8 @@ const path = require('path');
 
 const nextConfig = {
   output: 'standalone',
-  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  // Use relative paths for static assets to work with HA Ingress
+  assetPrefix: './',
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,

@@ -1,6 +1,6 @@
 {
     "name": "AppDaemon Studio",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "slug": "appdaemon-studio",
     "description": "Next.js powered IDE for AppDaemon apps with real-time log streaming and file management",
     "arch": ["amd64", "aarch64"],
