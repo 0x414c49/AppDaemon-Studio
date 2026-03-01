@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listVersions, getVersion, restoreVersion, deleteVersion } from '@/lib/version-control';
+import { listVersions, getVersion, restoreVersion, deleteVersion } from '../../../../lib/version-control';
 
 // GET /api/versions/[app] - List all versions
 export async function GET(

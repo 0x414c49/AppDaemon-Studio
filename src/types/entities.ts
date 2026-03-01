@@ -1,4 +1,4 @@
-import type { HAEntity, EntitiesByDomain } from '@/lib/home-assistant';
+import type { HAEntity, EntitiesByDomain } from '../lib/home-assistant';
 
 export type { HAEntity, EntitiesByDomain };
 

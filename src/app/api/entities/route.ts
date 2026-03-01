@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { fetchHomeAssistantEntities, groupEntitiesByDomain } from '@/lib/home-assistant';
-import type { HAEntity } from '@/lib/home-assistant';
+import { fetchHomeAssistantEntities, groupEntitiesByDomain } from '../../../lib/home-assistant';
+import type { HAEntity } from '../../../lib/home-assistant';
 
 export interface EntitiesResponse {
   entities: HAEntity[];

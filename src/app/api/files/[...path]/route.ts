@@ -5,8 +5,8 @@ import {
   readYamlFile, 
   writeYamlFile,
   deleteApp 
-} from '@/lib/file-manager';
-import { createVersion } from '@/lib/version-control';
+} from '../../../../lib/file-manager';
+import { createVersion } from '../../../../lib/version-control';
 
 // GET /api/files/[app]/[type] - type can be 'python' or 'yaml'
 export async function GET(

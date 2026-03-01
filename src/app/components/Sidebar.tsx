@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Plus, Trash2, Folder, FileCode, ChevronRight } from 'lucide-react';
-import { AppInfo } from '@/types';
+import { AppInfo } from '../../types';
 
 interface SidebarProps {
   apps: AppInfo[];

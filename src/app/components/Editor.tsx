@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import type { editor, languages } from 'monaco-editor';
 import { Save, FileCode, RefreshCw } from 'lucide-react';
-import { useEntities } from '@/hooks/useEntities';
-import { createEntityCompletions, shouldTriggerEntityCompletion, filterEntitiesByPrefix } from '@/lib/monaco/entity-completions';
+import { useEntities } from '../../hooks/useEntities';
+import { createEntityCompletions, shouldTriggerEntityCompletion, filterEntitiesByPrefix } from '../../lib/monaco/entity-completions';
 
 interface EditorProps {
   appName: string;

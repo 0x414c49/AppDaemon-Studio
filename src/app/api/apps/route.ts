@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listApps, createApp, deleteApp } from '@/lib/file-manager';
+import { listApps, createApp, deleteApp } from '../../../lib/file-manager';
 
 export async function GET() {
   try {
