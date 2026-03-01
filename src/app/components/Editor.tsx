@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
-import { Save, FileCode, FileJson } from 'lucide-react';
+import type { editor, languages } from 'monaco-editor';
+import { Save, FileCode, RefreshCw } from 'lucide-react';
+import { useEntities } from '@/hooks/useEntities';
+import { createEntityCompletions, shouldTriggerEntityCompletion, filterEntitiesByPrefix } from '@/lib/monaco/entity-completions';
 
 interface EditorProps {
   appName: string;
@@ -14,10 +17,65 @@ export function Editor({ appName }: EditorProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'python' | 'yaml'>('python');
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<typeof import('monaco-editor') | null>(null);
+  
+  const { entities, loading: entitiesLoading, error: entitiesError, refresh, lastUpdated } = useEntities();
 
   useEffect(() => {
     loadFile();
   }, [appName, activeTab]);
+
+  // Register completion provider when entities are loaded
+  useEffect(() => {
+    if (!monacoRef.current || entitiesLoading || entities.length === 0) return;
+    
+    const monaco = monacoRef.current;
+    
+    // Dispose previous provider if exists
+    const disposable = monaco.languages.registerCompletionItemProvider('python', {
+      triggerCharacters: ['.', '(', ',', "'", '"'],
+      provideCompletionItems: (model, position) => {
+        const lineContent = model.getLineContent(position.lineNumber);
+        const wordUntilPosition = model.getWordUntilPosition(position);
+        
+        // Check if we should trigger entity completions
+        if (!shouldTriggerEntityCompletion(lineContent, position.column)) {
+          return { suggestions: [] };
+        }
+        
+        // Get the prefix the user has typed (if any)
+        const prefix = wordUntilPosition.word;
+        
+        // Filter entities by prefix if user has started typing
+        const filteredEntities = prefix 
+          ? filterEntitiesByPrefix(entities, prefix)
+          : entities;
+        
+        // Create completion items
+        const suggestions = createEntityCompletions(filteredEntities).map(item => ({
+          ...item,
+          range: {
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: wordUntilPosition.startColumn,
+            endColumn: position.column,
+          },
+        }));
+        
+        return { suggestions };
+      },
+    });
+    
+    return () => {
+      disposable.dispose();
+    };
+  }, [entities, entitiesLoading]);
+
+  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')) => {
+    editorRef.current = editor;
+    monacoRef.current = monaco;
+  };
 
   const loadFile = async () => {
     try {
@@ -123,6 +181,7 @@ export function Editor({ appName }: EditorProps) {
           value={content}
           onChange={(value) => setContent(value || '')}
           theme="vs-dark"
+          onMount={handleEditorDidMount}
           options={{
             minimap: { enabled: false },
             fontSize: 14,
@@ -132,6 +191,9 @@ export function Editor({ appName }: EditorProps) {
             readOnly: false,
             automaticLayout: true,
             padding: { top: 16 },
+            quickSuggestions: true,
+            suggestOnTriggerCharacters: true,
+            acceptSuggestionOnEnter: 'on',
           }}
         />
       </div>
@@ -141,6 +203,29 @@ export function Editor({ appName }: EditorProps) {
         <div className="flex items-center gap-4">
           <span>{appName}</span>
           <span>{activeTab.toUpperCase()}</span>
+          {activeTab === 'python' && (
+            <span className="flex items-center gap-1">
+              {entitiesLoading ? (
+                <>
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  Loading entities...
+                </>
+              ) : entitiesError ? (
+                <span className="text-red-400" title={entitiesError}>
+                  Entities unavailable
+                </span>
+              ) : (
+                <>
+                  <span className="text-green-400">{entities.length} entities</span>
+                  {lastUpdated && (
+                    <span className="text-slate-500">
+                      (updated {lastUpdated.toLocaleTimeString()})
+                    </span>
+                  )}
+                </>
+              )}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-4">
           {isDirty && <span className="text-yellow-400">Modified</span>}

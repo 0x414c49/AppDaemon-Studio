@@ -4,9 +4,13 @@
 # Stage 1: Build the application
 FROM node:20-alpine AS builder
 
+# Build argument to bust cache when needed
+ARG BUILD_VERSION=unknown
+ARG BUILD_DATE=unknown
+
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
 RUN npm ci
 

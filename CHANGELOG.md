@@ -23,6 +23,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified API structure with Next.js App Router
 - Improved error handling with custom error classes
 
+## [0.2.2] - 2025-03-01
+
+### Added
+- **Entity Autocomplete**: Smart autocomplete for Home Assistant entities in Python editor
+  - Triggers after methods like `self.turn_on(`, `self.listen_state(`, etc.
+  - Fetches all entities from Home Assistant API
+  - Filters by entity_id and friendly_name
+  - Shows entity state and unit of measurement in completion details
+  - Status bar shows entity count and last update time
+
+### Technical Details
+- Added `hassio_api: true` permission (read-only, default role)
+- New API endpoint: `GET /api/entities` - Returns all HA entities grouped by domain
+- Monaco Editor completion provider for Python language
+- Graceful fallback when HA API unavailable
+
+### Permissions
+- **hassio_api**: true (required for entity discovery)
+- **hassio_role**: default (read-only access to entity states)
+
 ### Removed
 - Python backend (`app/` folder) - replaced with Next.js API routes
 - Nginx reverse proxy configuration
