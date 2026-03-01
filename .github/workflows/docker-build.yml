@@ -9,7 +9,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
@@ -22,12 +21,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Get version from package.json
-      id: get_version
+    - name: Get version and lowercase repo name
+      id: vars
       run: |
         VERSION=$(node -p "require('./package.json').version")
         echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Building version: $VERSION"
+        REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+        echo "repo_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION for repo: $REPO_LOWER"
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -49,8 +50,8 @@ jobs:
         platforms: linux/arm64
         push: ${{ github.event_name != 'pull_request' }}
         tags: |
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.version }}
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          ${{ env.REGISTRY }}/${{ steps.vars.outputs.repo_lower }}:${{ steps.vars.outputs.version }}
+          ${{ env.REGISTRY }}/${{ steps.vars.outputs.repo_lower }}:latest
         labels: |
-          org.opencontainers.image.version=${{ steps.get_version.outputs.version }}
+          org.opencontainers.image.version=${{ steps.vars.outputs.version }}
         no-cache: true
