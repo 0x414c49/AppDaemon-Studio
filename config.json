@@ -1,6 +1,6 @@
 {
     "name": "AppDaemon Studio",
-    "version": "0.2.15",
+    "version": "0.2.16",
     "slug": "appdaemon-studio",
     "description": "Next.js powered IDE for AppDaemon apps with real-time log streaming and file management",
     "arch": ["amd64", "aarch64"],
@@ -24,8 +24,9 @@
     "schema": {
         "log_level": "list(debug|info|warning|error)?"
     },
-    "init": false,
+    "init": true,
     "hassio_api": true,
-    "hassio_role": "manager",
+    "homeassistant_api": true,
+    "hassio_role": "default",
     "auth_api": true
 }
