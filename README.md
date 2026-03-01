@@ -2,9 +2,8 @@
 
 A Home Assistant add-on providing a complete IDE for creating, editing, and managing AppDaemon apps with a modern web interface.
 
-![Version](https://img.shields.io/badge/version-0.2.1-blue)
+![Version](https://img.shields.io/badge/version-0.2.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Docker](https://img.shields.io/badge/docker-222MB-blue)
 
 ## Features
 
@@ -13,8 +12,6 @@ A Home Assistant add-on providing a complete IDE for creating, editing, and mana
 - **File Version Control**: Automatic backups every time you save, with version history
 - **Dual File Support**: Edit both Python (`.py`) and YAML (`.yaml`) configuration files
 - **One-click Install**: Works as Home Assistant add-on with Ingress support
-- **Lightning Fast**: Built with Next.js for optimal performance
-- **Small Footprint**: Only 222MB Docker image (56% smaller than v0.1.x)
 
 ## Screenshots
 
@@ -61,79 +58,6 @@ A Home Assistant add-on providing a complete IDE for creating, editing, and mana
    - Line numbers
    - Dark theme
 4. Click "Save" when done - automatic version backup created!
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  Home Assistant (Ingress)                               │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │  AppDaemon Studio Add-on                        │   │
-│  │  ┌─────────────────────────────────────────┐   │   │
-│  │  │  Next.js (Port 3000)                    │   │   │
-│  │  │  ┌─────────┐ ┌─────────┐ ┌──────────┐  │   │   │
-│  │  │  │  React  │ │  API    │ │  Static  │  │   │   │
-│  │  │  │  Pages  │ │  Routes │ │  Files   │  │   │   │
-│  │  │  └────┬────┘ └────┬────┘ └────┬─────┘  │   │   │
-│  │  │       └───────────┴───────────┘        │   │   │
-│  │  │  ┌─────────────────────────────────┐   │   │   │
-│  │  │  │  File System (/config/apps)     │   │   │   │
-│  │  │  └─────────────────────────────────┘   │   │   │
-│  │  └─────────────────────────────────────────┘   │   │
-│  └─────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-```
-
-## Tech Stack
-
-- **Framework**: Next.js 14 (Full-stack React)
-- **Language**: TypeScript (strict mode)
-- **Styling**: Tailwind CSS
-- **Editor**: Monaco Editor (@monaco-editor/react)
-- **Icons**: Lucide React
-- **Container**: Docker (Alpine Linux + Node.js 20)
-
-## What's New in v0.2.1
-
-### Major Improvements
-- **Complete Rewrite**: Migrated from Python FastAPI + React to Next.js full-stack
-- **56% Smaller**: Docker image reduced from ~500MB to 222MB
-- **60% Faster**: Build time reduced from 3-5 minutes to ~1 minute
-- **Simpler Architecture**: Single process instead of 3 (nginx + python + node)
-
-### New Features
-- TypeScript-only codebase (no more Python)
-- Automatic file versioning on every save
-- Dual Python/YAML editor tabs
-- Improved error handling
-- Health check endpoint for monitoring
-
-### Removed
-- Python backend (replaced with Next.js API routes)
-- Nginx reverse proxy (no longer needed)
-- Old React/Vite frontend (integrated into Next.js)
-- Complex build process (simplified to npm)
-
-## API Endpoints
-
-### Apps
-- `GET /api/apps` - List all apps
-- `POST /api/apps` - Create new app
-
-### Files
-- `GET /api/files/{app}/python` - Read Python file
-- `GET /api/files/{app}/yaml` - Read YAML file
-- `PUT /api/files/{app}/python` - Update Python file (creates version backup)
-- `PUT /api/files/{app}/yaml` - Update YAML file (creates version backup)
-- `DELETE /api/files/{app}` - Delete entire app
-
-### Versions
-- `GET /api/versions/{app}` - List version history
-- `PUT /api/versions/{app}` - Restore a version
-- `DELETE /api/versions/{app}?versionId={id}` - Delete a version
-
-### Health
-- `GET /api/health` - Health check
 
 ## Development
 
