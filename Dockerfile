@@ -28,16 +28,9 @@ WORKDIR /app
 # Install libc6-compat for Alpine compatibility
 RUN apk add --no-cache libc6-compat
 
-# Create non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
 # Copy only the standalone output and necessary files
-COPY --from=builder --chown=appuser:appgroup /app/.next/standalone ./
-COPY --from=builder --chown=appuser:appgroup /app/.next/static ./.next/static
-
-# Set proper permissions
-RUN chown -R appuser:appgroup /app
-USER appuser
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 # Expose port
 EXPOSE 3000
@@ -51,5 +44,5 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
-# Start the standalone server
+# Start the standalone server (running as root for /config access)
 CMD ["node", "server.js"]
