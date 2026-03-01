@@ -24,30 +24,27 @@ This creates a knowledge base for future agents and prevents repeating the same 
 
 A Home Assistant add-on providing an IDE for AppDaemon apps with AI-powered assistance.
 
-## Tech Stack
+## Tech Stack (UPDATED: Now Next.js Full-Stack)
 
-### Backend
-- **Framework**: FastAPI (Python 3.11)
-- **Server**: Uvicorn with WebSocket support
-- **Key Libraries**:
-  - `fastapi` - Web framework
-  - `websockets` - Real-time log streaming
-  - `jinja2` - App templates
-  - `httpx` - AI API calls
-  - `watchdog` - File watching
-  - `pyyaml` - YAML config handling
+### Framework
+- **Next.js 14** - Full-stack React framework
+- **TypeScript** - Strict mode enabled
+- **Build Output**: Standalone mode for Docker
 
 ### Frontend
 - **Framework**: React 18 + TypeScript
-- **Build Tool**: Vite
 - **Styling**: Tailwind CSS
 - **Editor**: Monaco Editor (@monaco-editor/react)
-- **State**: Zustand
-- **HTTP**: Axios
+- **Icons**: Lucide React
+
+### Backend (Next.js API Routes)
+- **File Manager**: Node.js fs/promises
+- **Version Control**: Timestamp-based versioning
+- **No separate backend** - all in Next.js API routes
 
 ### Infrastructure
-- **Container**: Docker (Alpine Linux)
-- **Reverse Proxy**: Nginx (for Ingress)
+- **Container**: Docker (Alpine Linux with Node.js 20)
+- **Single Process**: Next.js handles everything (no nginx, no Python)
 - **CI/CD**: GitLab CI
 
 ## Architecture
@@ -56,16 +53,16 @@ A Home Assistant add-on providing an IDE for AppDaemon apps with AI-powered assi
 ┌─────────────────────────────────────────────────────────┐
 │  Home Assistant (Ingress)                               │
 │  ┌─────────────────────────────────────────────────┐   │
-│  │  Nginx (reverse proxy)                          │   │
+│  │  AppDaemon Studio Add-on                        │   │
 │  │  ┌─────────────────────────────────────────┐   │   │
-│  │  │  AppDaemon Studio Add-on                │   │   │
+│  │  │  Next.js (Port 3000)                    │   │   │
 │  │  │  ┌─────────┐ ┌─────────┐ ┌──────────┐  │   │   │
-│  │  │  │ FastAPI │ │WebSocket│ │ AI Proxy │  │   │   │
-│  │  │  │ Backend │ │ Logs    │ │ Services │  │   │   │
+│  │  │  │  React  │ │  API    │ │  Static  │  │   │   │
+│  │  │  │  Pages  │ │  Routes │ │  Files   │  │   │   │
 │  │  │  └────┬────┘ └────┬────┘ └────┬─────┘  │   │   │
 │  │  │       └───────────┴───────────┘        │   │   │
 │  │  │  ┌─────────────────────────────────┐   │   │   │
-│  │  │  │  File System (/config/appdaemon)│   │   │   │
+│  │  │  │  File System (/config/apps)     │   │   │   │
 │  │  │  └─────────────────────────────────┘   │   │   │
 │  │  └─────────────────────────────────────────┘   │   │
 │  └─────────────────────────────────────────────────┘   │
@@ -77,177 +74,114 @@ A Home Assistant add-on providing an IDE for AppDaemon apps with AI-powered assi
 ```
 appdaemon-studio/
 ├── AGENTS.md                 # This file
-├── config.json              # Home Assistant add-on config
-├── Dockerfile               # Container definition
-├── run.sh                   # Startup script
-├── requirements.txt         # Python dependencies
+├── config.json              # Home Assistant add-on config (port 3000)
+├── Dockerfile               # Multi-stage Node.js build
+├── package.json             # Node.js dependencies
+├── next.config.js           # Next.js config (standalone, basePath)
+├── tsconfig.json            # TypeScript config
+├── tailwind.config.js       # Tailwind CSS
+├── postcss.config.js        # PostCSS
 ├── .gitlab-ci.yml           # CI/CD pipeline
 ├── docs/                    # Project documentation
-│   ├── architecture.md
-│   ├── api-reference.md
-│   ├── ui-design.md
-│   └── deployment.md
 ├── lessons/                 # Lessons learned
-│   ├── 001-setup.md
-│   ├── 002-fastapi.md
-│   ├── 003-websocket.md
-│   └── 004-monaco-editor.md
 ├── tasks/                   # Task specifications
-│   ├── 001-addon-structure.md
-│   ├── 002-backend-api.md
-│   ├── 003-frontend-ui.md
-│   └── 004-gitlab-ci.md
-├── app/                     # Backend code
-│   ├── __init__.py
-│   ├── main.py
-│   ├── config.py
-│   ├── api/
-│   │   ├── __init__.py
-│   │   ├── apps.py
-│   │   ├── files.py
-│   │   ├── logs.py
-│   │   └── versions.py       # Simple version control
-│   ├── services/
-│   │   ├── __init__.py
-│   │   ├── file_manager.py
-│   │   ├── log_watcher.py
-│   │   └── version_control.py # Simple versioning per app
-│   └── templates/           # App templates (Jinja2)
-│       └── empty.py.j2      # Empty app template only
-├── ui/                      # Frontend code
-│   ├── index.html
-│   ├── vite.config.ts
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── tailwind.config.js
-│   └── src/
-│       ├── main.tsx
-│       ├── App.tsx
-│       ├── components/
-│       ├── hooks/
-│       ├── services/
-│       ├── store/
-│       └── types/
-└── nginx.conf               # Nginx config for Ingress
+├── src/
+│   ├── app/
+│   │   ├── api/             # API Routes
+│   │   │   ├── apps/        # List/create apps
+│   │   │   ├── files/       # File operations (python/yaml)
+│   │   │   ├── health/      # Health check
+│   │   │   └── versions/    # Version control
+│   │   ├── components/      # React components
+│   │   │   ├── Editor.tsx   # Monaco editor
+│   │   │   └── Sidebar.tsx  # App list sidebar
+│   │   ├── layout.tsx       # Root layout
+│   │   ├── page.tsx         # Main IDE page
+│   │   └── globals.css      # Global styles
+│   ├── lib/
+│   │   ├── file-manager.ts  # File operations
+│   │   └── version-control.ts # Version management
+│   └── types/
+│       └── index.ts         # TypeScript types
+└── .gitignore
 ```
 
 ## Coding Standards
 
-### Python (Backend)
-- Use type hints everywhere
-- Follow PEP 8
-- Use `async`/`await` for I/O operations
-- Docstrings in Google format
-- Error handling with custom exceptions
-
-### TypeScript (Frontend)
+### TypeScript (Full Stack)
 - Strict TypeScript mode
 - Functional components with hooks
-- Custom hooks for data fetching
-- Zustand for state management
 - No `any` types
+- Proper error handling with custom error classes
+- Async/await for I/O operations
+
+### API Routes
+- Use Next.js App Router convention
+- Dynamic routes: `[param]` for single, `[...path]` for catch-all
+- Return proper HTTP status codes
+- Consistent JSON response format
+
+### Error Handling
+- Custom error classes in lib files
+- Try/catch in API routes
+- Return user-friendly error messages
 
 ## Key Implementation Notes
 
-1. **Ingress Support**: All routes must work under `/hassio/ingress/appdaemon-studio`
-2. **File Paths**: Use `/addon_configs/*_appdaemon` (mapped volume) - AppDaemon config location
-3. **WebSocket**: Handle reconnection gracefully
-4. **Simple Version Control**: Each app gets `.versions/` folder with timestamped backups
-5. **Logs**: Stream from AppDaemon log file in the config directory
-6. **Templates**: Single empty template in `/app/templates/empty.py.j2`
+1. **Ingress Support**: Uses Next.js basePath: `/hassio/ingress/appdaemon-studio`
+2. **File Paths**: Use `/config/apps` (mapped volume in Home Assistant)
+3. **Version Control**: Each app gets `.versions/` folder with `YYYYMMDDHHMMSS_filename.ext` format
+4. **Standalone Output**: Docker uses `.next/standalone` for minimal image size
+5. **Health Check**: `GET /api/health` returns status and version
 
 ## Testing
 
-### Backend
+### Build & Test
 ```bash
-cd app
-pytest tests/
-```
+# Install dependencies
+npm install
 
-### Frontend
-```bash
-cd ui
-npm run test
+# Development server
+npm run dev
+
+# Build production
 npm run build
+
+# Linting
+npm run lint
 ```
 
-## Python Version Requirement (CRITICAL)
-
-**You MUST use Python 3.11 locally - same as CI.**
-
-CI uses `python:3.11-alpine` Docker image. Using different Python versions causes:
-- Type checking differences (mypy behavior varies by version)
-- pytest-asyncio compatibility issues
-- Different dependency behaviors
-
-### Setup Python 3.11 with pyenv
-
+### Docker Testing
 ```bash
-# Run the setup script (installs pyenv if needed, creates venv)
-./setup-python-3.11.sh
+# Build image
+docker build -t appdaemon-studio:test .
 
-# Or manually:
-brew install pyenv
-pyenv install 3.11.11
-pyenv local 3.11.11
-python -m venv venv
-source venv/bin/activate
-pip install -r app/requirements.txt
-pip install pytest pytest-asyncio==0.21.1 pytest-cov httpx types-PyYAML ruff mypy
-```
+# Run container
+docker run -d --name appdaemon-studio -p 3000:3000 \
+  -v /tmp/test-config:/config \
+  appdaemon-studio:test
 
-**Always activate the venv before working:**
-```bash
-source venv/bin/activate
-python --version  # Should show 3.11.x
+# Test endpoints
+curl http://localhost:3000/api/health
+curl http://localhost:3000/api/apps
 ```
 
 ## Pre-commit Checks (Required)
 
-**A task is not complete until linting passes and tests run successfully.**
-
-**CRITICAL: Only commit AFTER local checks pass with Python 3.11**
+**A task is not complete until the build passes.**
 
 Always run these before committing:
 
-### Backend Linting
+### Build & Lint
 ```bash
-cd app
-
-# Install linting tools (one-time)
-pip install ruff mypy types-PyYAML
-
-# Format code
-ruff format .
-
-# Check linting
-ruff check .
-
-# Type checking
-mypy . --ignore-missing-imports
-
-# Run tests
-pytest tests/ -v
-```
-
-### Frontend Linting
-```bash
-cd ui
-
 # Install dependencies
 npm install
 
-# Run linter
-npm run lint
-
-# Type checking
-npm run typecheck
-
-# Run tests
-npm run test
-
-# Build (catches build errors)
+# Build (catches TypeScript errors)
 npm run build
+
+# Linting
+npm run lint
 ```
 
 ### Quick Check Script
@@ -255,26 +189,31 @@ npm run build
 #!/bin/bash
 # save as check.sh in project root
 
-echo "=== Backend Checks ==="
-cd app
-ruff format . --check || { echo "Backend formatting failed"; exit 1; }
-ruff check . || { echo "Backend linting failed"; exit 1; }
-mypy . --ignore-missing-imports || { echo "Backend type checking failed"; exit 1; }
-pytest tests/ -v || { echo "Backend tests failed"; exit 1; }
+echo "=== Build Check ==="
+npm run build || { echo "Build failed"; exit 1; }
 
-echo "=== Frontend Checks ==="
-cd ../ui
-npm run lint || { echo "Frontend linting failed"; exit 1; }
-npm run typecheck || { echo "Frontend type checking failed"; exit 1; }
-npm run test || { echo "Frontend tests failed"; exit 1; }
-npm run build || { echo "Frontend build failed"; exit 1; }
+echo "=== Lint Check ==="
+npm run lint || { echo "Linting failed"; exit 1; }
 
 echo "=== All checks passed! ==="
 ```
 
+## Migration from Python (Historical)
+
+The project was migrated from Python FastAPI + React + Nginx to Next.js:
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| Processes | 3 (nginx, python, node) | 1 (Next.js) |
+| Image Size | ~500MB | ~220MB |
+| Build Time | 3-5 min | ~1 min |
+| Languages | Python + TypeScript | TypeScript only |
+
+See `tasks/005-nextjs-migration.md` for details.
+
 ## Resources
 
-- [FastAPI Docs](https://fastapi.tiangolo.com/)
+- [Next.js Docs](https://nextjs.org/docs)
 - [AppDaemon Docs](https://appdaemon.readthedocs.io/)
 - [Home Assistant Add-on Docs](https://developers.home-assistant.io/docs/add-ons)
 - [Monaco Editor Docs](https://microsoft.github.io/monaco-editor/)

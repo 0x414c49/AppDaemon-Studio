@@ -6,9 +6,8 @@ variables:
 stages:
   - build
 
-# Build amd64 image for x86_64 PCs
-# Note: aarch64 (Home Assistant Green) builds locally since GitLab free runners are amd64-only
-build-amd64:
+# Build and push multi-arch image
+build:
   stage: build
   image: docker:24
   services:
@@ -17,6 +16,7 @@ build-amd64:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
+    # Build for amd64 (GitLab runners)
     - docker build --tag $IMAGE_NAME/amd64:$CI_COMMIT_SHA --tag $IMAGE_NAME/amd64:latest .
     - docker push $IMAGE_NAME/amd64:$CI_COMMIT_SHA
     - docker push $IMAGE_NAME/amd64:latest

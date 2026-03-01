@@ -53,6 +53,7 @@ yarn-error.log*
 *.log
 
 # Build outputs
+.next/
 ui/dist/
 ui/build/
 *.tsbuildinfo
