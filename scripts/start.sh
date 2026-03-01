@@ -16,5 +16,6 @@ export NODE_ENV=production
 export PORT=3000
 export HOSTNAME=0.0.0.0
 
-# Start Next.js (server mode reads env vars at runtime)
-exec npm start
+# Start Next.js directly (avoid npm which spawns child processes)
+# This ensures env vars are inherited by the Node.js process
+exec ./node_modules/.bin/next start
