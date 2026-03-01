@@ -5,7 +5,13 @@ import MonacoEditor from '@monaco-editor/react';
 import type { editor, languages } from 'monaco-editor';
 import { Save, FileCode, RefreshCw } from 'lucide-react';
 import { useEntities } from '../../hooks/useEntities';
-import { createEntityCompletions, shouldTriggerEntityCompletion, filterEntitiesByPrefix } from '../../lib/monaco/entity-completions';
+import { 
+  createAppDaemonCompletions, 
+  createEntityCompletions, 
+  shouldTriggerEntityCompletion,
+  shouldTriggerMethodCompletion,
+  filterEntitiesByPrefix 
+} from '../../lib/monaco/completions';
 
 interface EditorProps {
   appName: string;
@@ -26,39 +32,28 @@ export function Editor({ appName }: EditorProps) {
     loadFile();
   }, [appName, activeTab]);
 
-  // Register completion provider when entities are loaded
+  // Register completion providers
   useEffect(() => {
-    if (!monacoRef.current || entitiesLoading || entities.length === 0) return;
+    if (!monacoRef.current) return;
     
     const monaco = monacoRef.current;
     
-    // Dispose previous provider if exists
-    const disposable = monaco.languages.registerCompletionItemProvider('python', {
-      triggerCharacters: ['.', '(', ',', "'", '"'],
+    // AppDaemon API completions (always available)
+    const appDaemonProvider = monaco.languages.registerCompletionItemProvider('python', {
+      triggerCharacters: ['.'],
       provideCompletionItems: (model, position) => {
         const lineContent = model.getLineContent(position.lineNumber);
-        const wordUntilPosition = model.getWordUntilPosition(position);
         
-        // Check if we should trigger entity completions
-        if (!shouldTriggerEntityCompletion(lineContent, position.column)) {
+        if (!shouldTriggerMethodCompletion(lineContent, position.column)) {
           return { suggestions: [] };
         }
         
-        // Get the prefix the user has typed (if any)
-        const prefix = wordUntilPosition.word;
-        
-        // Filter entities by prefix if user has started typing
-        const filteredEntities = prefix 
-          ? filterEntitiesByPrefix(entities, prefix)
-          : entities;
-        
-        // Create completion items
-        const suggestions = createEntityCompletions(filteredEntities).map(item => ({
+        const suggestions = createAppDaemonCompletions().map(item => ({
           ...item,
           range: {
             startLineNumber: position.lineNumber,
             endLineNumber: position.lineNumber,
-            startColumn: wordUntilPosition.startColumn,
+            startColumn: position.column,
             endColumn: position.column,
           },
         }));
@@ -67,8 +62,42 @@ export function Editor({ appName }: EditorProps) {
       },
     });
     
+    // Entity completions (only when entities are available)
+    let entityProvider: any;
+    if (!entitiesLoading && entities.length > 0) {
+      entityProvider = monaco.languages.registerCompletionItemProvider('python', {
+        triggerCharacters: ['(', ',', "'", '"'],
+        provideCompletionItems: (model, position) => {
+          const lineContent = model.getLineContent(position.lineNumber);
+          const wordUntilPosition = model.getWordUntilPosition(position);
+          
+          if (!shouldTriggerEntityCompletion(lineContent, position.column)) {
+            return { suggestions: [] };
+          }
+          
+          const prefix = wordUntilPosition.word;
+          const filteredEntities = prefix 
+            ? filterEntitiesByPrefix(entities, prefix)
+            : entities;
+          
+          const suggestions = createEntityCompletions(filteredEntities).map(item => ({
+            ...item,
+            range: {
+              startLineNumber: position.lineNumber,
+              endLineNumber: position.lineNumber,
+              startColumn: wordUntilPosition.startColumn,
+              endColumn: position.column,
+            },
+          }));
+          
+          return { suggestions };
+        },
+      });
+    }
+    
     return () => {
-      disposable.dispose();
+      appDaemonProvider.dispose();
+      if (entityProvider) entityProvider.dispose();
     };
   }, [entities, entitiesLoading]);
 
