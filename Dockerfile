@@ -44,11 +44,8 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
-# Pass through Supervisor token if available
-ENV SUPERVISOR_TOKEN=${SUPERVISOR_TOKEN}
-
-# Start the standalone server
-CMD node server.js
+# Start the standalone server (JSON format recommended)
+CMD ["node", "server.js"]
 
 # Copy s6 service scripts if using s6-overlay
 COPY rootfs/etc/services.d/appdaemon-studio /etc/services.d/appdaemon-studio/
