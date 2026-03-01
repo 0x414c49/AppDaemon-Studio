@@ -1,60 +1,6 @@
 import { NextResponse } from 'next/server';
-import { readFileSync, existsSync, readdirSync } from 'fs';
 
 const SUPERVISOR_URL = 'http://supervisor';
-
-// Try to read token from env, fallback to file (for child processes)
-function getToken(): { token: string | undefined; source: 'env' | 'file' | 'none'; fileExists: boolean; appDirListing: string[]; configDirListing: string[]; readError?: string | null } {
-  // First try env vars (parent process)
-  const envToken = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
-  if (envToken) {
-    return { token: envToken, source: 'env', fileExists: false, appDirListing: [], configDirListing: [], readError: null };
-  }
-  
-  // Fallback: read from file in /config (accessible from all processes)
-  const TOKEN_DIR = '/config/.appdaemon-studio';
-  const supervisorFile = `${TOKEN_DIR}/.supervisor_token`;
-  const hassioFile = `${TOKEN_DIR}/.hassio_token`;
-  
-  // List directories to debug
-  let appDirListing: string[] = [];
-  let configDirListing: string[] = [];
-  try {
-    appDirListing = readdirSync('/app').slice(0, 10); // limit output
-  } catch (e) {
-    appDirListing = [`Error listing /app: ${e}`];
-  }
-  try {
-    configDirListing = readdirSync('/config').slice(0, 10); // limit output
-  } catch (e) {
-    configDirListing = [`Error listing /config: ${e}`];
-  }
-  
-  const supervisorExists = existsSync(supervisorFile);
-  const hassioExists = existsSync(hassioFile);
-  
-  // Also try to read and capture any errors
-  let readError: string | null = null;
-  if (supervisorExists) {
-    try {
-      const token = readFileSync(supervisorFile, 'utf8').trim();
-       if (token) return { token, source: 'file', fileExists: true, appDirListing, configDirListing, readError: null };
-    } catch (e: any) {
-      readError = `Read error: ${e.message}`;
-    }
-  }
-  
-  if (hassioExists) {
-    try {
-      const token = readFileSync(hassioFile, 'utf8').trim();
-       if (token) return { token, source: 'file', fileExists: true, appDirListing, configDirListing, readError: null };
-    } catch (e: any) {
-      readError = readError || `Hassio read error: ${e.message}`;
-    }
-  }
-  
-  return { token: undefined, source: 'none', fileExists: supervisorExists || hassioExists, appDirListing, configDirListing, readError };
-}
 
 export interface HAEntity {
   entity_id: string;
@@ -79,33 +25,22 @@ export interface EntitiesResponse {
   error?: string;
   debug?: {
     hasEnvToken: boolean;
-    fileExists: boolean;
     tokenLength: number;
     pid: number;
-    source: 'env' | 'file' | 'none';
-    workingDir: string;
-    appDirListing: string[];
-    configDirListing: string[];
-    readError?: string | null;
+    nodeEnv: string;
   };
 }
 
 export async function GET() {
-  // Try to get token from env or file
-  const envToken = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
-  const { token, source, fileExists, appDirListing, configDirListing, readError } = getToken();
+  // Read env vars fresh (not cached at build time thanks to removing env config)
+  const token = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
   
   // Debug info
   const debug = {
-    hasEnvToken: !!envToken,
-    fileExists,
+    hasEnvToken: !!token,
     tokenLength: token?.length || 0,
     pid: process.pid,
-    source,
-    workingDir: process.cwd(),
-    appDirListing,
-    configDirListing,
-    readError,
+    nodeEnv: process.env.NODE_ENV,
   };
   
   if (!token) {
