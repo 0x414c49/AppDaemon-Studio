@@ -28,12 +28,20 @@ export interface EntitiesResponse {
     tokenLength: number;
     pid: number;
     nodeEnv: string;
+    envKeys: string[];
+    allEnvCount: number;
   };
 }
 
 export async function GET() {
-  // Read env vars fresh (not cached at build time thanks to removing env config)
-  const token = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN;
+  // Next.js standalone inlines env vars at build time
+  // Use dynamic access to bypass static analysis
+  const envKeys = Object.keys(process.env);
+  const supervisorToken = process.env['SUPERVISOR_TOKEN'] || process.env['HASSIO_TOKEN'];
+  const token = supervisorToken;
+  
+  // Debug: check all env vars containing TOKEN
+  const tokenKeys = envKeys.filter(k => k.includes('TOKEN') || k.includes('HASSIO') || k.includes('SUPERVISOR'));
   
   // Debug info
   const debug = {
@@ -41,6 +49,8 @@ export async function GET() {
     tokenLength: token?.length || 0,
     pid: process.pid,
     nodeEnv: process.env.NODE_ENV,
+    envKeys: tokenKeys,
+    allEnvCount: envKeys.length,
   };
   
   if (!token) {
