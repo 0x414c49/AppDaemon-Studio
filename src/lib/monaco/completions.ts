@@ -106,21 +106,21 @@ export const PYTHON_SNIPPETS = [
     label: 'def initialize',
     insertText: `def initialize(self):
     """Initialize the app."""
-    self.log("${1:App} initialized")
-    ${2:# Your initialization code here}`,
+    self.log("\${1:App} initialized")
+    \${2:# Your initialization code here}`,
     documentation: 'AppDaemon initialize method',
     detail: 'Snippet',
   },
   {
     label: 'timedelta',
-    insertText: "timedelta(${1:minutes=5})",
+    insertText: "timedelta(\${1:minutes=5})",
     documentation: 'Create time delta',
     detail: 'Python',
   },
   {
     label: 'try/except',
     insertText: `try:
-    ${1:# code}
+    \${1:# code}
 except Exception as e:
     self.log(f"Error: {e}", level="ERROR")`,
     documentation: 'Error handling pattern',
