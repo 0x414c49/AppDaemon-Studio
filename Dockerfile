@@ -28,9 +28,22 @@ WORKDIR /app
 # Install libc6-compat for Alpine compatibility
 RUN apk add --no-cache libc6-compat
 
+# Install s6-overlay for proper process management with init: true
+ARG S6_OVERLAY_VERSION=3.1.6.2
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
+
+# Architecture-specific s6-overlay (handled by Docker buildx)
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay.tar.xz && rm -f /tmp/*.tar.xz
+
 # Copy only the standalone output and necessary files
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+
+# Copy s6 service scripts
+COPY rootfs/etc/services.d/appdaemon-studio /etc/services.d/appdaemon-studio/
+RUN chmod +x /etc/services.d/appdaemon-studio/run /etc/services.d/appdaemon-studio/finish || true
 
 # Expose port
 EXPOSE 3000
@@ -44,9 +57,5 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
-# Start the standalone server (JSON format recommended)
-CMD ["node", "server.js"]
-
-# Copy s6 service scripts if using s6-overlay
-COPY rootfs/etc/services.d/appdaemon-studio /etc/services.d/appdaemon-studio/
-RUN chmod +x /etc/services.d/appdaemon-studio/run /etc/services.d/appdaemon-studio/finish || true
+# Use s6-overlay as init system (config.json has init: true)
+ENTRYPOINT ["/init"]
