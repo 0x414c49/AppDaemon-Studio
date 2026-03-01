@@ -1,0 +1,16 @@
+#!/usr/bin/with-contenv sh
+# s6 service script for AppDaemon Studio
+# This ensures SUPERVISOR_TOKEN is available to the Node.js app
+
+cd /app
+
+# Export the supervisor token if available
+if [ -n "$SUPERVISOR_TOKEN" ]; then
+    export SUPERVISOR_TOKEN="$SUPERVISOR_TOKEN"
+    echo "SUPERVISOR_TOKEN is set (length: ${#SUPERVISOR_TOKEN})"
+else
+    echo "WARNING: SUPERVISOR_TOKEN not available"
+fi
+
+# Start the Next.js standalone server
+exec node server.js

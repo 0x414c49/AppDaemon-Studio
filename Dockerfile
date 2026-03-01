@@ -49,3 +49,7 @@ ENV SUPERVISOR_TOKEN=${SUPERVISOR_TOKEN}
 
 # Start the standalone server
 CMD node server.js
+
+# Copy s6 service scripts if using s6-overlay
+COPY rootfs/etc/services.d/appdaemon-studio /etc/services.d/appdaemon-studio/
+RUN chmod +x /etc/services.d/appdaemon-studio/run /etc/services.d/appdaemon-studio/finish || true
