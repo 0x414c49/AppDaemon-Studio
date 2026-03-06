@@ -95,3 +95,6 @@ e2e/.cache/
 # Playwright browser downloads
 .playwright/
 
+# Local test directory
+test-apps/
+
