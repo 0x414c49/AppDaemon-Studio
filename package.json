@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "screenshots": "npx ts-node scripts/take-screenshots.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "@fontsource/cascadia-code": "^5.2.3",

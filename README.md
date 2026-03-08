@@ -1,56 +1,58 @@
 # AppDaemon Studio
 
-Write and manage your Home Assistant automations faster with a proper code editor.
+A proper IDE for writing AppDaemon apps in Home Assistant. Built with Next.js and Monaco Editor (the same editor as VS Code).
 
-## What it does
+## Features
 
-AppDaemon Studio gives you a real IDE for writing AppDaemon apps in Home Assistant. No more editing Python files through SSH or struggling with basic text editors. Get syntax highlighting, automatic backups, and a clean interface designed for actual coding work.
-
-![Main Interface](screenshots/01-main-interface.png)
-
-## Why use it
-
-- **Code faster** - Monaco editor (same as VS Code) with Python/YAML syntax highlighting
-- **Never lose work** - Automatic backups every time you save
-- **Stay organized** - All your apps in one place with clear naming
-- **Works where you are** - Access directly from Home Assistant sidebar
+- **Monaco Editor** - Full syntax highlighting for Python and YAML
+- **Version Control** - Automatic backups every time you save
+- **Entity Autocomplete** - Auto-suggests Home Assistant entities as you type
+- **AppDaemon API Autocomplete** - Intelligent code completion for AppDaemon methods
+- **Direct Integration** - Access from Home Assistant sidebar via Ingress
+- **Clean Interface** - All your apps organized in one place
 
 ## Installation
 
-1. Add this repository to your Home Assistant Add-on Store
-2. Install "AppDaemon Studio"  
-3. Click "Start"
+1. Add the repository to your Home Assistant Add-on Store
+2. Install "AppDaemon Studio"
+3. Start the add-on
 4. Access from your Home Assistant sidebar
 
-That's it. No configuration needed.
+No configuration required.
 
-## Getting started
+## Requirements
 
-**Create an app:**
-- Click the "+" button
-- Name it (e.g., "motion_lights")
+- Home Assistant
+- AppDaemon add-on installed
+
+## Usage
+
+**Create a new app:**
+- Click the "+" button in the sidebar
+- Enter app name and class name
 - Start coding
 
 **Edit an app:**
 - Click any app in the sidebar
 - Switch between Python and YAML tabs
-- Save when done (version backed up automatically)
+- Save changes (version backed up automatically)
 
-## Screenshots
+**Compare versions:**
+- Click "Compare" button to see previous versions
+- Restore or compare code changes
 
-![Sidebar](screenshots/02-sidebar.png)
-*All your apps organized in one place*
+## Development
 
-![Python Editor](screenshots/03-editor-python.png)
-*Full-featured Python editing*
+```bash
+# Install dependencies
+npm install
 
-![YAML Editor](screenshots/04-editor-yaml.png)
-*Configuration files made easy*
+# Run development server
+npm run dev
 
-## Requirements
-
-- Home Assistant
-- AppDaemon installed (the add-on uses your existing AppDaemon setup)
+# Build for production
+npm run build
+```
 
 ## Support
 
