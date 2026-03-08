@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { AppInfo, CreateAppData, FileContent, AppsConfig, AppConfig } from '../types';
+import { AppInfo, CreateAppData, FileContent, AppsConfig, AppConfig } from '@/types';
 import { generatePythonTemplate } from './templates';
 
 const APPS_DIR = '/config/apps';

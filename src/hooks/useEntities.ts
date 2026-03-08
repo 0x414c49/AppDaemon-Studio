@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { EntitiesResponse, HAEntity } from '../types/entities';
+import type { EntitiesResponse, HAEntity } from '@/types/entities';
 
 interface UseEntitiesReturn {
   entities: HAEntity[];

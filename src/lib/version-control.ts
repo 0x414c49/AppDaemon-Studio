@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { VersionInfo, FileContent } from '../types';
+import { VersionInfo, FileContent } from '@/types';
 
 const APPS_DIR = '/config/apps';
 const VERSIONS_DIR = '/config/apps/.versions';

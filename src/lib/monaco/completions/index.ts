@@ -1,4 +1,4 @@
-import type { HAEntity } from '../../home-assistant';
+import type { HAEntity } from '@/lib/home-assistant';
 import type { CompletionItem, CompletionDefinition } from './types';
 
 // Import all completion definitions

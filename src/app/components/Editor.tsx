@@ -4,14 +4,14 @@ import { useEffect, useState, useRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import type { editor, languages, Position } from 'monaco-editor';
 import { Save, FileCode, RefreshCw, GitCompare } from 'lucide-react';
-import { useEntities } from '../../hooks/useEntities';
+import { useEntities } from '@/hooks/useEntities';
 import { 
   createAppDaemonCompletions, 
   createEntityCompletions, 
   shouldTriggerEntityCompletion,
   filterEntitiesByPrefix 
-} from '../../lib/monaco/completions';
-import { APPDAEMON_SIGNATURES } from '../../lib/monaco/completions/signatures';
+} from '@/lib/monaco/completions';
+import { APPDAEMON_SIGNATURES } from '@/lib/monaco/completions/signatures';
 import { VersionCompare } from './VersionCompare';
 import { useToast } from './Toast';
 

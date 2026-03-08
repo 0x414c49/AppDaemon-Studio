@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
-import { AppInfo } from '../types';
+import { AppInfo } from '@/types';
 
 export default function Home() {
   const [apps, setApps] = useState<AppInfo[]>([]);

@@ -8,7 +8,7 @@ import {
   Wifi, Music, Camera, Tv, Power,
   Activity, Gauge, Cpu, Database, Check
 } from 'lucide-react';
-import { AppInfo } from '../../types';
+import { AppInfo } from '@/types';
 
 interface SidebarProps {
   apps: AppInfo[];

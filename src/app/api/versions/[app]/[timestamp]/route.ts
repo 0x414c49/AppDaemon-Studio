@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getVersion } from '../../../../../lib/version-control';
+import { getVersion } from '@/lib/version-control';
 
 export async function GET(
   request: NextRequest,

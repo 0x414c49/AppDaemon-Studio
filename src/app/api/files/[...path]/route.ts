@@ -4,8 +4,8 @@ import {
   writePythonFile,
   readAppsYaml,
   deleteApp 
-} from '../../../../lib/file-manager';
-import { createVersion } from '../../../../lib/version-control';
+} from '@/lib/file-manager';
+import { createVersion } from '@/lib/version-control';
 
 export async function GET(
   request: NextRequest,

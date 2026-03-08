@@ -1,4 +1,4 @@
-import type { HAEntity } from '../../home-assistant';
+import type { HAEntity } from '@/lib/home-assistant';
 
 export function shouldTriggerEntityCompletion(
   lineContent: string,
