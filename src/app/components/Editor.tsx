@@ -324,6 +324,20 @@ export function Editor({ appName, settings }: EditorProps) {
 
   const isDirty = content !== originalContent;
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        if (isDirty && !saving) {
+          saveFile();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDirty, saving, content, saveFile]);
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
