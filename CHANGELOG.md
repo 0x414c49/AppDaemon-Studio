@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.3.17] - 2026-03-08
+
+- feat: replace native dialogs with React components and improve UX
+- feat: add Ctrl/Cmd+S keyboard shortcut for saving
+
+
 ## [v0.3.16] - 2026-03-08
 
 - docs: simplify documentation and remove unnecessary files
