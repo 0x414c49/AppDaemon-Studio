@@ -9,13 +9,14 @@ on:
       - 'lessons/**'
 
 jobs:
-  bump-version:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     outputs:
-      version: ${{ steps.bump.outputs.version }}
-      previous_version: ${{ steps.bump.outputs.previous_version }}
+      version: ${{ steps.version.outputs.version }}
+      previous_version: ${{ steps.version.outputs.previous_version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
     
     steps:
       - name: Checkout code
@@ -27,12 +28,9 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
       
-      - name: Bump version
-        id: bump
+      - name: Get versions
+        id: version
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
           CURRENT_VERSION=$(jq -r '.version' config.json)
           echo "previous_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           
@@ -43,36 +41,13 @@ jobs:
           NEW_PATCH=$((PATCH + 1))
           NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
           
-          jq --arg version "$NEW_VERSION" '.version = $version' config.json > config.json.tmp
-          mv config.json.tmp config.json
-          
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          
-          git add config.json
-          git commit -m "chore: bump version to $NEW_VERSION"
-          git tag "v$NEW_VERSION"
-          git push
-          git push --tags
-
-  generate-changelog:
-    needs: bump-version
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      changelog: ${{ steps.changelog.outputs.changelog }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       
       - name: Generate changelog
         id: changelog
         run: |
-          PREV_TAG="v${{ needs.bump-version.outputs.previous_version }}"
-          NEW_TAG="v${{ needs.bump-version.outputs.version }}"
+          PREV_TAG="v${{ steps.version.outputs.previous_version }}"
+          NEW_TAG="v${{ steps.version.outputs.version }}"
           
           if git rev-parse "$PREV_TAG" >/dev/null 2>&1; then
             CHANGELOG=$(git log --pretty=format:"- %s" $PREV_TAG..HEAD --no-merges)
@@ -85,11 +60,24 @@ jobs:
           CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
           
           echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
-          
-          DATE=$(date +%Y-%m-%d)
+      
+      - name: Commit version and changelog
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.version }}"
+          NEW_TAG="v$NEW_VERSION"
           
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          jq --arg version "$NEW_VERSION" '.version = $version' config.json > config.json.tmp
+          mv config.json.tmp config.json
+          
+          CHANGELOG="${{ steps.changelog.outputs.changelog }}"
+          CHANGELOG="${CHANGELOG//'%0A'/$'\n'}"
+          CHANGELOG="${CHANGELOG//'%0D'/$'\r'}"
+          CHANGELOG="${CHANGELOG//'%25'/'%'}"
+          
+          DATE=$(date +%Y-%m-%d)
           
           cat > changelog_entry.md << EOF
           ## [$NEW_TAG] - $DATE
@@ -111,12 +99,14 @@ jobs:
           
           mv CHANGELOG_new.md CHANGELOG.md
           
-          git add CHANGELOG.md
-          git commit -m "docs: update changelog for $NEW_TAG"
+          git add config.json CHANGELOG.md
+          git commit -m "chore: release $NEW_TAG"
+          git tag "$NEW_TAG"
           git push
+          git push --tags
 
   build:
-    needs: [bump-version, generate-changelog]
+    needs: release
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -126,7 +116,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: v${{ needs.bump-version.outputs.version }}
+          ref: v${{ needs.release.outputs.version }}
       
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -147,7 +137,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=${{ needs.bump-version.outputs.version }}
+            type=raw,value=${{ needs.release.outputs.version }}
             type=raw,value=latest
       
       - name: Build and push Docker image
@@ -161,8 +151,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  release:
-    needs: [bump-version, generate-changelog, build]
+  create-github-release:
+    needs: release
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -171,17 +161,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: v${{ needs.bump-version.outputs.version }}
+          ref: v${{ needs.release.outputs.version }}
       
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          CHANGELOG="${{ needs.generate-changelog.outputs.changelog }}"
+          CHANGELOG="${{ needs.release.outputs.changelog }}"
           CHANGELOG="${CHANGELOG//'%0A'/$'\n'}"
           CHANGELOG="${CHANGELOG//'%0D'/$'\r'}"
           CHANGELOG="${CHANGELOG//'%25'/'%'}"
           
-          gh release create v${{ needs.bump-version.outputs.version }} \
-            --title "v${{ needs.bump-version.outputs.version }}" \
+          gh release create v${{ needs.release.outputs.version }} \
+            --title "v${{ needs.release.outputs.version }}" \
             --notes "$CHANGELOG"
