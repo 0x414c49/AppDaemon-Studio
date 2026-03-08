@@ -1,0 +1,25 @@
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  IMAGE_NAME: $CI_REGISTRY_IMAGE
+
+stages:
+  - build
+
+# Build and push multi-arch image
+build:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker info
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    # Build for amd64 (GitLab runners)
+    - docker build --tag $IMAGE_NAME/amd64:$CI_COMMIT_SHA --tag $IMAGE_NAME/amd64:latest .
+    - docker push $IMAGE_NAME/amd64:$CI_COMMIT_SHA
+    - docker push $IMAGE_NAME/amd64:latest
+  only:
+    - main
+    - tags

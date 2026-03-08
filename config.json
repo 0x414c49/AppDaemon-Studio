@@ -1,0 +1,35 @@
+{
+  "name": "AppDaemon Studio",
+  "version": "0.3.11",
+  "slug": "appdaemon-studio",
+  "description": "Next.js powered IDE for AppDaemon apps with real-time log streaming and file management",
+  "arch": [
+    "amd64",
+    "aarch64"
+  ],
+  "image": "ghcr.io/0x414c49/appdaemon-studio",
+  "url": "https://github.com/0x414c49/AppDaemon-Studio",
+  "startup": "application",
+  "boot": "auto",
+  "ingress": true,
+  "ingress_port": 3000,
+  "panel_icon": "mdi:code-braces",
+  "panel_title": "AppDaemon Studio",
+  "panel_admin": true,
+  "host_network": false,
+  "ports": {},
+  "map": [
+    "config:rw"
+  ],
+  "options": {
+    "log_level": "info"
+  },
+  "schema": {
+    "log_level": "list(debug|info|warning|error)?"
+  },
+  "init": false,
+  "hassio_api": true,
+  "homeassistant_api": true,
+  "hassio_role": "default",
+  "auth_api": true
+}
