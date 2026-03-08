@@ -3,16 +3,26 @@
 import { useEffect, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
+import { Settings } from './components/Settings';
 import { AppInfo } from '@/types';
+import { EditorSettings, getSettings, DEFAULT_SETTINGS, subscribeToSettings } from '@/lib/settings-store';
 
 export default function Home() {
   const [apps, setApps] = useState<AppInfo[]>([]);
   const [activeApp, setActiveApp] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [editorSettings, setEditorSettings] = useState<EditorSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
     fetchApps();
+  }, []);
+
+  useEffect(() => {
+    setEditorSettings(getSettings());
+    const unsubscribe = subscribeToSettings(setEditorSettings);
+    return unsubscribe;
   }, []);
 
   const fetchApps = async () => {
@@ -97,10 +107,11 @@ export default function Home() {
         onSelectApp={setActiveApp}
         onCreateApp={handleCreateApp}
         onDeleteApp={handleDeleteApp}
+        onOpenSettings={() => setShowSettings(true)}
       />
       <main className="flex-1 flex flex-col min-w-0">
         {activeApp ? (
-          <Editor appName={activeApp} />
+          <Editor appName={activeApp} settings={editorSettings} />
         ) : (
           <div className="flex-1 flex items-center justify-center text-slate-500">
             <div className="text-center">
@@ -110,6 +121,11 @@ export default function Home() {
           </div>
         )}
       </main>
+      <Settings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        onSettingsChange={setEditorSettings}
+      />
     </div>
   );
 }

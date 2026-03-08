@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import { DiffEditor } from '@monaco-editor/react';
 import { X, GitCompare } from 'lucide-react';
 import type { editor } from 'monaco-editor';
+import { EditorSettings } from '@/lib/settings-store';
+import { registerCustomThemes } from '@/lib/monaco/themes';
 
 interface VersionCompareProps {
   appName: string;
   currentCode: string;
   isOpen: boolean;
   onClose: () => void;
+  settings: EditorSettings;
 }
 
 interface Version {
@@ -19,7 +22,7 @@ interface Version {
   filename: string;
 }
 
-export function VersionCompare({ appName, currentCode, isOpen, onClose }: VersionCompareProps) {
+export function VersionCompare({ appName, currentCode, isOpen, onClose, settings }: VersionCompareProps) {
   const [versions, setVersions] = useState<Version[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<string>('');
   const [versionCode, setVersionCode] = useState('');
@@ -133,12 +136,18 @@ export function VersionCompare({ appName, currentCode, isOpen, onClose }: Versio
               language="python"
               original={versionCode}
               modified={currentCode}
-              theme="vs-dark"
+              theme={settings.theme}
+              onMount={(editor, monaco) => {
+                registerCustomThemes(monaco as any);
+                (monaco as any).editor.setTheme(settings.theme);
+              }}
               options={{
                 readOnly: true,
                 renderSideBySide: true,
                 minimap: { enabled: false },
-                fontSize: 14,
+                fontFamily: settings.fontFamily,
+                fontSize: settings.fontSize,
+                fontLigatures: settings.fontLigatures,
                 lineNumbers: 'on',
                 scrollBeyondLastLine: false,
                 automaticLayout: true,

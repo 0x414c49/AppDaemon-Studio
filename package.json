@@ -10,6 +10,9 @@
     "screenshots": "npx ts-node scripts/take-screenshots.ts"
   },
   "dependencies": {
+    "@fontsource/cascadia-code": "^5.2.3",
+    "@fontsource/fira-code": "^5.2.7",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@monaco-editor/react": "^4.6.0",
     "autoprefixer": "^10.4.17",
     "lucide-react": "^0.577.0",

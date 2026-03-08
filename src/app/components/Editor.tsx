@@ -12,14 +12,17 @@ import {
   filterEntitiesByPrefix 
 } from '@/lib/monaco/completions';
 import { APPDAEMON_SIGNATURES } from '@/lib/monaco/completions/signatures';
+import { registerCustomThemes } from '@/lib/monaco/themes';
+import { EditorSettings, DEFAULT_SETTINGS } from '@/lib/settings-store';
 import { VersionCompare } from './VersionCompare';
 import { useToast } from './Toast';
 
 interface EditorProps {
   appName: string;
+  settings: EditorSettings;
 }
 
-export function Editor({ appName }: EditorProps) {
+export function Editor({ appName, settings }: EditorProps) {
   const { addToast } = useToast();
   const [content, setContent] = useState('');
   const [originalContent, setOriginalContent] = useState('');
@@ -40,6 +43,9 @@ export function Editor({ appName }: EditorProps) {
   const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: any) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
+    
+    registerCustomThemes(monaco);
+    monaco.editor.setTheme(settings.theme);
     
     // Register AppDaemon API completions
     const appDaemonProvider = monaco.languages.registerCompletionItemProvider('python', {
@@ -199,6 +205,12 @@ export function Editor({ appName }: EditorProps) {
     
     completionProvidersRef.current.signature = signatureProvider;
   };
+  
+  useEffect(() => {
+    if (monacoRef.current) {
+      monacoRef.current.editor.setTheme(settings.theme);
+    }
+  }, [settings.theme]);
   
   // Update entity completions when entities change
   useEffect(() => {
@@ -389,11 +401,13 @@ export function Editor({ appName }: EditorProps) {
           language={activeTab === 'python' ? 'python' : 'yaml'}
           value={content}
           onChange={(value) => setContent(value || '')}
-          theme="vs-dark"
+          theme={settings.theme}
           onMount={handleEditorDidMount}
           options={{
             minimap: { enabled: false },
-            fontSize: 14,
+            fontFamily: settings.fontFamily,
+            fontSize: settings.fontSize,
+            fontLigatures: settings.fontLigatures,
             lineNumbers: 'on',
             roundedSelection: false,
             scrollBeyondLastLine: false,
@@ -457,6 +471,7 @@ export function Editor({ appName }: EditorProps) {
         currentCode={content}
         isOpen={showVersionCompare}
         onClose={() => setShowVersionCompare(false)}
+        settings={settings}
       />
     </div>
   );
