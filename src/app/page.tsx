@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
 import { Settings } from './components/Settings';
+import { ConfirmDialog } from './components/ConfirmDialog';
+import { AlertDialog } from './components/AlertDialog';
 import { AppInfo } from '@/types';
 import { EditorSettings, getSettings, DEFAULT_SETTINGS, subscribeToSettings } from '@/lib/settings-store';
 
@@ -14,6 +16,16 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [editorSettings, setEditorSettings] = useState<EditorSettings>(DEFAULT_SETTINGS);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    appName: string | null;
+  }>({ isOpen: false, appName: null });
+  const [alertDialog, setAlertDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: 'success' | 'error' | 'info';
+  }>({ isOpen: false, title: '', message: '', variant: 'info' });
 
   useEffect(() => {
     fetchApps();
@@ -52,22 +64,52 @@ export default function Home() {
       if (!response.ok) throw new Error('Failed to create app');
       await fetchApps();
       setActiveApp(name);
+      setAlertDialog({
+        isOpen: true,
+        title: 'Success',
+        message: `App "${name}" created successfully`,
+        variant: 'success',
+      });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create app');
+      setAlertDialog({
+        isOpen: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to create app',
+        variant: 'error',
+      });
     }
   };
 
   const handleDeleteApp = async (name: string) => {
-    if (!confirm(`Delete app "${name}"?`)) return;
+    setConfirmDialog({ isOpen: true, appName: name });
+  };
+
+  const confirmDeleteApp = async () => {
+    const appName = confirmDialog.appName;
+    if (!appName) return;
+    
     try {
-      const response = await fetch(`api/files/${name}`, {
+      const response = await fetch(`api/files/${appName}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete app');
       await fetchApps();
-      if (activeApp === name) setActiveApp(null);
+      if (activeApp === appName) setActiveApp(null);
+      setAlertDialog({
+        isOpen: true,
+        title: 'Success',
+        message: `App "${appName}" deleted successfully`,
+        variant: 'success',
+      });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete app');
+      setAlertDialog({
+        isOpen: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to delete app',
+        variant: 'error',
+      });
+    } finally {
+      setConfirmDialog({ isOpen: false, appName: null });
     }
   };
 
@@ -125,6 +167,25 @@ export default function Home() {
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         onSettingsChange={setEditorSettings}
+      />
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Delete App"
+        message={`Are you sure you want to delete app "${confirmDialog.appName}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={confirmDeleteApp}
+        onCancel={() => setConfirmDialog({ isOpen: false, appName: null })}
+        variant="danger"
+      />
+
+      <AlertDialog
+        isOpen={alertDialog.isOpen}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        variant={alertDialog.variant}
+        onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })}
       />
     </div>
   );

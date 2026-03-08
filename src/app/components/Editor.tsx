@@ -354,7 +354,11 @@ export function Editor({ appName, settings }: EditorProps) {
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <FileCode className="w-5 h-5 text-blue-400" />
             {activeTab === 'python' ? `${appName}.py` : 'apps.yaml'}
-            {isDirty && <span className="text-yellow-400 text-sm">•</span>}
+            {isDirty && (
+              <span className="px-2 py-0.5 text-xs rounded bg-yellow-900/30 text-yellow-400 font-medium">
+                Modified
+              </span>
+            )}
           </h2>
           
           <div className="flex gap-2">
