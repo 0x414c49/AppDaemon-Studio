@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.38] - 2026-03-20
+
+- chore: use appdaemon-studio-addon as GHCR image name
+
+
 ## [v0.3.37] - 2026-03-20
 
 - Remove comment for version bump job in build.yml
