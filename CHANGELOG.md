@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.41] - 2026-03-20
+
+- fix: run container as root so it can write to /config
+
+
 ## [v0.3.40] - 2026-03-20
 
 - chore: add addon icon.png to repo root for HA addon store
