@@ -249,9 +249,7 @@ try {
     await editorContent.click();
     await page.keyboard.press('Control+End');
     await page.waitForTimeout(300);
-    await page.keyboard.type('\n        self.turn_on("');
-    await page.waitForTimeout(800);
-    await page.keyboard.press('Control+Space');
+    await page.keyboard.type('\n        self.');
     await page.waitForTimeout(1500);
     await page.screenshot({ path: shot('09-autocomplete-v2') });
     console.log('✓ 09-autocomplete');

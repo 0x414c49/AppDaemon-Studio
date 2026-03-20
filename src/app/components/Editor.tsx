@@ -55,14 +55,17 @@ export function Editor({ appName, settings }: EditorProps) {
         const wordUntilPosition = model.getWordUntilPosition(position);
         
         const textBeforeCursor = lineContent.substring(0, position.column - 1);
-        const isAfterSelf = /self\.$/.test(textBeforeCursor);
+        // Match self. followed by any partial word (e.g. "self.", "self.turn", "self.turn_on")
+        const selfDotMatch = /self\.(\w*)$/.exec(textBeforeCursor);
+        const isAfterSelf = selfDotMatch !== null;
+        const selfPartialWord = selfDotMatch?.[1] ?? '';
         const isEmptyLine = /^\s*$/.test(textBeforeCursor);
         const isStartingKeyword = /\b(impo|from|clas|def|if|for|whil|try)\b/.test(textBeforeCursor);
-        const isAfterDot = /\.$/.test(textBeforeCursor);
-        
+        const isAfterDot = !isAfterSelf && /\.$/.test(textBeforeCursor);
+
         // Get all completions
         const allCompletions = createAppDaemonCompletions();
-        
+
         // Convert to Monaco suggestions with proper range
         const createSuggestions = (items: typeof allCompletions) => {
           return items.map(item => ({
@@ -72,11 +75,17 @@ export function Editor({ appName, settings }: EditorProps) {
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             documentation: item.documentation,
             detail: item.detail,
+            // filterText strips the "self." prefix so Monaco matches against what
+            // the user types AFTER the dot (e.g. "turn" matches "turn_on")
+            filterText: isAfterSelf && item.label.startsWith('self.')
+              ? item.label.slice(5)
+              : item.label,
             range: {
               startLineNumber: position.lineNumber,
               endLineNumber: position.lineNumber,
-              startColumn: isAfterSelf && item.label.startsWith('self.') 
-                ? position.column - 5 
+              // Cover "self." + any partial word already typed
+              startColumn: isAfterSelf && item.label.startsWith('self.')
+                ? position.column - 5 - selfPartialWord.length
                 : wordUntilPosition.startColumn,
               endColumn: position.column,
             },
