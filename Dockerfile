@@ -47,14 +47,11 @@ LABEL org.opencontainers.image.created="${BUILD_DATE}"
 
 WORKDIR /app
 
-RUN addgroup -g 1001 -S appuser && adduser -S appuser -u 1001
-USER appuser
-
 # .NET backend binary (arch-specific)
-COPY --from=backend --chown=appuser /publish .
+COPY --from=backend /publish .
 
 # React frontend (same files for all architectures)
-COPY --from=frontend --chown=appuser /app/dist ./wwwroot
+COPY --from=frontend /app/dist ./wwwroot
 
 ENV ASPNETCORE_URLS=http://+:3000 \
     DOTNET_RUNNING_IN_CONTAINER=true \
