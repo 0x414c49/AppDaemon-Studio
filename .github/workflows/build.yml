@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_RAW: ${{ github.repository }}
+  IMAGE_NAME_RAW: ${{ github.repository_owner }}/appdaemon-studio-addon
 
 jobs:
   release:
