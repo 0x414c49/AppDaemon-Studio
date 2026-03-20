@@ -13,7 +13,7 @@
 
 A web-based IDE for writing and managing [AppDaemon](https://appdaemon.readthedocs.io/) apps, built as a Home Assistant add-on. Runs entirely inside Home Assistant — no external services, no configuration required.
 
-![AppDaemon Studio](docs/screenshots/01-app-list.png)
+![AppDaemon Studio](docs/screenshots/01-app-list-v2.png)
 
 ## Features
 
@@ -48,19 +48,19 @@ Select an app from the sidebar to open it in the editor. Switch between the **Py
 
 Click the **+** button in the sidebar. Give it a name (lowercase, underscores only), a class name, an icon, and an optional description. A boilerplate Python file and a `apps.yaml` entry are created automatically.
 
-![Create app](docs/screenshots/04-create-app-dialog.png)
+![Create app](docs/screenshots/04-create-app-dialog-v2.png)
 
 ### Entity autocomplete
 
 While editing Python, type any quote character to trigger entity ID suggestions pulled live from your Home Assistant instance. Works for `entity_id`, `listen_state`, `turn_on`, etc.
 
-![Autocomplete](docs/screenshots/09-autocomplete.png)
+![Autocomplete](docs/screenshots/09-autocomplete-v2.png)
 
 ### Version history and diff
 
 Every time you save a Python file, the previous version is automatically snapshotted. Click **Compare** to open the diff viewer and select any saved version to see a side-by-side diff against the current file.
 
-![Version Compare](docs/screenshots/07-version-diff.png)
+![Version Compare](docs/screenshots/07-version-diff-v2.png)
 
 ### Log viewer
 
@@ -70,7 +70,7 @@ Click the **Logs** tab to see live AppDaemon output. Filter by level (INFO / WAR
 
 Customize the editor theme, font family, font size, and ligatures. Switch between light and dark UI themes.
 
-![Settings](docs/screenshots/05-settings-dialog.png)
+![Settings](docs/screenshots/05-settings-dialog-v2.png)
 
 ## Standalone mode (without Supervisor)
 

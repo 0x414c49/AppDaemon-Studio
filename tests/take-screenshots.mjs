@@ -178,7 +178,7 @@ try {
     await page.goto('http://localhost:4173/');
     await page.waitForSelector('text=motion_lights', { timeout: 10_000 });
     await page.waitForTimeout(300);
-    await page.screenshot({ path: shot('01-app-list') });
+    await page.screenshot({ path: shot('01-app-list-v2') });
     console.log('✓ 01-app-list');
     await page.close();
   }
@@ -191,7 +191,7 @@ try {
     await page.waitForSelector('text=motion_lights');
     await page.locator('button[title="New App"]').click();
     await page.waitForTimeout(300);
-    await page.screenshot({ path: shot('04-create-app-dialog') });
+    await page.screenshot({ path: shot('04-create-app-dialog-v2') });
     console.log('✓ 04-create-app-dialog');
     await page.close();
   }
@@ -204,7 +204,7 @@ try {
     await page.waitForSelector('text=motion_lights');
     await page.locator('button[title="Settings"]').click();
     await page.waitForTimeout(300);
-    await page.screenshot({ path: shot('05-settings-dialog') });
+    await page.screenshot({ path: shot('05-settings-dialog-v2') });
     console.log('✓ 05-settings-dialog');
     await page.close();
   }
@@ -231,7 +231,7 @@ try {
     await select.selectOption(oldestValue);
     await page.waitForSelector('.monaco-diff-editor', { timeout: 30_000 });
     await page.waitForTimeout(2_000);
-    await page.screenshot({ path: shot('07-version-diff') });
+    await page.screenshot({ path: shot('07-version-diff-v2') });
     console.log('✓ 07-version-diff');
     await page.close();
   }
@@ -253,7 +253,7 @@ try {
     await page.waitForTimeout(800);
     await page.keyboard.press('Control+Space');
     await page.waitForTimeout(1500);
-    await page.screenshot({ path: shot('09-autocomplete') });
+    await page.screenshot({ path: shot('09-autocomplete-v2') });
     console.log('✓ 09-autocomplete');
     await page.close();
   }
