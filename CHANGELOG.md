@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.3.36] - 2026-03-20
+
+- fix: remove invalid paths-ignore negation that prevented workflow from triggering
+- Fix image formatting in README
+- docs: README, architecture guide, changelog, screenshots
+- test: Playwright E2E tests
+- feat: Dockerfile and CI pipeline
+- feat: ASP.NET Core backend (.NET 10)
+- feat: React frontend (Vite + Monaco Editor)
+- chore: HA addon manifest
+- chore: init project scaffold
+
+
 ## [v0.3.35] - 2026-03-20
 
 - chore: release v0.3.34
