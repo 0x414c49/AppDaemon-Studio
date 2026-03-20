@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.37] - 2026-03-20
+
+- Remove comment for version bump job in build.yml
+
+
 ## [v0.3.36] - 2026-03-20
 
 - fix: remove invalid paths-ignore negation that prevented workflow from triggering
