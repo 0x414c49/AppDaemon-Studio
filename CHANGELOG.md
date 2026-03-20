@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.46] - 2026-03-20
+
+- feat: complete AppDaemon autocomplete — full API, context-aware entities, call_service completions, boilerplate snippets
+
+
 ## [v0.3.45] - 2026-03-20
 
 - test: add e2e tests for autocomplete (self., self.turn, entity IDs)
