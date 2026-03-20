@@ -1,0 +1,256 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'lessons/**'
+      - '.github/**'
+      - '!.github/workflows/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_RAW: ${{ github.repository }}
+
+jobs:
+  # Job 1: Version bump and tagging
+  release:
+    name: Version & Tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      previous_version: ${{ steps.version.outputs.previous_version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+      image_name: ${{ steps.image_name.outputs.lowercase }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Convert repository name to lowercase
+        id: image_name
+        run: echo "lowercase=$(echo '${{ env.IMAGE_NAME_RAW }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Get versions
+        id: version
+        run: |
+          CURRENT_VERSION=$(jq -r '.version' config.json)
+          echo "previous_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG="v${{ steps.version.outputs.previous_version }}"
+
+          if git rev-parse "$PREV_TAG" >/dev/null 2>&1; then
+            CHANGELOG=$(git log --pretty=format:"- %s" $PREV_TAG..HEAD --no-merges)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s" HEAD --no-merges -20)
+          fi
+
+          CHANGELOG="${CHANGELOG//'%'/'%25'}"
+          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+
+          echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
+
+      - name: Commit version and changelog
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.version }}"
+          NEW_TAG="v$NEW_VERSION"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          jq --arg version "$NEW_VERSION" '.version = $version' config.json > config.json.tmp
+          mv config.json.tmp config.json
+
+          jq --arg version "$NEW_VERSION" '.version = $version' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          CHANGELOG="${{ steps.changelog.outputs.changelog }}"
+          CHANGELOG="${CHANGELOG//'%0A'/$'\n'}"
+          CHANGELOG="${CHANGELOG//'%0D'/$'\r'}"
+          CHANGELOG="${CHANGELOG//'%25'/'%'}"
+
+          DATE=$(date +%Y-%m-%d)
+
+          cat > changelog_entry.md << EOF
+          ## [$NEW_TAG] - $DATE
+
+          $CHANGELOG
+
+          EOF
+
+          if [ -f CHANGELOG.md ]; then
+            head -n 1 CHANGELOG.md > CHANGELOG_new.md
+            echo "" >> CHANGELOG_new.md
+            cat changelog_entry.md >> CHANGELOG_new.md
+            tail -n +2 CHANGELOG.md >> CHANGELOG_new.md
+          else
+            echo "# Changelog" > CHANGELOG_new.md
+            echo "" >> CHANGELOG_new.md
+            cat changelog_entry.md >> CHANGELOG_new.md
+          fi
+
+          mv CHANGELOG_new.md CHANGELOG.md
+
+          git add config.json package.json CHANGELOG.md
+          git commit -m "chore: release $NEW_TAG"
+          git tag "$NEW_TAG"
+          git push
+          git push --tags
+
+  # Job 2: Build Docker images (parallel matrix)
+  # No QEMU needed: --platform=$BUILDPLATFORM in Dockerfile means both
+  # build stages (Node + .NET SDK) always run on the x86 host.
+  # .NET cross-compiles to arm64 natively via dotnet publish -r linux-arm64.
+  build:
+    name: Build ${{ matrix.platform }}
+    needs: [release]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.release.outputs.version }}
+          fetch-depth: 1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract platform name for tags
+        id: platform
+        run: |
+          PLATFORM_PAIR=${{ matrix.platform }}
+          PLATFORM_NAME=${PLATFORM_PAIR//\//-}
+          echo "name=$PLATFORM_NAME" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}-${{ steps.platform.outputs.name }}
+          cache-from: type=gha,scope=build-${{ steps.platform.outputs.name }}
+          cache-to: type=gha,mode=max,scope=build-${{ steps.platform.outputs.name }}
+          build-args: |
+            BUILD_VERSION=${{ needs.release.outputs.version }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+
+  # Job 3: Merge multi-platform manifests
+  merge:
+    name: Create Multi-Platform Manifest
+    needs: [release, build]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create manifest list and push
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }} \
+            -t ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:latest \
+            ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}-linux-arm64
+
+      - name: Inspect image
+        run: docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}
+
+  # Job 4: Create GitHub Release
+  create-github-release:
+    name: Create GitHub Release
+    needs: [release, merge]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.release.outputs.version }}
+          fetch-depth: 1
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHANGELOG="${{ needs.release.outputs.changelog }}"
+          CHANGELOG="${CHANGELOG//'%0A'/$'\n'}"
+          CHANGELOG="${CHANGELOG//'%0D'/$'\r'}"
+          CHANGELOG="${CHANGELOG//'%25'/'%'}"
+
+          gh release create v${{ needs.release.outputs.version }} \
+            --title "v${{ needs.release.outputs.version }}" \
+            --notes "$CHANGELOG"
+
+  # Job 5: Summary
+  summary:
+    name: Build Summary
+    needs: [release, build, merge, create-github-release]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${{ needs.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build:** ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Merge:** ${{ needs.merge.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Release:** ${{ needs.create-github-release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Image" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
