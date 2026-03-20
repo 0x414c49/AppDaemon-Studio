@@ -11,6 +11,10 @@ import '@fontsource/cascadia-code/500.css'
 import './app/globals.css'
 import { ToastProvider } from './app/components/Toast'
 import Home from './app/page'
+import { getSettings, applyUiTheme } from './lib/settings-store'
+
+// Apply saved UI theme before first render to avoid flash
+applyUiTheme(getSettings().uiTheme)
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

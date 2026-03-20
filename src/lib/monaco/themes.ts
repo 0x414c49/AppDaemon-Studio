@@ -185,6 +185,7 @@ const nightOwl: MonacoTheme = {
 };
 
 const customThemes: Record<string, MonacoTheme> = {
+  'vs-light': { base: 'vs', inherit: true, rules: [], colors: {} },
   'one-dark-pro': oneDarkPro,
   'dracula': dracula,
   'github-dark': githubDark,

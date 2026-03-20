@@ -11,6 +11,9 @@ export default defineConfig({
   base: './',
   build: {
     outDir: 'dist',
+    // Disable esbuild CSS minifier to avoid false CSS syntax warnings
+    // triggered by Tailwind's CSS custom property declarations.
+    cssMinify: false,
   },
   server: {
     // Dev proxy: forward API calls to .NET backend

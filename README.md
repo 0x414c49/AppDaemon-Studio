@@ -13,7 +13,7 @@
 
 A web-based IDE for writing and managing [AppDaemon](https://appdaemon.readthedocs.io/) apps, built as a Home Assistant add-on. Runs entirely inside Home Assistant — no external services, no configuration required.
 
-![AppDaemon Studio](docs/screenshots/02-python-editor.png) 
+![AppDaemon Studio](docs/screenshots/01-app-list.png)
 
 ## Features
 
@@ -21,7 +21,7 @@ A web-based IDE for writing and managing [AppDaemon](https://appdaemon.readthedo
 - **Entity Autocomplete** — As you type, your Home Assistant entity IDs appear as suggestions in the editor
 - **Version Control** — Every save creates a snapshot. Compare any two versions side-by-side and restore with one click
 - **Log Viewer** — Live AppDaemon logs with INFO / WARNING / ERROR filtering and per-app filtering
-- **Multiple Themes** — VS Dark, One Dark Pro, Dracula, GitHub Dark, Nord, Monokai, and more
+- **Multiple Themes** — VS Light, VS Dark, One Dark Pro, Dracula, GitHub Dark, Nord, Monokai, and more
 - **Font Options** — Fira Code, JetBrains Mono, Cascadia Code (all with ligature support)
 
 ## Installation
@@ -48,9 +48,13 @@ Select an app from the sidebar to open it in the editor. Switch between the **Py
 
 Click the **+** button in the sidebar. Give it a name (lowercase, underscores only), a class name, an icon, and an optional description. A boilerplate Python file and a `apps.yaml` entry are created automatically.
 
+![Create app](docs/screenshots/04-create-app-dialog.png)
+
 ### Entity autocomplete
 
 While editing Python, type any quote character to trigger entity ID suggestions pulled live from your Home Assistant instance. Works for `entity_id`, `listen_state`, `turn_on`, etc.
+
+![Autocomplete](docs/screenshots/09-autocomplete.png)
 
 ### Version history and diff
 
@@ -62,6 +66,12 @@ Every time you save a Python file, the previous version is automatically snapsho
 
 Click the **Logs** tab to see live AppDaemon output. Filter by level (INFO / WARNING / ERROR) or by a specific app name.
 
+### Settings
+
+Customize the editor theme, font family, font size, and ligatures. Switch between light and dark UI themes.
+
+![Settings](docs/screenshots/05-settings-dialog.png)
+
 ## Standalone mode (without Supervisor)
 
 AppDaemon Studio can also run outside of Home Assistant by setting environment variables:
@@ -72,17 +82,6 @@ AppDaemon Studio can also run outside of Home Assistant by setting environment v
 | `HA_TOKEN` | A long-lived access token from your HA profile |
 | `APPS_DIR` | Path to your config root (default `/config`) |
 | `APPDAEMON_LOG_FILE` | Path to AppDaemon log file (if not using Supervisor) |
-
-## More screenshots
-
-| | |
-|---|---|
-| ![App list](docs/screenshots/01-app-list.png) | ![YAML editor](docs/screenshots/03-yaml-editor.png) |
-| Sidebar with app list | YAML config editor |
-| ![Create app](docs/screenshots/04-create-app-dialog.png) | ![Settings](docs/screenshots/05-settings-dialog.png) |
-| Create new app dialog | Editor settings |
-| ![Logs](docs/screenshots/06-logs-viewer.png) | ![Compare modal](docs/screenshots/07a-compare-modal-empty.png) |
-| Live log viewer | Version compare — select a snapshot |
 
 ## Support
 

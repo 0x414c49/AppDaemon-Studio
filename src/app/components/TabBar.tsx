@@ -23,7 +23,7 @@ export function TabBar({ activeTab, onTabChange, disabled }: TabBarProps) {
   ];
 
   return (
-    <div className="flex items-center bg-[#252526] border-b border-[#3c3c3c]">
+    <div className="flex items-center bg-ha-card border-b border-ha-border">
       {tabs.map(tab => (
         <button
           key={tab.id}
@@ -31,8 +31,8 @@ export function TabBar({ activeTab, onTabChange, disabled }: TabBarProps) {
           disabled={disabled}
           className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
             activeTab === tab.id
-              ? 'bg-[#1e1e1e] text-white border-b-2 border-[#007acc]'
-              : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2d2e]'
+              ? 'bg-ha-bg text-ha-text border-b-2 border-ha-primary'
+              : 'text-ha-text-secondary hover:text-ha-text hover:bg-ha-surface-hover'
           } ${disabled && activeTab !== tab.id ? 'opacity-50' : ''}`}
         >
           {tab.icon}

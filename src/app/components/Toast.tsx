@@ -65,24 +65,24 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
 
 function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   const icons = {
-    success: <CheckCircle className="w-5 h-5 text-green-400" />,
-    error: <AlertCircle className="w-5 h-5 text-red-400" />,
-    info: <Info className="w-5 h-5 text-blue-400" />,
+    success: <CheckCircle className="w-5 h-5 text-ha-success" />,
+    error: <AlertCircle className="w-5 h-5 text-ha-error" />,
+    info: <Info className="w-5 h-5 text-ha-primary" />,
   };
 
   const colors = {
-    success: 'border-green-500 bg-green-950',
-    error: 'border-red-500 bg-red-950',
-    info: 'border-blue-500 bg-blue-950',
+    success: 'border-ha-success bg-ha-success-bg',
+    error: 'border-ha-error bg-ha-error-bg',
+    info: 'border-ha-primary bg-ha-info-bg',
   };
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg min-w-[300px] max-w-[500px] animate-slide-in ${colors[toast.type]}`}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg min-w-[300px] max-w-[500px] animate-slide-in bg-ha-card ${colors[toast.type]}`}
     >
       {icons[toast.type]}
-      <p className="flex-1 text-sm text-white">{toast.message}</p>
-      <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+      <p className="flex-1 text-sm text-ha-text">{toast.message}</p>
+      <button onClick={onClose} className="text-ha-text-secondary hover:text-ha-text transition-colors">
         <X className="w-4 h-4" />
       </button>
     </div>
