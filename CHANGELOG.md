@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.39] - 2026-03-20
+
+- fix: update image name and description in config.json
+
+
 ## [v0.3.38] - 2026-03-20
 
 - chore: use appdaemon-studio-addon as GHCR image name
