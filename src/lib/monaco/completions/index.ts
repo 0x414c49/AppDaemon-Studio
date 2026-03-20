@@ -15,7 +15,7 @@ import { REQUESTS_PATTERNS } from './http';
 export type { CompletionItem, CompletionDefinition };
 
 // Re-export helper functions
-export { shouldTriggerEntityCompletion, shouldTriggerMethodCompletion, filterEntitiesByPrefix } from './helpers';
+export { shouldTriggerEntityCompletion, shouldTriggerMethodCompletion, filterEntitiesByPrefix, filterEntitiesForContext } from './helpers';
 
 // Combine all completions and deduplicate by label
 function deduplicateCompletions(items: CompletionDefinition[]): CompletionDefinition[] {
