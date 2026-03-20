@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.44] - 2026-03-20
+
+- fix: autocomplete disappears after typing past self. dot
+
+
 ## [v0.3.43] - 2026-03-20
 
 - fix: rename screenshots to bust GitHub CDN cache
