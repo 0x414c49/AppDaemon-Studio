@@ -4,17 +4,27 @@ export interface EditorSettings {
   fontSize: number;
   fontLigatures: boolean;
   sidebarFontSize: number;
+  uiTheme: 'dark' | 'light';
 }
 
 const STORAGE_KEY = 'appdaemon-studio-settings';
 
 export const DEFAULT_SETTINGS: EditorSettings = {
-  theme: 'vs-dark',
+  theme: 'vs-light',
   fontFamily: 'Fira Code',
   fontSize: 14,
   fontLigatures: true,
   sidebarFontSize: 14,
+  uiTheme: 'light',
 };
+
+export function applyUiTheme(uiTheme: 'dark' | 'light'): void {
+  if (uiTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}
 
 export const AVAILABLE_THEMES = [
   { id: 'vs-dark', name: 'VS Dark', base: 'vs-dark' },
@@ -60,9 +70,10 @@ export function saveSettings(settings: EditorSettings): void {
   if (typeof window === 'undefined') {
     return;
   }
-  
+
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    applyUiTheme(settings.uiTheme);
     window.dispatchEvent(new CustomEvent('settings-changed', { detail: settings }));
   } catch (error) {
     // Silently ignore save errors
