@@ -1,0 +1,52 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+.github
+
+# Node dependencies (installed fresh in Docker)
+node_modules
+.npm
+
+# Vite build output (built inside Docker, not copied in)
+dist
+
+# .NET build artifacts (built inside Docker)
+AppDaemonStudio/bin
+AppDaemonStudio/obj
+AppDaemonStudio/wwwroot
+
+# Secrets and local env
+.env
+.env.*
+.env.local
+.env.*.local
+
+# Tests
+tests
+playwright.config.ts
+playwright-report
+test-results
+
+# Docs and media
+docs
+*.md
+CHANGELOG.md
+LICENSE.md
+
+# IDE and OS
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs
+
+# Misc
+*.tmp
+*.temp
+.cache
