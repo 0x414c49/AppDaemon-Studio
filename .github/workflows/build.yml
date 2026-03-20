@@ -13,7 +13,6 @@ env:
   IMAGE_NAME_RAW: ${{ github.repository }}
 
 jobs:
-  # Job 1: Version bump and tagging
   release:
     name: Version & Tag
     runs-on: ubuntu-latest
