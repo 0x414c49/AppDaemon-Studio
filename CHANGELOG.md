@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.45] - 2026-03-20
+
+- test: add e2e tests for autocomplete (self., self.turn, entity IDs)
+
+
 ## [v0.3.44] - 2026-03-20
 
 - fix: autocomplete disappears after typing past self. dot
