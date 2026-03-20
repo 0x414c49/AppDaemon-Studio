@@ -7,8 +7,6 @@ on:
       - '**.md'
       - 'docs/**'
       - 'lessons/**'
-      - '.github/**'
-      - '!.github/workflows/**'
 
 env:
   REGISTRY: ghcr.io
