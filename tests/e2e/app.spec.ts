@@ -194,4 +194,73 @@ class MotionLights(hass.Hass):
     await waitForEditor(page)
     await page.screenshot({ path: shot('08-full-app-view') })
   })
+
+  // ── 9. Autocomplete: self. shows AppDaemon method suggestions ────────────────
+  test('self. triggers AppDaemon method completions', async ({ page }) => {
+    await page.goto('/')
+    await page.getByText('motion_lights').click()
+    await waitForEditor(page)
+
+    // Click in the editor and navigate to end of file
+    await page.locator('.monaco-editor .view-lines').first().click()
+    await page.keyboard.press('Control+End')
+    await page.waitForTimeout(200)
+
+    // Type "self." — should trigger method completions via trigger character
+    await page.keyboard.type('\n        self.')
+    await page.waitForTimeout(1_000)
+
+    // The suggestion widget should appear with AppDaemon methods
+    const suggestionWidget = page.locator('.editor-widget.suggest-widget')
+    await expect(suggestionWidget).toBeVisible({ timeout: 5_000 })
+
+    // Verify known AppDaemon methods are present
+    await expect(suggestionWidget.getByText('turn_on', { exact: false })).toBeVisible()
+    await expect(suggestionWidget.getByText('turn_off', { exact: false })).toBeVisible()
+    await expect(suggestionWidget.getByText('listen_state', { exact: false })).toBeVisible()
+  })
+
+  // ── 10. Autocomplete: self.turn filters correctly ────────────────────────────
+  test('typing after self. filters method list', async ({ page }) => {
+    await page.goto('/')
+    await page.getByText('motion_lights').click()
+    await waitForEditor(page)
+
+    await page.locator('.monaco-editor .view-lines').first().click()
+    await page.keyboard.press('Control+End')
+    await page.waitForTimeout(200)
+
+    // Type "self.turn" — should filter to turn_on / turn_off
+    await page.keyboard.type('\n        self.turn')
+    await page.waitForTimeout(1_000)
+
+    const suggestionWidget = page.locator('.editor-widget.suggest-widget')
+    await expect(suggestionWidget).toBeVisible({ timeout: 5_000 })
+    await expect(suggestionWidget.getByText('turn_on', { exact: false })).toBeVisible()
+    await expect(suggestionWidget.getByText('turn_off', { exact: false })).toBeVisible()
+  })
+
+  // ── 11. Autocomplete: entity IDs inside string arguments ─────────────────────
+  test('entity IDs appear inside string arguments', async ({ page }) => {
+    await page.goto('/')
+    await page.getByText('motion_lights').click()
+    await waitForEditor(page)
+
+    // Wait for entities to load (status bar shows count, not "unavailable")
+    await expect(page.locator('text=/\\d+ entities/')).toBeVisible({ timeout: 10_000 })
+
+    await page.locator('.monaco-editor .view-lines').first().click()
+    await page.keyboard.press('Control+End')
+    await page.waitForTimeout(200)
+
+    // Type opening quote inside a turn_on call — entity completions should appear
+    await page.keyboard.type('\n        self.turn_on("')
+    await page.waitForTimeout(1_000)
+
+    const suggestionWidget = page.locator('.editor-widget.suggest-widget')
+    await expect(suggestionWidget).toBeVisible({ timeout: 5_000 })
+
+    // At least one entity ID should be listed
+    await expect(suggestionWidget.locator('.monaco-list-row').first()).toBeVisible()
+  })
 })
