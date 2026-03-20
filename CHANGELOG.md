@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.3.42] - 2026-03-20
+
+- chore: update docs screenshots and README
+- fix: apply HA design tokens across all UI components
+- fix: migrate UI to Home Assistant design tokens (dark + light themes)
+
+
 ## [v0.3.41] - 2026-03-20
 
 - fix: run container as root so it can write to /config
