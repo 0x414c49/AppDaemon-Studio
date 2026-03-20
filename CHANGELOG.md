@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.40] - 2026-03-20
+
+- chore: add addon icon.png to repo root for HA addon store
+
+
 ## [v0.3.39] - 2026-03-20
 
 - fix: update image name and description in config.json
