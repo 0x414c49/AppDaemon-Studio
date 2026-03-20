@@ -83,32 +83,32 @@ export function VersionCompare({ appName, currentCode, isOpen, onClose, settings
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-slate-800 rounded-lg shadow-2xl w-[90vw] h-[85vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-ha-card rounded-xl shadow-2xl w-[90vw] h-[85vh] flex flex-col border border-ha-border">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-ha-border">
           <div className="flex items-center gap-3">
-            <GitCompare className="w-5 h-5 text-blue-400" />
-            <h2 className="text-lg font-semibold text-white">
-              Compare Versions - {appName}
+            <GitCompare className="w-5 h-5 text-ha-primary" />
+            <h2 className="text-lg font-semibold text-ha-text">
+              Compare Versions — {appName}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-ha-text-secondary hover:text-ha-text transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Version Selector */}
-        <div className="px-6 py-3 border-b border-slate-700">
+        <div className="px-6 py-3 border-b border-ha-border">
           <div className="flex items-center gap-4">
-            <label className="text-sm text-slate-300">Compare with:</label>
+            <label className="text-sm text-ha-text-secondary">Compare with:</label>
             <select
               value={selectedVersion}
               onChange={(e) => setSelectedVersion(e.target.value)}
-              className="flex-1 bg-slate-700 text-white px-3 py-2 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+              className="flex-1 bg-ha-surface text-ha-text px-3 py-2 rounded-lg border border-ha-border focus:border-ha-primary focus:outline-none"
               disabled={loading}
             >
               <option value="">Select a version...</option>
@@ -119,8 +119,8 @@ export function VersionCompare({ appName, currentCode, isOpen, onClose, settings
               ))}
             </select>
           </div>
-          {loading && <p className="text-sm text-slate-400 mt-2">Loading versions...</p>}
-          {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
+          {loading && <p className="text-sm text-ha-text-secondary mt-2">Loading versions...</p>}
+          {error && <p className="text-sm text-ha-error mt-2">{error}</p>}
         </div>
 
         {/* Diff Editor */}
@@ -149,15 +149,15 @@ export function VersionCompare({ appName, currentCode, isOpen, onClose, settings
               }}
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-slate-400">
+            <div className="flex items-center justify-center h-full text-ha-text-secondary">
               {selectedVersion ? 'Loading version content...' : 'Select a version to compare'}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-3 border-t border-slate-700 text-sm">
-          <div className="text-slate-400">
+        <div className="flex items-center justify-between px-6 py-3 border-t border-ha-border text-sm">
+          <div className="text-ha-text-secondary">
             {selectedVersion && versionCode && (
               <span>
                 Left: Version from {formatTimestamp(versions.find(v => v.version === selectedVersion)?.timestamp || '')}
@@ -168,7 +168,7 @@ export function VersionCompare({ appName, currentCode, isOpen, onClose, settings
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+            className="px-4 py-2 border border-ha-border text-ha-text hover:bg-ha-surface rounded-lg transition-colors"
           >
             Close
           </button>

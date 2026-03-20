@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Plus, Trash2, Folder, FolderOpen, FileCode, 
-  Zap, Sun, Moon, Thermometer, Lightbulb, 
+import {
+  Plus, Trash2, Folder, FolderOpen, FileCode,
+  Zap, Sun, Moon, Thermometer, Lightbulb,
   Home, Lock, Bell, Calendar, Clock,
   Wifi, Music, Camera, Tv, Power,
   Activity, Gauge, Cpu, Database, Check, Settings,
@@ -85,26 +85,26 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
   };
 
   return (
-    <aside 
-      className="bg-[#252526] border-r border-[#3c3c3c] flex flex-col flex-shrink-0"
+    <aside
+      className="bg-ha-sidebar border-r border-ha-border flex flex-col flex-shrink-0"
       style={{ width: `${width}px`, fontSize: `${fontSize}px` }}
     >
-      {/* Header - VS Style */}
-      <div className="h-9 flex items-center justify-between px-3 bg-[#323233] border-b border-[#3c3c3c]">
-        <span className="font-medium text-[#cccccc] uppercase tracking-wide" style={{ fontSize: '0.75rem' }}>
-          Solution Explorer
+      {/* Header */}
+      <div className="h-9 flex items-center justify-between px-3 bg-ha-surface border-b border-ha-border">
+        <span className="font-medium text-ha-text-secondary uppercase tracking-wide" style={{ fontSize: '0.75rem' }}>
+          Apps
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="p-1 text-[#cccccc] hover:text-white hover:bg-[#3c3c3c] rounded transition-colors"
+            className="p-1 text-ha-text-secondary hover:text-ha-text hover:bg-ha-surface-hover rounded transition-colors"
             title="New App"
           >
             <Plus className="w-4 h-4" />
           </button>
           <button
             onClick={onOpenSettings}
-            className="p-1 text-[#cccccc] hover:text-white hover:bg-[#3c3c3c] rounded transition-colors"
+            className="p-1 text-ha-text-secondary hover:text-ha-text hover:bg-ha-surface-hover rounded transition-colors"
             title="Settings"
           >
             <Settings className="w-4 h-4" />
@@ -116,23 +116,23 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
       <div className="flex-1 overflow-y-auto">
         {apps.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-            <Folder className="w-12 h-12 text-[#5a5a5a] mb-3" />
-            <p className="text-[#858585] mb-3">No apps yet</p>
+            <Folder className="w-12 h-12 text-ha-text-disabled mb-3" />
+            <p className="text-ha-text-secondary mb-3">No apps yet</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="text-[#3794ff] hover:underline"
+              className="text-ha-primary hover:underline"
             >
               Create your first app
             </button>
           </div>
         ) : (
           <div className="py-1">
-            {/* Solution Root */}
-            <div className="flex items-center h-[22px] px-2 text-[#cccccc]">
-              <ChevronDown className="w-4 h-4 mr-1 text-[#858585]" />
-              <FolderOpen className="w-4 h-4 mr-1.5 text-[#dcb67a]" />
+            {/* Root row */}
+            <div className="flex items-center h-[22px] px-2 text-ha-text">
+              <ChevronDown className="w-4 h-4 mr-1 text-ha-text-secondary" />
+              <FolderOpen className="w-4 h-4 mr-1.5 text-ha-accent" />
               <span className="font-medium">apps</span>
-              <span className="text-[#858585] ml-auto" style={{ fontSize: '0.75rem' }}>{apps.length}</span>
+              <span className="text-ha-text-secondary ml-auto" style={{ fontSize: '0.75rem' }}>{apps.length}</span>
             </div>
 
             {/* Apps list */}
@@ -140,21 +140,21 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
               {apps.map((app) => {
                 const Icon = getIconComponent(app.icon);
                 const isActive = activeApp === app.name;
-                
+
                 return (
                   <div
                     key={app.name}
-                    className={`group flex items-center h-[22px] px-2 cursor-pointer ${
-                      isActive ? 'bg-[#094771]' : 'hover:bg-[#2a2d2e]'
+                    className={`group flex items-center h-[22px] px-2 cursor-pointer rounded-sm ${
+                      isActive ? 'bg-ha-surface-active' : 'hover:bg-ha-surface-hover'
                     }`}
                     onClick={() => onSelectApp(app.name)}
                     title={app.description || app.name}
                   >
                     <Icon className={`w-4 h-4 mr-2 ${
-                      isActive ? 'text-[#4fc1ff]' : 'text-[#858585]'
+                      isActive ? 'text-ha-primary' : 'text-ha-text-secondary'
                     }`} />
                     <span className={`flex-1 truncate ${
-                      isActive ? 'text-white' : 'text-[#cccccc]'
+                      isActive ? 'text-ha-text font-medium' : 'text-ha-text'
                     }`}>
                       {app.name}
                     </span>
@@ -163,7 +163,7 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
                         e.stopPropagation();
                         onDeleteApp(app.name);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 text-[#858585] hover:text-[#f48771] transition-all"
+                      className="opacity-0 group-hover:opacity-100 p-0.5 text-ha-text-secondary hover:text-ha-error transition-all"
                       title="Delete"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -177,18 +177,18 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
       </div>
 
       {/* Status bar */}
-      <div className="h-6 flex items-center px-3 bg-[#007acc] text-white" style={{ fontSize: '0.75rem' }}>
+      <div className="h-6 flex items-center px-3 bg-ha-status text-white" style={{ fontSize: '0.75rem' }}>
         <span>{apps.length} app{apps.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[#252526] rounded-lg p-6 w-96 border border-[#3c3c3c]">
-            <h2 className="text-lg font-bold text-white mb-4">Create New App</h2>
+          <div className="bg-ha-card rounded-xl p-6 w-96 border border-ha-border shadow-2xl">
+            <h2 className="text-lg font-bold text-ha-text mb-4">Create New App</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#cccccc] mb-1">
+                <label className="block text-sm font-medium text-ha-text-secondary mb-1">
                   App Name
                 </label>
                 <input
@@ -200,12 +200,12 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
                     setNewClassName(generateClassName(snakeCaseName));
                   }}
                   placeholder="my_app"
-                  className="w-full px-3 py-2 bg-[#3c3c3c] border border-[#3c3c3c] rounded text-white placeholder-[#858585] focus:outline-none focus:border-[#007acc]"
+                  className="w-full px-3 py-2 bg-ha-surface border border-ha-border rounded-lg text-ha-text focus:outline-none focus:border-ha-primary"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#cccccc] mb-1">
+                <label className="block text-sm font-medium text-ha-text-secondary mb-1">
                   Class Name
                 </label>
                 <input
@@ -213,11 +213,11 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
                   value={newClassName}
                   onChange={(e) => setNewClassName(e.target.value)}
                   placeholder="MyApp"
-                  className="w-full px-3 py-2 bg-[#3c3c3c] border border-[#3c3c3c] rounded text-white placeholder-[#858585] focus:outline-none focus:border-[#007acc]"
+                  className="w-full px-3 py-2 bg-ha-surface border border-ha-border rounded-lg text-ha-text focus:outline-none focus:border-ha-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#cccccc] mb-2">
+                <label className="block text-sm font-medium text-ha-text-secondary mb-2">
                   Icon
                 </label>
                 <div className="grid grid-cols-10 gap-1">
@@ -226,30 +226,30 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
                       key={name}
                       type="button"
                       onClick={() => setSelectedIcon(name)}
-                      className={`p-2 rounded transition-colors relative ${
+                      className={`p-2 rounded-lg transition-colors relative ${
                         selectedIcon === name
-                          ? 'bg-[#094771] text-white'
-                          : 'bg-[#3c3c3c] hover:bg-[#505050] text-[#cccccc]'
+                          ? 'bg-ha-surface-active text-ha-primary'
+                          : 'bg-ha-surface hover:bg-ha-surface-hover text-ha-text-secondary'
                       }`}
                       title={name}
                     >
                       <IconComp className="w-4 h-4" />
                       {selectedIcon === name && (
-                        <Check className="w-2.5 h-2.5 absolute -top-1 -right-1 text-white bg-[#007acc] rounded-full" />
+                        <Check className="w-2.5 h-2.5 absolute -top-1 -right-1 text-white bg-ha-primary rounded-full" />
                       )}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#cccccc] mb-1">
+                <label className="block text-sm font-medium text-ha-text-secondary mb-1">
                   Description
                 </label>
                 <textarea
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Brief description of what this app does"
-                  className="w-full px-3 py-2 bg-[#3c3c3c] border border-[#3c3c3c] rounded text-white placeholder-[#858585] focus:outline-none focus:border-[#007acc] resize-none"
+                  className="w-full px-3 py-2 bg-ha-surface border border-ha-border rounded-lg text-ha-text focus:outline-none focus:border-ha-primary resize-none"
                   rows={2}
                 />
               </div>
@@ -257,13 +257,13 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2 bg-[#3c3c3c] hover:bg-[#505050] text-[#cccccc] rounded transition-colors"
+                  className="flex-1 px-4 py-2 border border-ha-border text-ha-text hover:bg-ha-surface rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-[#007acc] hover:bg-[#0098ff] text-white rounded transition-colors"
+                  className="flex-1 px-4 py-2 bg-ha-primary hover:bg-ha-primary-dark text-white rounded-lg transition-colors"
                 >
                   Create
                 </button>

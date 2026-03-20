@@ -9,9 +9,9 @@ const FAST_POLL_INTERVAL = 1500;
 const FAST_POLL_DURATION = 10000;
 
 const LEVEL_CONFIG = {
-  INFO: { color: 'text-slate-300', bg: 'bg-slate-800', icon: Info },
-  WARNING: { color: 'text-yellow-400', bg: 'bg-yellow-900/20', icon: AlertTriangle },
-  ERROR: { color: 'text-red-400', bg: 'bg-red-900/20', icon: XCircle },
+  INFO: { color: 'text-ha-text', bg: 'bg-ha-surface', icon: Info },
+  WARNING: { color: 'text-ha-warning', bg: 'bg-ha-warning-bg', icon: AlertTriangle },
+  ERROR: { color: 'text-ha-error', bg: 'bg-ha-error-bg', icon: XCircle },
 };
 
 export function LogViewer() {
@@ -133,8 +133,8 @@ export function LogViewer() {
   const filteredLogs = logs.filter(log => selectedLevels.has(log.level)).slice().reverse();
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-[#1e1e1e]">
-      <div className="flex items-center gap-3 p-3 border-b border-[#3c3c3c] bg-[#252526]">
+    <div className="flex flex-col h-full min-h-0 bg-ha-bg">
+      <div className="flex items-center gap-3 p-3 border-b border-ha-border bg-ha-card">
         <div className="flex items-center gap-1">
           {(['INFO', 'WARNING', 'ERROR'] as const).map(level => {
             const config = LEVEL_CONFIG[level];
@@ -144,13 +144,13 @@ export function LogViewer() {
               <button
                 key={level}
                 onClick={() => toggleLevel(level)}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
-                  isActive ? config.bg : 'bg-[#3c3c3c] opacity-50'
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${
+                  isActive ? config.bg : 'bg-ha-surface opacity-50'
                 }`}
                 title={`Toggle ${level}`}
               >
-                <Icon className={`w-3 h-3 ${isActive ? config.color : 'text-[#858585]'}`} />
-                <span className={isActive ? config.color : 'text-[#858585]'}>{level}</span>
+                <Icon className={`w-3 h-3 ${isActive ? config.color : 'text-ha-text-secondary'}`} />
+                <span className={isActive ? config.color : 'text-ha-text-secondary'}>{level}</span>
               </button>
             );
           })}
@@ -161,7 +161,7 @@ export function LogViewer() {
         <button
           onClick={fetchLogs}
           disabled={isLoading}
-          className="flex items-center gap-1 px-2 py-1 bg-[#3c3c3c] hover:bg-[#505050] rounded text-xs text-[#cccccc] transition-colors disabled:opacity-50"
+          className="flex items-center gap-1 px-2 py-1 bg-ha-surface hover:bg-ha-surface-hover rounded-lg text-xs text-ha-text transition-colors disabled:opacity-50"
           title="Refresh"
         >
           <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
@@ -169,8 +169,8 @@ export function LogViewer() {
 
         <button
           onClick={() => setIsAutoRefresh(!isAutoRefresh)}
-          className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
-            isAutoRefresh ? 'bg-[#094771] text-white' : 'bg-[#3c3c3c] text-[#858585]'
+          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${
+            isAutoRefresh ? 'bg-ha-surface-active text-ha-primary' : 'bg-ha-surface text-ha-text-secondary'
           }`}
           title={isAutoRefresh ? 'Auto-refresh on' : 'Auto-refresh off'}
         >
@@ -181,7 +181,7 @@ export function LogViewer() {
         {isPaused && (
           <button
             onClick={handleResume}
-            className="flex items-center gap-1 px-2 py-1 bg-yellow-600 hover:bg-yellow-500 rounded text-xs text-white transition-colors"
+            className="flex items-center gap-1 px-2 py-1 bg-ha-warning-bg hover:opacity-90 rounded-lg text-xs text-ha-warning transition-colors"
           >
             <Pause className="w-3 h-3" />
             Resume
@@ -195,12 +195,12 @@ export function LogViewer() {
         className="flex-1 min-h-0 overflow-y-auto font-mono text-xs p-2 pb-16"
       >
         {error ? (
-          <div className="flex items-center justify-center h-full text-red-400">
+          <div className="flex items-center justify-center h-full text-ha-error">
             <XCircle className="w-5 h-5 mr-2" />
             {error}
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-[#858585]">
+          <div className="flex items-center justify-center h-full text-ha-text-secondary">
             No logs to display
           </div>
         ) : (
@@ -213,14 +213,14 @@ export function LogViewer() {
                   key={`${log.timestamp}-${index}`}
                   className={`flex items-start gap-2 px-2 py-0.5 rounded ${config.bg}`}
                 >
-                  <span className="text-[#858585] shrink-0">
+                  <span className="text-ha-text-secondary shrink-0">
                     {log.timestamp.split(' ')[1]}
                   </span>
                   <Icon className={`w-3 h-3 shrink-0 mt-0.5 ${config.color}`} />
                   <span className={`shrink-0 font-medium ${config.color}`}>
                     {log.source}
                   </span>
-                  <span className="text-[#cccccc] break-all">
+                  <span className="text-ha-text break-all">
                     {log.message}
                   </span>
                 </div>
@@ -234,7 +234,7 @@ export function LogViewer() {
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
           <button
             onClick={handleResume}
-            className="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-full text-white text-sm shadow-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-ha-warning-bg hover:opacity-90 rounded-full text-ha-warning text-sm shadow-lg transition-colors"
           >
             <Play className="w-4 h-4" />
             Resume

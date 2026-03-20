@@ -339,8 +339,8 @@ export function Editor({ appName, settings }: EditorProps) {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="flex-1 flex items-center justify-center bg-ha-bg">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ha-primary"></div>
       </div>
     );
   }
@@ -348,35 +348,35 @@ export function Editor({ appName, settings }: EditorProps) {
   return (
     <div className="flex-1 flex flex-col min-w-0">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
+      <div className="flex items-center justify-between px-4 py-2 bg-ha-card border-b border-ha-border">
         <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <FileCode className="w-5 h-5 text-blue-400" />
+          <h2 className="text-base font-semibold text-ha-text flex items-center gap-2">
+            <FileCode className="w-4 h-4 text-ha-primary" />
             {activeTab === 'python' ? `${appName}.py` : 'apps.yaml'}
             {isDirty && (
-              <span className="px-2 py-0.5 text-xs rounded bg-yellow-900/30 text-yellow-400 font-medium">
+              <span className="px-2 py-0.5 text-xs rounded-full bg-ha-warning-bg text-ha-warning font-medium">
                 Modified
               </span>
             )}
           </h2>
-          
-          <div className="flex gap-2">
+
+          <div className="flex gap-1">
             <button
               onClick={() => setActiveTab('python')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === 'python'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  ? 'bg-ha-primary text-white'
+                  : 'border border-ha-border text-ha-text-secondary hover:bg-ha-surface'
               }`}
             >
               Python
             </button>
             <button
               onClick={() => setActiveTab('yaml')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === 'yaml'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  ? 'bg-ha-primary text-white'
+                  : 'border border-ha-border text-ha-text-secondary hover:bg-ha-surface'
               }`}
             >
               YAML
@@ -388,20 +388,20 @@ export function Editor({ appName, settings }: EditorProps) {
           {activeTab === 'python' && (
             <button
               onClick={() => setShowVersionCompare(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-md font-medium bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg font-medium border border-ha-border text-ha-text hover:bg-ha-surface transition-colors"
             >
               <GitCompare className="w-4 h-4" />
               Compare
             </button>
           )}
-          
+
           <button
             onClick={saveFile}
             disabled={saving || !isDirty}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
               isDirty
-                ? 'bg-green-600 hover:bg-green-700 text-white'
-                : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                ? 'bg-ha-primary hover:bg-ha-primary-dark text-white'
+                : 'border border-ha-border text-ha-text-disabled cursor-not-allowed opacity-50'
             }`}
           >
             <Save className="w-4 h-4" />
@@ -439,7 +439,7 @@ export function Editor({ appName, settings }: EditorProps) {
       </div>
 
       {/* Status bar */}
-      <div className="flex items-center justify-between px-4 py-1 bg-slate-800 border-t border-slate-700 text-xs text-slate-400">
+      <div className="flex items-center justify-between px-4 py-1 bg-ha-card border-t border-ha-border text-xs text-ha-text-secondary">
         <div className="flex items-center gap-4">
           <span>{appName}</span>
           <span>{activeTab.toUpperCase()}</span>
@@ -451,23 +451,23 @@ export function Editor({ appName, settings }: EditorProps) {
                   Loading entities...
                 </>
               ) : !entitiesAvailable ? (
-                <button 
+                <button
                   onClick={refresh}
-                  className="text-yellow-400 hover:text-yellow-300 flex items-center gap-1"
+                  className="text-ha-warning hover:opacity-80 flex items-center gap-1"
                   title="Click to retry"
                 >
                   <RefreshCw className="w-3 h-3" />
                   Entities unavailable (click to retry)
                 </button>
               ) : entitiesError ? (
-                <span className="text-red-400" title={entitiesError}>
+                <span className="text-ha-error" title={entitiesError}>
                   Entities error
                 </span>
               ) : (
                 <>
-                  <span className="text-green-400">{entities.length} entities</span>
+                  <span className="text-ha-success">{entities.length} entities</span>
                   {lastUpdated && (
-                    <span className="text-slate-500">
+                    <span className="text-ha-text-disabled">
                       (updated {lastUpdated.toLocaleTimeString()})
                     </span>
                   )}
@@ -477,7 +477,7 @@ export function Editor({ appName, settings }: EditorProps) {
           )}
         </div>
         <div className="flex items-center gap-4">
-          {isDirty && <span className="text-yellow-400">Modified</span>}
+          {isDirty && <span className="text-ha-warning">Modified</span>}
           <span>UTF-8</span>
         </div>
       </div>
