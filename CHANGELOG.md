@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.43] - 2026-03-20
+
+- fix: rename screenshots to bust GitHub CDN cache
+
+
 ## [v0.3.42] - 2026-03-20
 
 - chore: update docs screenshots and README
