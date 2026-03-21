@@ -20,6 +20,7 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
     private Task _monitorTask = Task.CompletedTask;
     private volatile bool _isReady;
     private volatile PackageSyncStatus? _syncStatus;
+    private string? _resolvedAddonSlug;
 
     public bool IsReady => _isReady;
     public int Port => LspPort;
@@ -78,7 +79,8 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
                 client.Timeout = TimeSpan.FromSeconds(10);
 
-                var slug = _settings.AddonSlug ?? await DiscoverAddonSlugAsync(client, ct);
+                _resolvedAddonSlug ??= _settings.AddonSlug ?? await DiscoverAddonSlugAsync(client, ct);
+                var slug = _resolvedAddonSlug;
                 if (slug != null)
                 {
                     var response = await client.GetAsync($"addons/{slug}/info", ct);
