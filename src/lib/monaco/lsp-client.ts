@@ -85,7 +85,6 @@ export interface LspClientHandle {
  */
 export function startLspClient(
   monacoInstance: typeof import('monaco-editor'),
-  _editor: editor.IStandaloneCodeEditor,
 ): LspClientHandle {
   const wsUrl = (() => {
     const u = new URL('api/lsp', window.location.href);
@@ -101,12 +100,13 @@ export function startLspClient(
 
   const disposables: Array<{ dispose(): void }> = [];
   let initialized = false;
+  let pendingOpen: { uri: string; text: string } | null = null;
+  let currentOpenUri: string | null = null;
 
   // ── Diagnostics → Monaco markers ─────────────────────────────────────────
   conn.onNotification('textDocument/publishDiagnostics', (params: PublishDiagnosticsParams) => {
-    const model = monacoInstance.editor.getModels().find(
-      m => m.uri.toString() === params.uri || m.uri.path.endsWith('.py')
-    );
+    // Monaco model URIs are inmemory://model/N — match by language instead
+    const model = monacoInstance.editor.getModels().find(m => m.getLanguageId() === 'python');
     if (!model) return;
 
     const markers = params.diagnostics.map(d => ({
@@ -128,7 +128,7 @@ export function startLspClient(
       provideHover: async (model, position) => {
         if (!initialized) return null;
 
-        const uri = model.uri.toString();
+        const uri = currentOpenUri ?? model.uri.toString();
         const result = await conn.sendRequest('textDocument/hover', {
           textDocument: { uri },
           position: { line: position.lineNumber - 1, character: position.column - 1 },
@@ -154,7 +154,7 @@ export function startLspClient(
       provideCompletionItems: async (model, position) => {
         if (!initialized) return { suggestions: [] };
 
-        const uri = model.uri.toString();
+        const uri = currentOpenUri ?? model.uri.toString();
         const result = await conn.sendRequest(
           'textDocument/completion',
           {
@@ -170,8 +170,16 @@ export function startLspClient(
         const { CompletionItemKind, CompletionItemInsertTextRule } = monacoInstance.languages;
         const wordUntilPosition = model.getWordUntilPosition(position);
 
+        // Suppress dunders when after self. — our custom provider handles AppDaemon methods
+        const lineContent = model.getLineContent(position.lineNumber);
+        const textBeforeCursor = lineContent.substring(0, position.column - 1);
+        const isAfterSelf = /self\.\w*$/.test(textBeforeCursor);
+        const filtered = isAfterSelf
+          ? items.filter(item => !item.label.startsWith('_'))
+          : items;
+
         return {
-          suggestions: items.map(item => ({
+          suggestions: filtered.map(item => ({
             label: item.label,
             kind: lspCompletionKindToMonaco(CompletionItemKind, item.kind),
             detail: item.detail,
@@ -182,6 +190,10 @@ export function startLspClient(
             insertTextRules: item.insertTextFormat === 2
               ? CompletionItemInsertTextRule.InsertAsSnippet
               : undefined,
+            // Push dunder/private items below everything else
+            sortText: item.label.startsWith('__') ? `9_${item.label}`
+                    : item.label.startsWith('_')  ? `8_${item.label}`
+                    : `4_${item.label}`,
             range: {
               startLineNumber: position.lineNumber,
               endLineNumber: position.lineNumber,
@@ -218,6 +230,8 @@ export function startLspClient(
           pylsp: {
             plugins: {
               jedi: { environment: '/opt/pylsp-venv' },
+              pycodestyle: { enabled: false },
+              mccabe: { enabled: false },
             },
           },
         },
@@ -225,6 +239,14 @@ export function startLspClient(
 
       conn.sendNotification('initialized', {});
       initialized = true;
+
+      // Flush any document that was opened before the handshake completed
+      if (pendingOpen) {
+        conn.sendNotification('textDocument/didOpen', {
+          textDocument: { uri: pendingOpen.uri, languageId: 'python', version: 1, text: pendingOpen.text } satisfies TextDocumentItem,
+        });
+        pendingOpen = null;
+      }
     } catch {
       // LSP not available — silently degrade
     }
@@ -240,7 +262,12 @@ export function startLspClient(
   // ── Returned handle ───────────────────────────────────────────────────────
   return {
     notifyOpen(uri: string, text: string) {
-      if (!initialized) return;
+      currentOpenUri = uri;
+      if (!initialized) {
+        pendingOpen = { uri, text };
+        return;
+      }
+      pendingOpen = null;
       conn.sendNotification('textDocument/didOpen', {
         textDocument: { uri, languageId: 'python', version: 1, text } satisfies TextDocumentItem,
       });
@@ -255,6 +282,7 @@ export function startLspClient(
     },
 
     notifyClose(uri: string) {
+      if (currentOpenUri === uri) currentOpenUri = null;
       if (!initialized) return;
       conn.sendNotification('textDocument/didClose', {
         textDocument: { uri },

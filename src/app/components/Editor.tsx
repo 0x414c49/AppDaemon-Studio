@@ -31,8 +31,24 @@ export function Editor({ appName, settings }: EditorProps) {
   const [monaco, setMonaco] = useState<typeof import('monaco-editor') | null>(null);
 
   const { entities, loading: entitiesLoading, error: entitiesError, available: entitiesAvailable, refresh, lastUpdated } = useEntities();
+  const [diagnostics, setDiagnostics] = useState<{ errors: number; warnings: number; markers: import('monaco-editor').editor.IMarker[] }>({ errors: 0, warnings: 0, markers: [] });
 
   useMonacoProviders(monaco, entities, entitiesLoading);
+
+  // Track Monaco markers (pylsp diagnostics) for the badge
+  useEffect(() => {
+    if (!monaco) return;
+    const update = () => {
+      const markers = monaco.editor.getModelMarkers({ owner: 'pylsp' });
+      setDiagnostics({
+        errors: markers.filter(m => m.severity === monaco.MarkerSeverity.Error).length,
+        warnings: markers.filter(m => m.severity === monaco.MarkerSeverity.Warning).length,
+        markers,
+      });
+    };
+    const sub = monaco.editor.onDidChangeMarkers(update);
+    return () => sub.dispose();
+  }, [monaco]);
 
   useEffect(() => {
     loadFile();
@@ -45,8 +61,13 @@ export function Editor({ appName, settings }: EditorProps) {
     setMonaco(monacoInstance);
 
     // Start LSP client for Python editing; gracefully no-ops if server is absent
-    const lsp = startLspClient(monacoInstance, editorInstance);
+    const lsp = startLspClient(monacoInstance);
     lspClientRef.current = lsp;
+    // File may already be loaded (loadFile runs before onMount); send didOpen now
+    const currentText = editorInstance.getValue();
+    if (currentText) {
+      lsp.notifyOpen(`file:///apps/${appName}.py`, currentText);
+    }
   };
 
   // Cleanup LSP on unmount
@@ -115,6 +136,17 @@ export function Editor({ appName, settings }: EditorProps) {
 
   const isDirty = content !== originalContent;
 
+  const jumpToFirstError = () => {
+    const first = diagnostics.markers
+      .filter(m => m.severity === (monaco?.MarkerSeverity.Error ?? 8))
+      .sort((a, b) => a.startLineNumber - b.startLineNumber)[0]
+      ?? diagnostics.markers[0];
+    if (!first || !editorRef.current) return;
+    editorRef.current.revealLineInCenter(first.startLineNumber);
+    editorRef.current.setPosition({ lineNumber: first.startLineNumber, column: first.startColumn });
+    editorRef.current.focus();
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
@@ -155,13 +187,31 @@ export function Editor({ appName, settings }: EditorProps) {
           <div className="flex gap-1">
             <button
               onClick={() => setActiveTab('python')}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+              className={`relative px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === 'python'
                   ? 'bg-ha-primary text-white'
                   : 'border border-ha-border text-ha-text-secondary hover:bg-ha-surface'
               }`}
             >
               Python
+              {diagnostics.errors > 0 && (
+                <span
+                  onClick={e => { e.stopPropagation(); jumpToFirstError(); }}
+                  title={diagnostics.markers.filter(m => m.severity === (monaco?.MarkerSeverity.Error ?? 8)).map(m => `L${m.startLineNumber}: ${m.message}`).join('\n')}
+                  className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-4 text-center cursor-pointer hover:bg-red-400"
+                >
+                  {diagnostics.errors}
+                </span>
+              )}
+              {diagnostics.errors === 0 && diagnostics.warnings > 0 && (
+                <span
+                  onClick={e => { e.stopPropagation(); jumpToFirstError(); }}
+                  title={diagnostics.markers.filter(m => m.severity === (monaco?.MarkerSeverity.Warning ?? 4)).map(m => `L${m.startLineNumber}: ${m.message}`).join('\n')}
+                  className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-yellow-500 text-white text-[10px] font-bold leading-4 text-center cursor-pointer hover:bg-yellow-400"
+                >
+                  {diagnostics.warnings}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab('yaml')}
@@ -230,9 +280,19 @@ export function Editor({ appName, settings }: EditorProps) {
             readOnly: false,
             automaticLayout: true,
             padding: { top: 16 },
-            quickSuggestions: true,
+            quickSuggestions: { other: true, comments: false, strings: true },
+            quickSuggestionsDelay: 0,
             suggestOnTriggerCharacters: true,
             acceptSuggestionOnEnter: 'on',
+            suggest: {
+              preview: true,
+              previewMode: 'subword',
+              showStatusBar: true,
+              localityBonus: true,
+              filterGraceful: true,
+              insertMode: 'replace',
+              selectionMode: 'always',
+            },
           }}
         />
       </div>
@@ -259,18 +319,16 @@ export function Editor({ appName, settings }: EditorProps) {
                   Entities unavailable (click to retry)
                 </button>
               ) : entitiesError ? (
-                <span className="text-ha-error" title={entitiesError}>
-                  Entities error
-                </span>
+                <button onClick={refresh} className="text-ha-error hover:opacity-80 flex items-center gap-1" title={entitiesError}>
+                  <RefreshCw className="w-3 h-3" />
+                  Entities error (click to retry)
+                </button>
               ) : (
-                <>
-                  <span className="text-ha-success">{entities.length} entities</span>
-                  {lastUpdated && (
-                    <span className="text-ha-text-disabled">
-                      (updated {lastUpdated.toLocaleTimeString()})
-                    </span>
-                  )}
-                </>
+                <button onClick={refresh} className="text-ha-success hover:opacity-80 flex items-center gap-1" title="Click to refresh entities">
+                  <RefreshCw className="w-3 h-3" />
+                  {entities.length} entities
+                  {lastUpdated && <span className="text-ha-text-disabled">(updated {lastUpdated.toLocaleTimeString()})</span>}
+                </button>
               )}
             </span>
           )}

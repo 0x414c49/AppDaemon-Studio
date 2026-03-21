@@ -1,6 +1,7 @@
+using System.Buffers;
+using System.Buffers.Text;
 using System.Net.Sockets;
 using System.Net.WebSockets;
-using System.Text;
 using AppDaemonStudio.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +11,8 @@ namespace AppDaemonStudio.Controllers;
 [Route("api/lsp")]
 public class LspController(ILspService lspService, ILogger<LspController> logger) : ControllerBase
 {
-    private const int LspPort = 2087;
-    private const int BufferSize = 64 * 1024; // 64 KB
+    private const int WsBufferSize  = 64 * 1024; // max WebSocket message we'll receive
+    private const int HeaderBufSize = 256;        // LSP headers are always tiny ("Content-Length: N\r\n\r\n")
 
     [HttpGet]
     public async Task Get()
@@ -30,22 +31,22 @@ public class LspController(ILspService lspService, ILogger<LspController> logger
             return;
         }
 
-        using var ws = await HttpContext.WebSockets.AcceptWebSocketAsync();
+        using var ws  = await HttpContext.WebSockets.AcceptWebSocketAsync();
         using var tcp = new TcpClient();
 
         try
         {
-            await tcp.ConnectAsync("127.0.0.1", LspPort);
+            await tcp.ConnectAsync("127.0.0.1", lspService.Port);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to connect to pylsp on port {Port}", LspPort);
+            logger.LogWarning(ex, "Failed to connect to pylsp on port {Port}", lspService.Port);
             await ws.CloseAsync(WebSocketCloseStatus.InternalServerError, "LSP unavailable", CancellationToken.None);
             return;
         }
 
         using var stream = tcp.GetStream();
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(HttpContext.RequestAborted);
+        using var cts    = CancellationTokenSource.CreateLinkedTokenSource(HttpContext.RequestAborted);
 
         logger.LogDebug("LSP WebSocket proxy connected");
 
@@ -75,85 +76,105 @@ public class LspController(ILspService lspService, ILogger<LspController> logger
     // WebSocket → TCP: receive raw JSON, prepend Content-Length header
     private static async Task WsToTcpAsync(WebSocket ws, NetworkStream stream, CancellationToken ct)
     {
-        var buffer = new byte[BufferSize];
-        while (!ct.IsCancellationRequested && ws.State == WebSocketState.Open)
+        // Rent both buffers once for the lifetime of this connection
+        var wsBuf = ArrayPool<byte>.Shared.Rent(WsBufferSize);
+        var hdrBuf = ArrayPool<byte>.Shared.Rent(HeaderBufSize);
+        try
         {
-            var result = await ws.ReceiveAsync(buffer, ct);
-            if (result.MessageType == WebSocketMessageType.Close) break;
+            while (!ct.IsCancellationRequested && ws.State == WebSocketState.Open)
+            {
+                var result = await ws.ReceiveAsync(wsBuf.AsMemory(0, WsBufferSize), ct);
+                if (result.MessageType == WebSocketMessageType.Close) break;
 
-            var header = Encoding.ASCII.GetBytes($"Content-Length: {result.Count}\r\n\r\n");
-            await stream.WriteAsync(header, ct);
-            await stream.WriteAsync(buffer.AsMemory(0, result.Count), ct);
+                // Write "Content-Length: N\r\n\r\n" with no string/byte[] allocation
+                int hdrLen = WriteContentLengthHeader(hdrBuf, result.Count);
+                await stream.WriteAsync(hdrBuf.AsMemory(0, hdrLen), ct);
+                await stream.WriteAsync(wsBuf.AsMemory(0, result.Count), ct);
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(wsBuf);
+            ArrayPool<byte>.Shared.Return(hdrBuf);
         }
     }
 
-    // TCP → WebSocket: read Content-Length framed message, forward raw JSON
+    // TCP → WebSocket: read Content-Length framed messages, forward raw JSON
     private static async Task TcpToWsAsync(NetworkStream stream, WebSocket ws, CancellationToken ct)
     {
-        var headerBuf = new byte[BufferSize];
+        // Small fixed header buffer — LSP headers are always < 64 bytes
+        var headerBuf = new byte[HeaderBufSize];
 
         while (!ct.IsCancellationRequested && ws.State == WebSocketState.Open)
         {
-            // Read headers until \r\n\r\n
+            // Read into headerBuf one byte at a time until \r\n\r\n
+            // (no per-byte allocation — reads directly into the existing buffer)
             int headerLen = 0;
             int contentLength = -1;
 
             while (!ct.IsCancellationRequested)
             {
-                int b = await ReadByteAsync(stream, ct);
-                if (b < 0) return;
+                int n = await stream.ReadAsync(headerBuf.AsMemory(headerLen, 1), ct);
+                if (n == 0) return;
 
-                headerBuf[headerLen++] = (byte)b;
+                headerLen++;
 
-                // Check for end of headers
                 if (headerLen >= 4 &&
                     headerBuf[headerLen - 4] == '\r' &&
                     headerBuf[headerLen - 3] == '\n' &&
                     headerBuf[headerLen - 2] == '\r' &&
                     headerBuf[headerLen - 1] == '\n')
                 {
-                    var headerText = Encoding.ASCII.GetString(headerBuf, 0, headerLen);
-                    contentLength = ParseContentLength(headerText);
+                    contentLength = ParseContentLength(headerBuf.AsSpan(0, headerLen));
                     break;
                 }
             }
 
             if (contentLength <= 0) continue;
 
-            // Read exactly contentLength bytes
-            var body = new byte[contentLength];
-            int read = 0;
-            while (read < contentLength && !ct.IsCancellationRequested)
+            // Rent body buffer from pool — avoids LOH pressure for large responses (completions, hover)
+            var bodyBuf = ArrayPool<byte>.Shared.Rent(contentLength);
+            try
             {
-                int n = await stream.ReadAsync(body.AsMemory(read, contentLength - read), ct);
-                if (n == 0) return;
-                read += n;
-            }
+                int read = 0;
+                while (read < contentLength && !ct.IsCancellationRequested)
+                {
+                    int n = await stream.ReadAsync(bodyBuf.AsMemory(read, contentLength - read), ct);
+                    if (n == 0) return;
+                    read += n;
+                }
 
-            if (ws.State == WebSocketState.Open)
+                if (ws.State == WebSocketState.Open)
+                    await ws.SendAsync(bodyBuf.AsMemory(0, read), WebSocketMessageType.Text, true, ct);
+            }
+            finally
             {
-                await ws.SendAsync(body.AsMemory(0, read), WebSocketMessageType.Text, true, ct);
+                ArrayPool<byte>.Shared.Return(bodyBuf);
             }
         }
     }
 
-    private static async Task<int> ReadByteAsync(NetworkStream stream, CancellationToken ct)
+    // Writes "Content-Length: N\r\n\r\n" into buf using UTF-8 literals and Utf8Formatter.
+    // Zero heap allocations.
+    private static int WriteContentLengthHeader(byte[] buf, int contentLength)
     {
-        var buf = new byte[1];
-        int n = await stream.ReadAsync(buf, ct);
-        return n == 0 ? -1 : buf[0];
+        "Content-Length: "u8.CopyTo(buf.AsSpan());
+        Utf8Formatter.TryFormat(contentLength, buf.AsSpan(16), out int written);
+        "\r\n\r\n"u8.CopyTo(buf.AsSpan(16 + written));
+        return 16 + written + 4;
     }
 
-    private static int ParseContentLength(string headers)
+    // Span-based Content-Length parse — no string allocation
+    private static int ParseContentLength(ReadOnlySpan<byte> header)
     {
-        foreach (var line in headers.Split("\r\n", StringSplitOptions.RemoveEmptyEntries))
-        {
-            if (line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
-            {
-                var value = line["Content-Length:".Length..].Trim();
-                if (int.TryParse(value, out int len)) return len;
-            }
-        }
-        return -1;
+        ReadOnlySpan<byte> prefix = "Content-Length: "u8;
+        int pos = header.IndexOf(prefix);
+        if (pos < 0) return -1;
+
+        var rest = header[(pos + prefix.Length)..];
+        int end  = rest.IndexOf((byte)'\r');
+        if (end < 0) return -1;
+
+        return Utf8Parser.TryParse(rest[..end], out int len, out _) ? len : -1;
     }
 }

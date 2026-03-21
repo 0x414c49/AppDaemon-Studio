@@ -52,7 +52,7 @@ WORKDIR /app
 RUN apk add --no-cache python3 py3-pip py3-virtualenv && \
     python3 -m venv /opt/pylsp-venv && \
     /opt/pylsp-venv/bin/pip install --no-cache-dir \
-        python-lsp-server \
+        "python-lsp-server[pyflakes,pycodestyle]" \
         appdaemon
 
 # .NET backend binary (arch-specific)

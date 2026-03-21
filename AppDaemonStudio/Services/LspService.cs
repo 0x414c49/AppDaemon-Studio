@@ -20,6 +20,7 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
     private volatile bool _isReady;
 
     public bool IsReady => _isReady;
+    public int Port => LspPort;
 
     public LspService(ILogger<LspService> logger, AppSettings settings, IHttpClientFactory httpClientFactory)
     {
@@ -128,7 +129,7 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
             {
                 FileName = "/opt/pylsp-venv/bin/pip",
                 Arguments = $"install {string.Join(' ', packages.Select(p => $"\"{p}\""))}",
-                RedirectStandardOutput = true,
+                RedirectStandardOutput = false, // not consumed — leaving redirected causes deadlock on large output
                 RedirectStandardError = true,
                 UseShellExecute = false,
             })!;
