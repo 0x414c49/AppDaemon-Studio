@@ -2,16 +2,11 @@
 
 import { useEffect, useState, useRef } from 'react';
 import MonacoEditor from '@monaco-editor/react';
-import type { editor, languages, Position } from 'monaco-editor';
+import type { editor } from 'monaco-editor';
 import { Save, FileCode, RefreshCw, GitCompare } from 'lucide-react';
 import { useEntities } from '@/hooks/useEntities';
-import { 
-  createAppDaemonCompletions,
-  createEntityCompletions,
-  shouldTriggerEntityCompletion,
-  filterEntitiesForContext,
-} from '@/lib/monaco/completions';
-import { APPDAEMON_SIGNATURES } from '@/lib/monaco/completions/signatures';
+import { useMonacoProviders } from '@/hooks/useMonacoProviders';
+import { startLspClient, type LspClientHandle } from '@/lib/monaco/lsp-client';
 import { registerCustomThemes } from '@/lib/monaco/themes';
 import { EditorSettings, DEFAULT_SETTINGS } from '@/lib/settings-store';
 import { VersionCompare } from './VersionCompare';
@@ -31,377 +26,60 @@ export function Editor({ appName, settings }: EditorProps) {
   const [activeTab, setActiveTab] = useState<'python' | 'yaml'>('python');
   const [showVersionCompare, setShowVersionCompare] = useState(false);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const monacoRef = useRef<typeof import('monaco-editor') | null>(null);
-  const completionProvidersRef = useRef<{ appDaemon?: any; entity?: any; signature?: any; callService?: any }>({});
-  
+  const lspClientRef = useRef<LspClientHandle | null>(null);
+  const docVersionRef = useRef(0);
+  const [monaco, setMonaco] = useState<typeof import('monaco-editor') | null>(null);
+
   const { entities, loading: entitiesLoading, error: entitiesError, available: entitiesAvailable, refresh, lastUpdated } = useEntities();
+
+  useMonacoProviders(monaco, entities, entitiesLoading);
 
   useEffect(() => {
     loadFile();
   }, [appName, activeTab]);
 
-  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: any) => {
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-    
-    registerCustomThemes(monaco);
-    monaco.editor.setTheme(settings.theme);
-    
-    // Register AppDaemon API completions
-    const appDaemonProvider = monaco.languages.registerCompletionItemProvider('python', {
-      triggerCharacters: ['.', ' ', '('],
-      provideCompletionItems: (model: editor.ITextModel, position: Position) => {
-        const lineContent = model.getLineContent(position.lineNumber);
-        const wordUntilPosition = model.getWordUntilPosition(position);
-        
-        const textBeforeCursor = lineContent.substring(0, position.column - 1);
-        // Match self. followed by any partial word (e.g. "self.", "self.turn", "self.turn_on")
-        const selfDotMatch = /self\.(\w*)$/.exec(textBeforeCursor);
-        const isAfterSelf = selfDotMatch !== null;
-        const selfPartialWord = selfDotMatch?.[1] ?? '';
-        const isEmptyLine = /^\s*$/.test(textBeforeCursor);
-        const isStartingKeyword = /\b(impo|from|clas|def|if|for|whil|try)\b/.test(textBeforeCursor);
-        const isAfterDot = !isAfterSelf && /\.$/.test(textBeforeCursor);
+  const handleEditorDidMount = (editorInstance: editor.IStandaloneCodeEditor, monacoInstance: any) => {
+    editorRef.current = editorInstance;
+    registerCustomThemes(monacoInstance);
+    monacoInstance.editor.setTheme(settings.theme);
+    setMonaco(monacoInstance);
 
-        // Get all completions
-        const allCompletions = createAppDaemonCompletions();
-
-        // Convert to Monaco suggestions with proper range
-        const createSuggestions = (items: typeof allCompletions) => {
-          return items.map(item => ({
-            label: item.label,
-            kind: item.kind,
-            insertText: item.insertText,
-            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation: item.documentation,
-            detail: item.detail,
-            // filterText strips the "self." prefix so Monaco matches against what
-            // the user types AFTER the dot (e.g. "turn" matches "turn_on")
-            filterText: isAfterSelf && item.label.startsWith('self.')
-              ? item.label.slice(5)
-              : item.label,
-            range: {
-              startLineNumber: position.lineNumber,
-              endLineNumber: position.lineNumber,
-              // Cover "self." + any partial word already typed
-              startColumn: isAfterSelf && item.label.startsWith('self.')
-                ? position.column - 5 - selfPartialWord.length
-                : wordUntilPosition.startColumn,
-              endColumn: position.column,
-            },
-          }));
-        };
-        
-        // Context-based filtering
-        if (isAfterSelf) {
-          // After self. - show AppDaemon methods
-          const filtered = allCompletions.filter(item => 
-            item.label.startsWith('self.') || 
-            item.detail?.includes('AppDaemon') ||
-            item.detail?.includes('Time') ||
-            item.detail?.includes('Sun') ||
-            item.detail?.includes('Presence')
-          );
-          return { suggestions: createSuggestions(filtered) };
-        } else if (isAfterDot) {
-          // After any other dot - show module methods
-          const filtered = allCompletions.filter(item =>
-            item.detail === 'JSON' ||
-            item.detail === 'OS' ||
-            item.detail === 'Datetime' ||
-            item.detail === 'HTTP'
-          );
-          return { suggestions: createSuggestions(filtered) };
-        } else if (isEmptyLine || isStartingKeyword) {
-          // Start of line or typing keyword - show imports, keywords, classes
-          const filtered = allCompletions.filter(item =>
-            item.detail === 'Import' ||
-            item.detail === 'Keyword' ||
-            item.detail === 'Snippet' ||
-            item.detail === 'Control Flow' ||
-            item.label.startsWith('class ') ||
-            item.label.startsWith('def ') ||
-            item.label.startsWith('import ')
-          );
-          return { suggestions: createSuggestions(filtered) };
-        } else {
-          // Default - show utility functions, paths, builtins
-          const filtered = allCompletions.filter(item =>
-            item.detail === 'JSON' ||
-            item.detail === 'JSON Pattern' ||
-            item.detail === 'OS' ||
-            item.detail === 'Datetime' ||
-            item.detail === 'HTTP' ||
-            item.detail === 'File I/O' ||
-            item.detail === 'Snippet' ||
-            item.detail === 'Path' ||
-            item.detail === 'Built-in' ||
-            item.detail === 'Python' ||
-            item.detail === 'Control Flow'
-          );
-          return { suggestions: createSuggestions(filtered) };
-        }
-      },
-    });
-    
-    completionProvidersRef.current.appDaemon = appDaemonProvider;
-
-    // Register call_service / call_action domain/service completions
-    const HA_SERVICES: { service: string; detail: string; documentation: string }[] = [
-      // Light
-      { service: 'light/turn_on',       detail: 'light',         documentation: 'Turn on a light. kwargs: entity_id, brightness (0-255), rgb_color, color_temp, transition, effect' },
-      { service: 'light/turn_off',      detail: 'light',         documentation: 'Turn off a light. kwargs: entity_id, transition' },
-      { service: 'light/toggle',        detail: 'light',         documentation: 'Toggle a light on/off. kwargs: entity_id' },
-      // Switch
-      { service: 'switch/turn_on',      detail: 'switch',        documentation: 'Turn on a switch. kwargs: entity_id' },
-      { service: 'switch/turn_off',     detail: 'switch',        documentation: 'Turn off a switch. kwargs: entity_id' },
-      { service: 'switch/toggle',       detail: 'switch',        documentation: 'Toggle a switch. kwargs: entity_id' },
-      // Climate
-      { service: 'climate/set_temperature',   detail: 'climate', documentation: 'Set target temperature. kwargs: entity_id, temperature, hvac_mode' },
-      { service: 'climate/set_hvac_mode',     detail: 'climate', documentation: 'Set HVAC mode. kwargs: entity_id, hvac_mode (off|heat|cool|auto|dry|fan_only)' },
-      { service: 'climate/set_fan_mode',      detail: 'climate', documentation: 'Set fan mode. kwargs: entity_id, fan_mode' },
-      { service: 'climate/turn_on',           detail: 'climate', documentation: 'Turn on climate device. kwargs: entity_id' },
-      { service: 'climate/turn_off',          detail: 'climate', documentation: 'Turn off climate device. kwargs: entity_id' },
-      // Cover
-      { service: 'cover/open_cover',    detail: 'cover',         documentation: 'Open a cover. kwargs: entity_id' },
-      { service: 'cover/close_cover',   detail: 'cover',         documentation: 'Close a cover. kwargs: entity_id' },
-      { service: 'cover/toggle',        detail: 'cover',         documentation: 'Toggle a cover. kwargs: entity_id' },
-      { service: 'cover/set_cover_position', detail: 'cover',    documentation: 'Set cover position (0-100). kwargs: entity_id, position' },
-      // Fan
-      { service: 'fan/turn_on',         detail: 'fan',           documentation: 'Turn on a fan. kwargs: entity_id, speed, percentage' },
-      { service: 'fan/turn_off',        detail: 'fan',           documentation: 'Turn off a fan. kwargs: entity_id' },
-      { service: 'fan/set_percentage',  detail: 'fan',           documentation: 'Set fan speed percentage (0-100). kwargs: entity_id, percentage' },
-      // Lock
-      { service: 'lock/lock',           detail: 'lock',          documentation: 'Lock a lock. kwargs: entity_id' },
-      { service: 'lock/unlock',         detail: 'lock',          documentation: 'Unlock a lock. kwargs: entity_id, code (optional)' },
-      // Media player
-      { service: 'media_player/turn_on',       detail: 'media_player', documentation: 'Turn on media player. kwargs: entity_id' },
-      { service: 'media_player/turn_off',      detail: 'media_player', documentation: 'Turn off media player. kwargs: entity_id' },
-      { service: 'media_player/media_play',    detail: 'media_player', documentation: 'Start playback. kwargs: entity_id' },
-      { service: 'media_player/media_pause',   detail: 'media_player', documentation: 'Pause playback. kwargs: entity_id' },
-      { service: 'media_player/media_stop',    detail: 'media_player', documentation: 'Stop playback. kwargs: entity_id' },
-      { service: 'media_player/media_next_track',  detail: 'media_player', documentation: 'Skip to next track. kwargs: entity_id' },
-      { service: 'media_player/play_media',    detail: 'media_player', documentation: 'Play media. kwargs: entity_id, media_content_id, media_content_type' },
-      { service: 'media_player/volume_set',    detail: 'media_player', documentation: 'Set volume (0.0-1.0). kwargs: entity_id, volume_level' },
-      // Notify
-      { service: 'notify/notify',              detail: 'notify', documentation: 'Send a notification. kwargs: message, title' },
-      { service: 'notify/persistent_notification', detail: 'notify', documentation: 'Create a persistent HA notification. kwargs: message, title, notification_id' },
-      // Input helpers
-      { service: 'input_boolean/turn_on',   detail: 'input_boolean', documentation: 'Turn on input_boolean. kwargs: entity_id' },
-      { service: 'input_boolean/turn_off',  detail: 'input_boolean', documentation: 'Turn off input_boolean. kwargs: entity_id' },
-      { service: 'input_boolean/toggle',    detail: 'input_boolean', documentation: 'Toggle input_boolean. kwargs: entity_id' },
-      { service: 'input_number/set_value',  detail: 'input_number',  documentation: 'Set input_number value. kwargs: entity_id, value' },
-      { service: 'input_select/select_option', detail: 'input_select', documentation: 'Set input_select option. kwargs: entity_id, option' },
-      { service: 'input_text/set_value',    detail: 'input_text',    documentation: 'Set input_text value. kwargs: entity_id, value' },
-      // Automation / Script / Scene
-      { service: 'automation/trigger',      detail: 'automation', documentation: 'Trigger an automation. kwargs: entity_id' },
-      { service: 'automation/turn_on',      detail: 'automation', documentation: 'Enable an automation. kwargs: entity_id' },
-      { service: 'automation/turn_off',     detail: 'automation', documentation: 'Disable an automation. kwargs: entity_id' },
-      { service: 'script/turn_on',          detail: 'script',     documentation: 'Run a script. kwargs: entity_id, variables' },
-      { service: 'scene/turn_on',           detail: 'scene',      documentation: 'Activate a scene. kwargs: entity_id, transition' },
-      // Timer
-      { service: 'timer/start',             detail: 'timer',      documentation: 'Start a timer. kwargs: entity_id, duration (HH:MM:SS)' },
-      { service: 'timer/cancel',            detail: 'timer',      documentation: 'Cancel a timer. kwargs: entity_id' },
-      // Persistent notification
-      { service: 'persistent_notification/create',  detail: 'persistent_notification', documentation: 'Create a persistent notification. kwargs: message, title, notification_id' },
-      { service: 'persistent_notification/dismiss', detail: 'persistent_notification', documentation: 'Dismiss a persistent notification. kwargs: notification_id' },
-      // Homeassistant
-      { service: 'homeassistant/restart',   detail: 'homeassistant', documentation: 'Restart Home Assistant.' },
-      { service: 'homeassistant/reload_all',detail: 'homeassistant', documentation: 'Reload all YAML configuration.' },
-      { service: 'tts/speak',               detail: 'tts',        documentation: 'Speak text via TTS. kwargs: media_player_entity_id, message, language' },
-    ];
-
-    const callServiceProvider = monaco.languages.registerCompletionItemProvider('python', {
-      triggerCharacters: ["'", '"', '/'],
-      provideCompletionItems: (model: editor.ITextModel, position: Position) => {
-        const lineContent = model.getLineContent(position.lineNumber);
-        const textBeforeCursor = lineContent.substring(0, position.column - 1);
-        const wordUntilPosition = model.getWordUntilPosition(position);
-
-        // Only fire inside the first string arg of call_service / call_action
-        if (!/self\.(call_service|call_action)\s*\(\s*['"][^'"]*$/.test(textBeforeCursor)) {
-          return { suggestions: [] };
-        }
-
-        const prefix = wordUntilPosition.word;
-        const filtered = prefix
-          ? HA_SERVICES.filter(s => s.service.includes(prefix.toLowerCase()))
-          : HA_SERVICES;
-
-        return {
-          suggestions: filtered.map(s => ({
-            label: s.service,
-            kind: 12, // Value
-            insertText: s.service,
-            detail: s.detail,
-            documentation: s.documentation,
-            filterText: s.service,
-            range: {
-              startLineNumber: position.lineNumber,
-              endLineNumber: position.lineNumber,
-              startColumn: wordUntilPosition.startColumn,
-              endColumn: position.column,
-            },
-          })),
-        };
-      },
-    });
-    completionProvidersRef.current.callService = callServiceProvider;
-
-    // Register signature help provider for method signatures
-    const signatureProvider = monaco.languages.registerSignatureHelpProvider('python', {
-      triggerCharacters: ['(', ','],
-      provideSignatureHelp: (model: editor.ITextModel, position: Position) => {
-        const textUntilPosition = model.getValueInRange({
-          startLineNumber: 1,
-          startColumn: 1,
-          endLineNumber: position.lineNumber,
-          endColumn: position.column,
-        });
-        
-        // Match self.method_name(
-        const methodNames = Object.keys(APPDAEMON_SIGNATURES).join('|');
-        const match = textUntilPosition.match(new RegExp(`self\\.(${methodNames})\\s*\\(([^)]*)$`));
-        
-        if (!match) {
-          return { value: { signatures: [], activeSignature: 0, activeParameter: 0 }, dispose: () => {} };
-        }
-        
-        const methodName = match[1];
-        const paramsString = match[2];
-        
-        // Count commas to determine active parameter (simple approach)
-        let activeParameter = 0;
-        let depth = 0;
-        let inString = false;
-        let stringChar = '';
-        
-        for (let i = 0; i < paramsString.length; i++) {
-          const char = paramsString[i];
-          
-          // Track string boundaries
-          if ((char === '"' || char === "'") && paramsString[i-1] !== '\\') {
-            if (!inString) {
-              inString = true;
-              stringChar = char;
-            } else if (char === stringChar) {
-              inString = false;
-            }
-          }
-          
-          // Only count commas outside strings and nested parens
-          if (!inString) {
-            if (char === '(' || char === '[' || char === '{') depth++;
-            if (char === ')' || char === ']' || char === '}') depth--;
-            if (char === ',' && depth === 0) activeParameter++;
-          }
-        }
-        
-        const sig = APPDAEMON_SIGNATURES[methodName];
-        
-        if (!sig) {
-          return { value: { signatures: [], activeSignature: 0, activeParameter: 0 }, dispose: () => {} };
-        }
-        
-        return {
-          value: {
-            signatures: [sig],
-            activeSignature: 0,
-            activeParameter
-          },
-          dispose: () => {}
-        };
-      }
-    });
-    
-    completionProvidersRef.current.signature = signatureProvider;
+    // Start LSP client for Python editing; gracefully no-ops if server is absent
+    const lsp = startLspClient(monacoInstance, editorInstance);
+    lspClientRef.current = lsp;
   };
-  
+
+  // Cleanup LSP on unmount
   useEffect(() => {
-    if (monacoRef.current) {
-      monacoRef.current.editor.setTheme(settings.theme);
-    }
-  }, [settings.theme]);
-  
-  // Update entity completions when entities change
-  useEffect(() => {
-    if (!monacoRef.current) return;
-    
-    const monaco = monacoRef.current;
-    
-    // Dispose previous entity provider
-    if (completionProvidersRef.current.entity) {
-      completionProvidersRef.current.entity.dispose();
-    }
-    
-    const entityProvider = monaco.languages.registerCompletionItemProvider('python', {
-      triggerCharacters: ['(', ',', "'", '"'],
-      provideCompletionItems: (model: editor.ITextModel, position: Position) => {
-        // Skip if no entities available yet
-        if (entitiesLoading || entities.length === 0) {
-          return { suggestions: [] };
-        }
-        
-        const lineContent = model.getLineContent(position.lineNumber);
-        const wordUntilPosition = model.getWordUntilPosition(position);
-        
-        if (!shouldTriggerEntityCompletion(lineContent, position.column)) {
-          return { suggestions: [] };
-        }
-        
-        const prefix = wordUntilPosition.word;
-        const filteredEntities = filterEntitiesForContext(
-          entities, lineContent, position.column, prefix
-        );
-        
-        const suggestions = createEntityCompletions(filteredEntities).map(item => ({
-          label: item.label,
-          kind: item.kind,
-          insertText: item.insertText,
-          documentation: item.documentation,
-          detail: item.detail,
-          range: {
-            startLineNumber: position.lineNumber,
-            endLineNumber: position.lineNumber,
-            startColumn: wordUntilPosition.startColumn,
-            endColumn: position.column,
-          },
-        }));
-        
-        return { suggestions };
-      },
-    });
-    
-    completionProvidersRef.current.entity = entityProvider;
-  }, [entities, entitiesLoading]);
-  
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (completionProvidersRef.current.appDaemon) {
-        completionProvidersRef.current.appDaemon.dispose();
-      }
-      if (completionProvidersRef.current.entity) {
-        completionProvidersRef.current.entity.dispose();
-      }
-      if (completionProvidersRef.current.signature) {
-        completionProvidersRef.current.signature.dispose();
-      }
-      if (completionProvidersRef.current.callService) {
-        completionProvidersRef.current.callService.dispose();
-      }
-    };
+    return () => { lspClientRef.current?.dispose(); };
   }, []);
+
+  useEffect(() => {
+    if (monaco) {
+      monaco.editor.setTheme(settings.theme);
+    }
+  }, [settings.theme, monaco]);
+  
+  const lspUri = (tab: 'python' | 'yaml') =>
+    `file:///apps/${appName}.${tab === 'python' ? 'py' : 'yaml'}`;
 
   const loadFile = async () => {
     try {
       setLoading(true);
+      // Close previous LSP document before switching
+      if (lspClientRef.current) {
+        lspClientRef.current.notifyClose(lspUri(activeTab));
+      }
       const fileType = activeTab === 'python' ? 'python' : 'yaml';
       const response = await fetch(`api/files/${appName}/${fileType}`);
       if (!response.ok) throw new Error('Failed to load file');
       const data = await response.json();
       setContent(data.content);
       setOriginalContent(data.content);
+      docVersionRef.current = 1;
+      if (activeTab === 'python' && lspClientRef.current) {
+        lspClientRef.current.notifyOpen(lspUri('python'), data.content);
+      }
     } catch (err) {
       setContent(activeTab === 'python' ? '# Error loading file' : '# Error loading file');
     } finally {
@@ -531,7 +209,14 @@ export function Editor({ appName, settings }: EditorProps) {
           defaultLanguage={activeTab === 'python' ? 'python' : 'yaml'}
           language={activeTab === 'python' ? 'python' : 'yaml'}
           value={content}
-          onChange={(value) => setContent(value || '')}
+          onChange={(value) => {
+            const text = value || '';
+            setContent(text);
+            if (activeTab === 'python' && lspClientRef.current) {
+              docVersionRef.current += 1;
+              lspClientRef.current.notifyChange(lspUri('python'), docVersionRef.current, text);
+            }
+          }}
           theme={settings.theme}
           onMount={handleEditorDidMount}
           options={{

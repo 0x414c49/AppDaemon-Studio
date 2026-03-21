@@ -47,6 +47,14 @@ LABEL org.opencontainers.image.created="${BUILD_DATE}"
 
 WORKDIR /app
 
+# Python venv with pylsp + appdaemon for LSP support
+# appdaemon installed so Jedi reads real source — full API completions, hover, go-to-def
+RUN apk add --no-cache python3 py3-pip py3-virtualenv && \
+    python3 -m venv /opt/pylsp-venv && \
+    /opt/pylsp-venv/bin/pip install --no-cache-dir \
+        python-lsp-server \
+        appdaemon
+
 # .NET backend binary (arch-specific)
 COPY --from=backend /publish .
 

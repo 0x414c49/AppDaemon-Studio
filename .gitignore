@@ -37,3 +37,6 @@ playwright-report/
 *.tmp
 *.bak
 *.cache
+
+# Local dev — never commit to production
+local-dev/

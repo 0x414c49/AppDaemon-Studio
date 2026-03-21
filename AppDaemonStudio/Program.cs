@@ -27,9 +27,15 @@ builder.Services.AddScoped<IHomeAssistantService, HomeAssistantService>();
 builder.Services.AddScoped<IVersionControlService, VersionControlService>();
 builder.Services.AddSingleton<ILogReaderService, LogReaderService>();
 
+// LSP service (no-op when pylsp venv is absent)
+builder.Services.AddSingleton<LspService>();
+builder.Services.AddSingleton<ILspService>(sp => sp.GetRequiredService<LspService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<LspService>());
+
 var app = builder.Build();
 
 app.UseCors("ApiCors");
+app.UseWebSockets();
 app.UseStaticFiles();        // serves wwwroot/
 app.MapControllers();
 app.MapFallbackToFile("index.html");   // SPA fallback
