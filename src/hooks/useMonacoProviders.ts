@@ -47,7 +47,7 @@ export function useMonacoProviders(
         const isAfterSelf = selfDotMatch !== null;
         const selfPartialWord = selfDotMatch?.[1] ?? '';
         const isEmptyLine = /^\s*$/.test(textBeforeCursor);
-        const isStartingKeyword = /\b(impo|from|clas|def|if|for|whil|try)\b/.test(textBeforeCursor);
+        const isStartingKeyword = /^\s*(import|from|class|def|if|for|while|try)\b/.test(textBeforeCursor);
         const isAfterDot = !isAfterSelf && /\.$/.test(textBeforeCursor);
 
         const allCompletions = completionsRef.current;

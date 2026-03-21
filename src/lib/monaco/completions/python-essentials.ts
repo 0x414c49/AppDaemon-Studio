@@ -190,7 +190,13 @@ export const PYTHON_IMPORTS: CompletionDefinition[] = [
   {
     label: 'import appdaemon',
     insertText: "import appdaemon.plugins.hass.hassapi as hass",
-    documentation: 'AppDaemon HassAPI - required base import',
+    documentation: 'AppDaemon HassAPI - full module path import',
+    detail: 'Import',
+  },
+  {
+    label: 'import hassapi',
+    insertText: "import hassapi as hass",
+    documentation: 'AppDaemon HassAPI - shorthand import (supported since AD v4)',
     detail: 'Import',
   },
   {

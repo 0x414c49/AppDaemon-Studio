@@ -53,7 +53,7 @@ export function shouldTriggerMethodCompletion(
   const textBeforeCursor = lineContent.substring(0, position);
   if (/self\.$/.test(textBeforeCursor)) return true;
   if (/^\s*$/.test(textBeforeCursor)) return true;
-  if (/\b(impo|from|clas|def|if|for|whil|try)\b/.test(textBeforeCursor)) return true;
+  if (/^\s*(import|from|class|def|if|for|while|try)\b/.test(textBeforeCursor)) return true;
   return false;
 }
 
