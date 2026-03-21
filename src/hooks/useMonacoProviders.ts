@@ -60,6 +60,9 @@ export function useMonacoProviders(
             insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
             documentation: item.documentation,
             detail: item.detail,
+            sortText: isAfterSelf
+              ? (item.detail === 'Entity Control' ? `0_0_${item.label}` : `0_9_${item.label}`)
+              : `3_${item.label}`,
             filterText: isAfterSelf && item.label.startsWith('self.')
               ? item.label.slice(5)
               : item.label,
@@ -149,10 +152,10 @@ export function useMonacoProviders(
         const suggestions = createEntityCompletions(filteredEntities).map(item => ({
           label: item.label,
           kind: CompletionItemKind.Value,
-          // No extra quotes — cursor is already inside a quoted string
           insertText: item.label,
           documentation: item.documentation,
           detail: item.detail,
+          sortText: `1_${item.label}`,
           range: {
             startLineNumber: position.lineNumber,
             endLineNumber: position.lineNumber,
@@ -190,6 +193,7 @@ export function useMonacoProviders(
             detail: s.detail,
             documentation: s.documentation,
             filterText: s.service,
+            sortText: `2_${s.service}`,
             range: {
               startLineNumber: position.lineNumber,
               endLineNumber: position.lineNumber,
