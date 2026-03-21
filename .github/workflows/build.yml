@@ -117,13 +117,44 @@ jobs:
           git push
           git push --tags
 
-  # Job 2: Build Docker images (parallel matrix)
-  # No QEMU needed: --platform=$BUILDPLATFORM in Dockerfile means both
-  # build stages (Node + .NET SDK) always run on the x86 host.
-  # .NET cross-compiles to arm64 natively via dotnet publish -r linux-arm64.
+  # Job 2: Build React frontend once — artifact shared by both Docker matrix jobs
+  build-frontend:
+    name: Build Frontend
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.release.outputs.version }}
+          fetch-depth: 1
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+          retention-days: 1
+
+  # Job 3: Build Docker images (parallel matrix)
+  # No QEMU needed: --platform=$BUILDPLATFORM in Dockerfile means the
+  # .NET SDK always cross-compiles on the x86 host.
+  # Frontend is injected via --build-context; node-build stage is skipped entirely.
   build:
     name: Build ${{ matrix.platform }}
-    needs: [release]
+    needs: [release, build-frontend]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -141,6 +172,12 @@ jobs:
         with:
           ref: v${{ needs.release.outputs.version }}
           fetch-depth: 1
+
+      - name: Download pre-built frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: ./dist
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -168,6 +205,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}-${{ steps.platform.outputs.name }}
           cache-from: type=gha,scope=build-${{ steps.platform.outputs.name }}
           cache-to: type=gha,mode=max,scope=build-${{ steps.platform.outputs.name }}
+          build-contexts: frontend-dist=./dist
           build-args: |
             BUILD_VERSION=${{ needs.release.outputs.version }}
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
@@ -234,7 +272,7 @@ jobs:
   # Job 5: Summary
   summary:
     name: Build Summary
-    needs: [release, build, merge, create-github-release]
+    needs: [release, build-frontend, build, merge, create-github-release]
     if: always()
     runs-on: ubuntu-latest
     steps:

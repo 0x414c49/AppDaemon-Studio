@@ -2,7 +2,7 @@
 
 # ── Stage 1: Build React frontend (architecture-independent static files) ──────
 # --platform=$BUILDPLATFORM: always runs on the builder host (x86), never QEMU
-FROM --platform=$BUILDPLATFORM node:20-alpine AS frontend
+FROM --platform=$BUILDPLATFORM node:20-alpine AS node-build
 
 WORKDIR /app
 
@@ -13,6 +13,13 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY . .
 RUN npm run build
 # Output: /app/dist (pure HTML/CSS/JS — no arch dependency)
+
+# ── Stage 1b: Frontend dist ─────────────────────────────────────────────────────
+# Local builds: copies dist from node-build above.
+# CI builds: replaced entirely via --build-context frontend-dist=./dist
+#   → node-build stage is skipped, Node is never pulled, npm never runs.
+FROM scratch AS frontend-dist
+COPY --from=node-build /app/dist/ /
 
 # ── Stage 2: Build .NET backend ────────────────────────────────────────────────
 # --platform=$BUILDPLATFORM: SDK runs on host, cross-compiles to TARGETARCH
@@ -59,7 +66,7 @@ RUN apk add --no-cache python3 py3-pip py3-virtualenv && \
 COPY --from=backend /publish .
 
 # React frontend (same files for all architectures)
-COPY --from=frontend /app/dist ./wwwroot
+COPY --from=frontend-dist / ./wwwroot
 
 ENV ASPNETCORE_URLS=http://+:3000 \
     DOTNET_RUNNING_IN_CONTAINER=true \
