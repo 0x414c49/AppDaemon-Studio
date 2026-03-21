@@ -27,8 +27,16 @@ public record EntityListResponse(
 public record LogsResponse(List<LogEntry> Logs);
 
 // ── Health ────────────────────────────────────────────────────────────────────
+public record PackageSyncStatus(
+    IReadOnlyList<string> Packages,
+    bool Success,
+    string? Output,
+    DateTimeOffset CompletedAt);
+
 public record HealthResponse(
     string Status,
     string Timestamp,
     string Version,
-    bool HaConfigured);
+    bool HaConfigured,
+    bool LspReady,
+    PackageSyncStatus? PackageSync);
