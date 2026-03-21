@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using AppDaemonStudio.Configuration;
+using AppDaemonStudio.Models;
 
 namespace AppDaemonStudio.Services;
 
@@ -18,9 +19,12 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
     private CancellationTokenSource _cts = new();
     private Task _monitorTask = Task.CompletedTask;
     private volatile bool _isReady;
+    private volatile PackageSyncStatus? _syncStatus;
+    private string? _resolvedAddonSlug;
 
     public bool IsReady => _isReady;
     public int Port => LspPort;
+    public PackageSyncStatus? SyncStatus => _syncStatus;
 
     public LspService(ILogger<LspService> logger, AppSettings settings, IHttpClientFactory httpClientFactory)
     {
@@ -66,7 +70,7 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
         var packages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // ── Source 1: AppDaemon addon options via Supervisor API ──────────
-        if (_settings.SupervisorToken is { } token && _settings.AddonSlug is { } slug)
+        if (_settings.SupervisorToken is { } token)
         {
             try
             {
@@ -75,21 +79,26 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
                 client.Timeout = TimeSpan.FromSeconds(10);
 
-                var response = await client.GetAsync($"addons/{slug}/info", ct);
-                if (response.IsSuccessStatusCode)
+                _resolvedAddonSlug ??= _settings.AddonSlug ?? await DiscoverAddonSlugAsync(client, ct);
+                var slug = _resolvedAddonSlug;
+                if (slug != null)
                 {
-                    var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(ct);
-                    var dataProp = doc?.RootElement.TryGetProperty("data", out var data) == true ? data : doc?.RootElement;
-
-                    if (dataProp?.TryGetProperty("options", out var opts) == true &&
-                        opts.TryGetProperty("python_packages", out var pkgs) == true)
+                    var response = await client.GetAsync($"addons/{slug}/info", ct);
+                    if (response.IsSuccessStatusCode)
                     {
-                        foreach (var pkg in pkgs.EnumerateArray())
+                        var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(ct);
+                        var dataProp = doc?.RootElement.TryGetProperty("data", out var data) == true ? data : doc?.RootElement;
+
+                        if (dataProp?.TryGetProperty("options", out var opts) == true &&
+                            opts.TryGetProperty("python_packages", out var pkgs) == true)
                         {
-                            var name = pkg.GetString();
-                            if (!string.IsNullOrWhiteSpace(name)) packages.Add(name);
+                            foreach (var pkg in pkgs.EnumerateArray())
+                            {
+                                var name = pkg.GetString();
+                                if (!string.IsNullOrWhiteSpace(name)) packages.Add(name);
+                            }
+                            _logger.LogInformation("Found {Count} package(s) in AppDaemon addon options", packages.Count);
                         }
-                        _logger.LogInformation("Found {Count} package(s) in AppDaemon addon options", packages.Count);
                     }
                 }
             }
@@ -117,9 +126,47 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
         return [.. packages];
     }
 
+    private async Task<string?> DiscoverAddonSlugAsync(HttpClient client, CancellationToken ct)
+    {
+        try
+        {
+            var response = await client.GetAsync("addons", ct);
+            if (!response.IsSuccessStatusCode) return null;
+
+            using var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(ct);
+            if (doc is null) return null;
+
+            var root = doc.RootElement;
+            if (!root.TryGetProperty("addons", out var addons) &&
+                (!root.TryGetProperty("data", out var data) || !data.TryGetProperty("addons", out addons)))
+                return null;
+
+            foreach (var addon in addons.EnumerateArray())
+            {
+                var name = addon.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
+                var slug = addon.TryGetProperty("slug", out var s) ? s.GetString() ?? "" : "";
+                if (name.Contains("appdaemon", StringComparison.OrdinalIgnoreCase) ||
+                    slug.Contains("appdaemon", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogInformation("Auto-discovered AppDaemon addon slug: {Slug}", slug);
+                    return slug;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Could not auto-discover AppDaemon addon slug");
+        }
+        return null;
+    }
+
     private async Task SyncPackagesAsync(List<string> packages, CancellationToken ct)
     {
-        if (packages.Count == 0) return;
+        if (packages.Count == 0)
+        {
+            _syncStatus = new PackageSyncStatus(packages, true, "No extra packages configured.", DateTimeOffset.UtcNow);
+            return;
+        }
 
         _logger.LogInformation("Installing {Count} extra package(s) into pylsp venv: {Packages}",
             packages.Count, string.Join(", ", packages));
@@ -129,26 +176,33 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
             {
                 FileName = "/opt/pylsp-venv/bin/pip",
                 Arguments = $"install {string.Join(' ', packages.Select(p => $"\"{p}\""))}",
-                RedirectStandardOutput = false, // not consumed — leaving redirected causes deadlock on large output
+                RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
             })!;
 
+            // Read both streams concurrently to prevent pipe buffer deadlock
+            var stdoutTask = pip.StandardOutput.ReadToEndAsync(ct);
+            var stderrTask = pip.StandardError.ReadToEndAsync(ct);
             await pip.WaitForExitAsync(ct);
+            var stdout = await stdoutTask;
+            var stderr = await stderrTask;
 
-            if (pip.ExitCode != 0)
-            {
-                var err = await pip.StandardError.ReadToEndAsync(ct);
-                _logger.LogWarning("pip install exited {Code}: {Err}", pip.ExitCode, err);
-            }
+            var success = pip.ExitCode == 0;
+            // Prefer stderr on failure (pip writes errors there), stdout on success
+            var output = (!success && !string.IsNullOrWhiteSpace(stderr) ? stderr : stdout).Trim();
+
+            if (!success)
+                _logger.LogWarning("pip install exited {Code}: {Err}", pip.ExitCode, stderr);
             else
-            {
                 _logger.LogInformation("Package sync complete");
-            }
+
+            _syncStatus = new PackageSyncStatus(packages, success, output, DateTimeOffset.UtcNow);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Package sync failed — continuing without it");
+            _syncStatus = new PackageSyncStatus(packages, false, ex.Message, DateTimeOffset.UtcNow);
         }
     }
 
