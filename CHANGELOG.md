@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.3.48] - 2026-03-21
+
+- perf: cache resolved addon slug for package sync — discover once, reuse on restart
+- fix: auto-discover AppDaemon addon slug in LspService for package sync
+- feat: expose package sync status and pip output via health endpoint
+
+
 ## [v0.3.47] - 2026-03-21
 
 - security: remove information disclosure from health endpoint
