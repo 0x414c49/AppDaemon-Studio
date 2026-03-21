@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.50] - 2026-03-21
+
+- fix: add hassapi shorthand import and repair isStartingKeyword regex
+
+
 ## [v0.3.49] - 2026-03-21
 
 - fix: stop completions firing on every space keystroke
