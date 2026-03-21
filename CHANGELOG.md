@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.49] - 2026-03-21
+
+- fix: stop completions firing on every space keystroke
+
+
 ## [v0.3.48] - 2026-03-21
 
 - perf: cache resolved addon slug for package sync — discover once, reuse on restart
