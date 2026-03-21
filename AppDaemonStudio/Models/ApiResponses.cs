@@ -27,25 +27,8 @@ public record EntityListResponse(
 public record LogsResponse(List<LogEntry> Logs);
 
 // ── Health ────────────────────────────────────────────────────────────────────
-public record EnvironmentInfo(
-    bool HasSupervisorToken,
-    bool HasHassioToken,
-    string SupervisorTokenSource,
-    string DotnetEnv,
-    string? Hostname,
-    List<string> AllEnvVars);
-
-public record RequestHeadersInfo(
-    bool HasXIngressPath,
-    bool HasXRemoteUser,
-    bool HasXHassUserId,
-    bool HasAuthorization,
-    string ContentType,
-    string UserAgent);
-
 public record HealthResponse(
     string Status,
     string Timestamp,
     string Version,
-    EnvironmentInfo Environment,
-    RequestHeadersInfo RequestHeaders);
+    bool HaConfigured);
