@@ -14,12 +14,12 @@ public class AppsController(IFileManagerService fileManager, ILogger<AppsControl
         try
         {
             var apps = await fileManager.ListAppsAsync();
-            return Ok(new { apps, count = apps.Count });
+            return Ok(new AppListResponse(apps, apps.Count));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error listing apps");
-            return StatusCode(500, new { detail = "Failed to list apps" });
+            return StatusCode(500, new ErrorResponse("Failed to list apps"));
         }
     }
 
@@ -34,7 +34,7 @@ public class AppsController(IFileManagerService fileManager, ILogger<AppsControl
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating app {Name}", request.Name);
-            return BadRequest(new { detail = ex.Message });
+            return BadRequest(new ErrorResponse(ex.Message));
         }
     }
 }

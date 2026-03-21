@@ -1,3 +1,4 @@
+using AppDaemonStudio.Models;
 using AppDaemonStudio.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,12 +23,12 @@ public class FilesController(
         }
         catch (FileNotFoundException ex)
         {
-            return NotFound(new { detail = ex.Message });
+            return NotFound(new ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error reading python file for {App}", app);
-            return StatusCode(500, new { detail = ex.Message });
+            return StatusCode(500, new ErrorResponse(ex.Message));
         }
     }
 
@@ -44,7 +45,7 @@ public class FilesController(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error reading yaml for {App}", app);
-            return StatusCode(500, new { detail = ex.Message });
+            return StatusCode(500, new ErrorResponse(ex.Message));
         }
     }
 
@@ -64,12 +65,12 @@ public class FilesController(
             catch { /* no existing file — skip versioning */ }
 
             await fileManager.WritePythonFileAsync(app, body.Content);
-            return Ok(new { status = "success", message = $"Python file for '{app}' updated" });
+            return Ok(new SuccessResponse(true, $"Python file for '{app}' updated"));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error writing python file for {App}", app);
-            return BadRequest(new { detail = ex.Message });
+            return BadRequest(new ErrorResponse(ex.Message));
         }
     }
 
@@ -81,12 +82,12 @@ public class FilesController(
         try
         {
             await fileManager.WriteAppsYamlAsync(body.Content);
-            return Ok(new { status = "success", message = "YAML config updated" });
+            return Ok(new SuccessResponse(true, "YAML config updated"));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error writing yaml for {App}", app);
-            return BadRequest(new { detail = ex.Message });
+            return BadRequest(new ErrorResponse(ex.Message));
         }
     }
 
@@ -101,12 +102,12 @@ public class FilesController(
         }
         catch (FileNotFoundException ex)
         {
-            return NotFound(new { detail = ex.Message });
+            return NotFound(new ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting app {App}", app);
-            return BadRequest(new { detail = ex.Message });
+            return BadRequest(new ErrorResponse(ex.Message));
         }
     }
 }

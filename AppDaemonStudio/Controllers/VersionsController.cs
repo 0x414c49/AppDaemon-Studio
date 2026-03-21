@@ -1,3 +1,4 @@
+using AppDaemonStudio.Models;
 using AppDaemonStudio.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,12 +15,12 @@ public class VersionsController(IVersionControlService versionControl, ILogger<V
         try
         {
             var versions = await versionControl.ListVersionsAsync(app);
-            return Ok(new { versions, count = versions.Count });
+            return Ok(new VersionListResponse(versions, versions.Count));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error listing versions for {App}", app);
-            return StatusCode(500, new { detail = ex.Message });
+            return StatusCode(500, new ErrorResponse(ex.Message));
         }
     }
 
@@ -34,12 +35,12 @@ public class VersionsController(IVersionControlService versionControl, ILogger<V
         }
         catch (FileNotFoundException ex)
         {
-            return NotFound(new { detail = ex.Message });
+            return NotFound(new ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting version {Timestamp} for {App}", timestamp, app);
-            return StatusCode(500, new { detail = ex.Message });
+            return StatusCode(500, new ErrorResponse(ex.Message));
         }
     }
 
@@ -50,16 +51,16 @@ public class VersionsController(IVersionControlService versionControl, ILogger<V
         try
         {
             await versionControl.RestoreVersionAsync(app, body.VersionId);
-            return Ok(new { success = true, message = "Version restored" });
+            return Ok(new SuccessResponse(true, "Version restored"));
         }
         catch (FileNotFoundException ex)
         {
-            return NotFound(new { detail = ex.Message });
+            return NotFound(new ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error restoring version for {App}", app);
-            return StatusCode(500, new { detail = ex.Message });
+            return StatusCode(500, new ErrorResponse(ex.Message));
         }
     }
 
@@ -68,21 +69,21 @@ public class VersionsController(IVersionControlService versionControl, ILogger<V
     public async Task<IActionResult> DeleteVersion(string app, [FromQuery] string? versionId)
     {
         if (string.IsNullOrEmpty(versionId))
-            return BadRequest(new { detail = "Missing versionId" });
+            return BadRequest(new ErrorResponse("Missing versionId"));
 
         try
         {
             await versionControl.DeleteVersionAsync(app, versionId);
-            return Ok(new { success = true, message = "Version deleted" });
+            return Ok(new SuccessResponse(true, "Version deleted"));
         }
         catch (FileNotFoundException ex)
         {
-            return NotFound(new { detail = ex.Message });
+            return NotFound(new ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting version for {App}", app);
-            return StatusCode(500, new { detail = ex.Message });
+            return StatusCode(500, new ErrorResponse(ex.Message));
         }
     }
 }

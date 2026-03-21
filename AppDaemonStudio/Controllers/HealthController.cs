@@ -1,4 +1,5 @@
 using AppDaemonStudio.Configuration;
+using AppDaemonStudio.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AppDaemonStudio.Controllers;
@@ -19,30 +20,24 @@ public class HealthController(AppSettings settings) : ControllerBase
             .Order()
             .ToList();
 
-        return Ok(new
-        {
-            status = "ok",
-            timestamp = DateTime.UtcNow.ToString("O"),
-            version = settings.Version,
-            environment = new
-            {
-                hasSupervisorToken,
-                hasHassioToken = !string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("HASSIO_TOKEN")),
-                supervisorTokenSource = System.Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN") != null ? "env"
+        return Ok(new HealthResponse(
+            Status: "ok",
+            Timestamp: DateTime.UtcNow.ToString("O"),
+            Version: settings.Version,
+            Environment: new EnvironmentInfo(
+                HasSupervisorToken: hasSupervisorToken,
+                HasHassioToken: !string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("HASSIO_TOKEN")),
+                SupervisorTokenSource: System.Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN") != null ? "env"
                     : System.IO.File.Exists("/tmp/supervisor_token") ? "file" : "none",
-                dotnetEnv = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production",
-                hostname = System.Environment.GetEnvironmentVariable("HOSTNAME"),
-                allEnvVars,
-            },
-            requestHeaders = new
-            {
-                hasXIngressPath = Request.Headers.ContainsKey("x-ingress-path"),
-                hasXRemoteUser = Request.Headers.ContainsKey("x-remote-user"),
-                hasXHassUserId = Request.Headers.ContainsKey("x-hass-user-id"),
-                hasAuthorization = Request.Headers.ContainsKey("Authorization"),
-                contentType = Request.Headers.ContentType.ToString(),
-                userAgent = Request.Headers.UserAgent.ToString(),
-            },
-        });
+                DotnetEnv: System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production",
+                Hostname: System.Environment.GetEnvironmentVariable("HOSTNAME"),
+                AllEnvVars: allEnvVars),
+            RequestHeaders: new RequestHeadersInfo(
+                HasXIngressPath: Request.Headers.ContainsKey("x-ingress-path"),
+                HasXRemoteUser: Request.Headers.ContainsKey("x-remote-user"),
+                HasXHassUserId: Request.Headers.ContainsKey("x-hass-user-id"),
+                HasAuthorization: Request.Headers.ContainsKey("Authorization"),
+                ContentType: Request.Headers.ContentType.ToString(),
+                UserAgent: Request.Headers.UserAgent.ToString())));
     }
 }
