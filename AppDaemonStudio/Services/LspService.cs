@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using AppDaemonStudio.Configuration;
+using AppDaemonStudio.Models;
 
 namespace AppDaemonStudio.Services;
 
@@ -18,9 +19,11 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
     private CancellationTokenSource _cts = new();
     private Task _monitorTask = Task.CompletedTask;
     private volatile bool _isReady;
+    private volatile PackageSyncStatus? _syncStatus;
 
     public bool IsReady => _isReady;
     public int Port => LspPort;
+    public PackageSyncStatus? SyncStatus => _syncStatus;
 
     public LspService(ILogger<LspService> logger, AppSettings settings, IHttpClientFactory httpClientFactory)
     {
@@ -119,7 +122,11 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
 
     private async Task SyncPackagesAsync(List<string> packages, CancellationToken ct)
     {
-        if (packages.Count == 0) return;
+        if (packages.Count == 0)
+        {
+            _syncStatus = new PackageSyncStatus(packages, true, "No extra packages configured.", DateTimeOffset.UtcNow);
+            return;
+        }
 
         _logger.LogInformation("Installing {Count} extra package(s) into pylsp venv: {Packages}",
             packages.Count, string.Join(", ", packages));
@@ -129,26 +136,33 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
             {
                 FileName = "/opt/pylsp-venv/bin/pip",
                 Arguments = $"install {string.Join(' ', packages.Select(p => $"\"{p}\""))}",
-                RedirectStandardOutput = false, // not consumed — leaving redirected causes deadlock on large output
+                RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
             })!;
 
+            // Read both streams concurrently to prevent pipe buffer deadlock
+            var stdoutTask = pip.StandardOutput.ReadToEndAsync(ct);
+            var stderrTask = pip.StandardError.ReadToEndAsync(ct);
             await pip.WaitForExitAsync(ct);
+            var stdout = await stdoutTask;
+            var stderr = await stderrTask;
 
-            if (pip.ExitCode != 0)
-            {
-                var err = await pip.StandardError.ReadToEndAsync(ct);
-                _logger.LogWarning("pip install exited {Code}: {Err}", pip.ExitCode, err);
-            }
+            var success = pip.ExitCode == 0;
+            // Prefer stderr on failure (pip writes errors there), stdout on success
+            var output = (!success && !string.IsNullOrWhiteSpace(stderr) ? stderr : stdout).Trim();
+
+            if (!success)
+                _logger.LogWarning("pip install exited {Code}: {Err}", pip.ExitCode, stderr);
             else
-            {
                 _logger.LogInformation("Package sync complete");
-            }
+
+            _syncStatus = new PackageSyncStatus(packages, success, output, DateTimeOffset.UtcNow);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Package sync failed — continuing without it");
+            _syncStatus = new PackageSyncStatus(packages, false, ex.Message, DateTimeOffset.UtcNow);
         }
     }
 
