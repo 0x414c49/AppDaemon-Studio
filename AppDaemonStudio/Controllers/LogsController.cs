@@ -1,4 +1,5 @@
 using AppDaemonStudio.Configuration;
+using AppDaemonStudio.Models;
 using AppDaemonStudio.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,7 +26,7 @@ public class LogsController(
         {
             var resolvedSlug = effectiveSlug ?? await FindSlugViaSupervisorAsync(supervisorToken);
             if (resolvedSlug == null)
-                return NotFound(new { error = "Could not find AppDaemon addon. Make sure AppDaemon is installed." });
+                return NotFound(new LogsErrorResponse("Could not find AppDaemon addon. Make sure AppDaemon is installed."));
 
             return await FetchViaSupervisorAsync(resolvedSlug, supervisorToken);
         }
@@ -39,12 +40,12 @@ public class LogsController(
         {
             var resolvedSlug = effectiveSlug ?? await FindSlugViaHaAsync(settings.HaToken, settings.HaUrl);
             if (resolvedSlug == null)
-                return NotFound(new { error = "Could not find AppDaemon addon via HA API." });
+                return NotFound(new LogsErrorResponse("Could not find AppDaemon addon via HA API."));
 
             return await FetchViaSupervisorViaHaAsync(resolvedSlug, settings.HaToken, settings.HaUrl);
         }
 
-        return StatusCode(401, new { error = "Logs not available. This feature requires Home Assistant with Supervisor." });
+        return StatusCode(401, new LogsErrorResponse("Logs not available. This feature requires Home Assistant with Supervisor."));
     }
 
     private async Task<string?> FindSlugViaSupervisorAsync(string token)
@@ -104,18 +105,19 @@ public class LogsController(
             if (!response.IsSuccessStatusCode)
             {
                 var err = await response.Content.ReadAsStringAsync();
-                return StatusCode((int)response.StatusCode, new { error = $"Failed to fetch logs: {(int)response.StatusCode} - {err}" });
+                return StatusCode((int)response.StatusCode,
+                    new LogsErrorResponse($"Failed to fetch logs: {(int)response.StatusCode} - {err}"));
             }
             var raw = await response.Content.ReadAsStringAsync();
-            return Ok(new { logs = logReader.ParseLogs(raw) });
+            return Ok(new LogsResponse(logReader.ParseLogs(raw)));
         }
         catch (TaskCanceledException)
         {
-            return StatusCode(500, new { error = "Timeout fetching logs from AppDaemon" });
+            return StatusCode(500, new LogsErrorResponse("Timeout fetching logs from AppDaemon"));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = ex.Message });
+            return StatusCode(500, new LogsErrorResponse(ex.Message));
         }
     }
 
@@ -124,11 +126,11 @@ public class LogsController(
         try
         {
             var content = await System.IO.File.ReadAllTextAsync(filePath);
-            return Ok(new { logs = logReader.ParseLogs(content) });
+            return Ok(new LogsResponse(logReader.ParseLogs(content)));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = $"Failed to read log file: {ex.Message}" });
+            return StatusCode(500, new LogsErrorResponse($"Failed to read log file: {ex.Message}"));
         }
     }
 
@@ -152,14 +154,14 @@ public class LogsController(
                 if (resp.IsSuccessStatusCode)
                 {
                     var raw = await resp.Content.ReadAsStringAsync();
-                    return Ok(new { logs = logReader.ParseLogs(raw) });
+                    return Ok(new LogsResponse(logReader.ParseLogs(raw)));
                 }
                 lastError = $"HTTP {(int)resp.StatusCode}";
             }
             catch (Exception ex) { lastError = ex.Message; }
         }
 
-        return StatusCode(500, new { error = $"Failed to fetch logs. Last error: {lastError}" });
+        return StatusCode(500, new LogsErrorResponse($"Failed to fetch logs. Last error: {lastError}"));
     }
 
     private HttpClient CreateClient(string token, bool acceptText = false)

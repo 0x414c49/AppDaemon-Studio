@@ -37,3 +37,8 @@ playwright-report/
 *.tmp
 *.bak
 *.cache
+
+# Local dev scripts and config — never commit
+run-local.sh
+compose.yml
+.env.local
