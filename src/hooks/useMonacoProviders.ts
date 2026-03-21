@@ -37,7 +37,7 @@ export function useMonacoProviders(
 
     // ── 1. AppDaemon API completions (Python) ──────────────────────────────
     const appDaemonProvider = monaco.languages.registerCompletionItemProvider('python', {
-      triggerCharacters: ['.', ' ', '('],
+      triggerCharacters: ['.', '('],
       provideCompletionItems: (model: editor.ITextModel, position: Position) => {
         const lineContent = model.getLineContent(position.lineNumber);
         const wordUntilPosition = model.getWordUntilPosition(position);
@@ -258,7 +258,7 @@ export function useMonacoProviders(
 
     // ── 5. YAML completions (apps.yaml) ───────────────────────────────────
     const yamlProvider = monaco.languages.registerCompletionItemProvider('yaml', {
-      triggerCharacters: [' ', ':'],
+      triggerCharacters: [':'],
       provideCompletionItems: (model: editor.ITextModel, position: Position) => {
         const wordUntilPosition = model.getWordUntilPosition(position);
 
