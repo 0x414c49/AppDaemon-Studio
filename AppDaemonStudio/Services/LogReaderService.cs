@@ -17,8 +17,14 @@ public partial class LogReaderService : ILogReaderService
     public List<LogEntry> ParseLogs(string raw)
     {
         var entries = new List<LogEntry>();
-        foreach (var line in raw.Split('\n'))
+        var span = raw.AsSpan();
+        while (!span.IsEmpty)
         {
+            int nl = span.IndexOf('\n');
+            var lineSpan = nl >= 0 ? span[..nl] : span;
+            span = nl >= 0 ? span[(nl + 1)..] : ReadOnlySpan<char>.Empty;
+
+            var line = lineSpan.ToString();
             var entry = ParseLine(AnsiRegex().Replace(line, ""));
             if (entry != null) entries.Add(entry);
         }

@@ -19,17 +19,8 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
             throw new ArgumentException($"Invalid app name '{name}'. Use only lowercase letters, digits, and underscores.");
     }
 
-    private async Task EnsureAppsDirAsync()
-    {
-        Directory.CreateDirectory(settings.AppsDir);
-        await Task.CompletedTask;
-    }
-
-    private async Task EnsureVersionsDirAsync()
-    {
-        Directory.CreateDirectory(settings.VersionsDir);
-        await Task.CompletedTask;
-    }
+    private void EnsureAppsDir() => Directory.CreateDirectory(settings.AppsDir);
+    private void EnsureVersionsDir() => Directory.CreateDirectory(settings.VersionsDir);
 
     // ── apps.yaml hand-rolled parser (matches TypeScript behavior) ────────────
 
@@ -113,7 +104,7 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
 
     private async Task WriteAppsConfigAsync(Dictionary<string, Dictionary<string, string>> config)
     {
-        await EnsureAppsDirAsync();
+        EnsureAppsDir();
         await File.WriteAllTextAsync(settings.AppsYaml, StringifyAppsYaml(config));
     }
 
@@ -148,17 +139,20 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
 
     public async Task<List<AppInfo>> ListAppsAsync()
     {
-        await EnsureAppsDirAsync();
+        EnsureAppsDir();
         var config = await ReadAppsConfigAsync();
         var apps = new List<AppInfo>();
+        var seenNames = new HashSet<string>(StringComparer.Ordinal);
 
-        var pyFiles = Directory.GetFiles(settings.AppsDir, "*.py")
-            .Where(f => !Path.GetFileName(f).StartsWith('.'))
-            .ToList();
+        EnsureVersionsDir();
 
-        foreach (var pyFile in pyFiles)
+        foreach (var pyFile in Directory.EnumerateFiles(settings.AppsDir, "*.py"))
         {
+            var fileName = Path.GetFileName(pyFile);
+            if (fileName.StartsWith('.')) continue;
+
             var appName = Path.GetFileNameWithoutExtension(pyFile);
+            seenNames.Add(appName);
             config.TryGetValue(appName, out var appConfig);
 
             string className, description, icon;
@@ -176,13 +170,7 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
             }
 
             var mtime = File.GetLastWriteTimeUtc(pyFile);
-            var versionCount = 0;
-            try
-            {
-                await EnsureVersionsDirAsync();
-                versionCount = Directory.GetFiles(settings.VersionsDir, $"{appName}_*.py").Length;
-            }
-            catch { }
+            var versionCount = Directory.EnumerateFiles(settings.VersionsDir, $"{appName}_*.py").Count();
 
             apps.Add(new AppInfo(appName, className, description, true, true, mtime.ToString("O"), versionCount, icon));
         }
@@ -190,7 +178,7 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
         // Apps in yaml but no .py file
         foreach (var (appName, appConfig) in config)
         {
-            if (apps.Any(a => a.Name == appName)) continue;
+            if (seenNames.Contains(appName)) continue;
             appConfig.TryGetValue("class", out var cls);
             appConfig.TryGetValue("description", out var desc);
             appConfig.TryGetValue("icon", out var icon);
@@ -221,7 +209,7 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
 
         var pythonContent = GeneratePythonTemplate(request.Name, request.ClassName, request.Description);
         await File.WriteAllTextAsync(pyPath, pythonContent);
-        await EnsureVersionsDirAsync();
+        EnsureVersionsDir();
 
         logger.LogInformation("Created app {AppName}", request.Name);
         return new AppInfo(request.Name, request.ClassName, request.Description ?? "", true, true,
@@ -280,7 +268,7 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
 
     public async Task WriteAppsYamlAsync(string content)
     {
-        await EnsureAppsDirAsync();
+        EnsureAppsDir();
         await File.WriteAllTextAsync(settings.AppsYaml, content);
     }
 }

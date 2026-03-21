@@ -15,6 +15,7 @@ builder.Services.AddControllers().AddJsonOptions(o =>
 });
 
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
 
 // CORS for standalone / dev mode
 builder.Services.AddCors(opt => opt.AddPolicy("ApiCors", p =>
@@ -23,7 +24,7 @@ builder.Services.AddCors(opt => opt.AddPolicy("ApiCors", p =>
 // App services
 builder.Services.AddSingleton<AppSettings>();
 builder.Services.AddScoped<IFileManagerService, FileManagerService>();
-builder.Services.AddScoped<IHomeAssistantService, HomeAssistantService>();
+builder.Services.AddSingleton<IHomeAssistantService, HomeAssistantService>();
 builder.Services.AddScoped<IVersionControlService, VersionControlService>();
 builder.Services.AddSingleton<ILogReaderService, LogReaderService>();
 
