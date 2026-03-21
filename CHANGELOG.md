@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.3.47] - 2026-03-21
+
+- security: remove information disclosure from health endpoint
+- perf: build frontend once in CI, inject into both Docker matrix jobs
+- refactor: replace anonymous controller return types with named records
+- perf: server-side memory and CPU improvements
+- feat: prioritise Entity Control methods (turn_on, turn_off, toggle) in self. autocomplete
+- fix: LSP stability — zero-alloc proxy, diagnostics badge, pyflakes, pip deadlock
+- chore: ignore local dev scripts and env file
+- feat: autocomplete overhaul + pylsp LSP integration
+
+
 ## [v0.3.46] - 2026-03-20
 
 - feat: complete AppDaemon autocomplete — full API, context-aware entities, call_service completions, boilerplate snippets
