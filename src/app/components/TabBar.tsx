@@ -1,8 +1,8 @@
 'use client';
 
-import { FileCode, ScrollText } from 'lucide-react';
+import { FileCode, ScrollText, Braces } from 'lucide-react';
 
-export type TabId = 'editor' | 'logs';
+export type TabId = 'editor' | 'logs' | 'template';
 
 interface Tab {
   id: TabId;
@@ -20,6 +20,7 @@ export function TabBar({ activeTab, onTabChange, disabled }: TabBarProps) {
   const tabs: Tab[] = [
     { id: 'editor', label: 'Editor', icon: <FileCode className="w-4 h-4" /> },
     { id: 'logs', label: 'Logs', icon: <ScrollText className="w-4 h-4" /> },
+    { id: 'template', label: 'Template', icon: <Braces className="w-4 h-4" /> },
   ];
 
   return (
@@ -28,12 +29,12 @@ export function TabBar({ activeTab, onTabChange, disabled }: TabBarProps) {
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          disabled={disabled}
+          disabled={disabled && tab.id === 'editor'}
           className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
             activeTab === tab.id
               ? 'bg-ha-bg text-ha-text border-b-2 border-ha-primary'
               : 'text-ha-text-secondary hover:text-ha-text hover:bg-ha-surface-hover'
-          } ${disabled && activeTab !== tab.id ? 'opacity-50' : ''}`}
+          } ${disabled && tab.id === 'editor' ? 'opacity-50' : ''}`}
         >
           {tab.icon}
           {tab.label}
