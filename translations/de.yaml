@@ -14,21 +14,18 @@ configuration:
     name: Apps-Ordner
     description: >-
       Pfad zum AppDaemon-Apps-Verzeichnis innerhalb dieses Add-on-Containers.
-      AppDaemon Studio und AppDaemon müssen denselben Ordner über das
-      config-Volume teilen (/homeassistant innerhalb von Add-on-Containern).
 
-      Einrichtung im AppDaemon-Add-on:
-        1. Öffne dein AppDaemon-Add-on → Reiter Konfiguration
-        2. Bearbeite appdaemon.yaml, sodass app_dir auf /homeassistant zeigt:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Setze diese Option auf denselben Pfad: /homeassistant/apps
+      Öffne mit einem Datei-Editor (z. B. Studio Code Server)
+      /addon_configs/appdaemon/appdaemon.yaml und setze app_dir:
 
-      Beide Add-ons haben das „config"-Volume standardmäßig eingebunden.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Setze diese Option dann auf denselben Pfad: /homeassistant/apps
 
   api_password:
     name: AppDaemon-API-Passwort
     description: >-
       Das api_password aus der HTTP-API-Konfiguration von AppDaemon.
-      Leer lassen, wenn die HTTP-API von AppDaemon kein Passwort hat (Standard).
+      Leer lassen, wenn kein Passwort gesetzt ist (Standard).
       Nur für die App-Neustart-Funktion erforderlich.

@@ -14,21 +14,18 @@ configuration:
     name: অ্যাপস ফোল্ডার
     description: >-
       এই অ্যাড-অন কন্টেইনারের ভেতরে AppDaemon অ্যাপস ডিরেক্টরির পাথ।
-      AppDaemon Studio এবং AppDaemon-কে config ভলিউমের মাধ্যমে
-      একই ফোল্ডার শেয়ার করতে হবে (কন্টেইনারে /homeassistant)।
 
-      AppDaemon অ্যাড-অনে সেটআপ:
-        1. AppDaemon অ্যাড-অন → কনফিগারেশন ট্যাব খুলুন
-        2. appdaemon.yaml সম্পাদনা করুন, app_dir /homeassistant-এ সেট করুন:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. এই বিকল্পটি একই পাথে সেট করুন: /homeassistant/apps
+      একটি ফাইল এডিটর অ্যাড-অন (যেমন Studio Code Server) ব্যবহার করে
+      /addon_configs/appdaemon/appdaemon.yaml খুলুন এবং app_dir সেট করুন:
 
-      উভয় অ্যাড-অনেই ডিফল্টভাবে "config" ভলিউম ম্যাপ করা আছে।
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      তারপর এই বিকল্পটি একই পাথে সেট করুন: /homeassistant/apps
 
   api_password:
     name: AppDaemon API পাসওয়ার্ড
     description: >-
       AppDaemon HTTP API কনফিগারেশনের api_password।
-      HTTP API-তে পাসওয়ার্ড না থাকলে (ডিফল্ট) খালি রাখুন।
+      পাসওয়ার্ড না থাকলে (ডিফল্ট) খালি রাখুন।
       শুধুমাত্র অ্যাপ পুনরায় চালু করার জন্য প্রয়োজন।

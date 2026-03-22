@@ -14,21 +14,18 @@ configuration:
     name: پوشه برنامه‌ها
     description: >-
       مسیر دایرکتوری برنامه‌های AppDaemon درون کانتینر این افزونه.
-      AppDaemon Studio و AppDaemon باید از طریق والیوم config
-      یک پوشه مشترک داشته باشند (/homeassistant درون کانتینرها).
 
-      راه‌اندازی در افزونه AppDaemon:
-        ۱. افزونه AppDaemon را باز کنید → تب پیکربندی
-        ۲. فایل appdaemon.yaml را ویرایش کنید تا app_dir به /homeassistant اشاره کند:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        ۳. این گزینه را به همان مسیر تنظیم کنید: /homeassistant/apps
+      از یک ویرایشگر فایل (مثلاً Studio Code Server) استفاده کنید تا
+      /addon_configs/appdaemon/appdaemon.yaml را باز کنید و app_dir را تنظیم کنید:
 
-      هر دو افزونه به‌صورت پیش‌فرض والیوم "config" را دارند.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      سپس این گزینه را به همان مسیر تنظیم کنید: /homeassistant/apps
 
   api_password:
     name: رمز عبور API AppDaemon
     description: >-
       مقدار api_password از پیکربندی HTTP API افزونه AppDaemon.
-      اگر HTTP API افزونه AppDaemon رمز عبور ندارد (پیش‌فرض) خالی بگذارید.
+      اگر رمز عبور ندارد (پیش‌فرض) خالی بگذارید.
       فقط برای قابلیت راه‌اندازی مجدد برنامه‌ها لازم است.

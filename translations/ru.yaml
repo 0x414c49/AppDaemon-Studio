@@ -14,21 +14,18 @@ configuration:
     name: Папка приложений
     description: >-
       Путь к директории приложений AppDaemon внутри контейнера этого дополнения.
-      AppDaemon Studio и AppDaemon должны использовать одну папку через
-      том config (/homeassistant внутри контейнеров дополнений).
 
-      Настройка в дополнении AppDaemon:
-        1. Откройте дополнение AppDaemon → вкладка Конфигурация
-        2. Отредактируйте appdaemon.yaml, укажите app_dir на /homeassistant:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Установите этот параметр на тот же путь: /homeassistant/apps
+      Используйте редактор файлов (например, Studio Code Server), чтобы открыть
+      /addon_configs/appdaemon/appdaemon.yaml и задать app_dir:
 
-      Оба дополнения имеют том "config" по умолчанию.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Затем установите этот параметр на тот же путь: /homeassistant/apps
 
   api_password:
     name: Пароль API AppDaemon
     description: >-
       Значение api_password из конфигурации HTTP API AppDaemon.
-      Оставьте пустым, если HTTP API AppDaemon не требует пароля (по умолчанию).
+      Оставьте пустым, если пароль не задан (по умолчанию).
       Нужен только для функции перезапуска приложений.

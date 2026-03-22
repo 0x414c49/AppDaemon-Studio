@@ -14,21 +14,18 @@ configuration:
     name: Pasta de aplicações
     description: >-
       Caminho para o diretório de aplicações AppDaemon dentro deste contentor.
-      O AppDaemon Studio e o AppDaemon devem partilhar a mesma pasta através do
-      volume config (/homeassistant dentro dos contentores de addons).
 
-      Configuração no addon AppDaemon:
-        1. Abra o addon AppDaemon → separador Configuração
-        2. Edite appdaemon.yaml para que app_dir aponte para /homeassistant:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Defina esta opção com o mesmo caminho: /homeassistant/apps
+      Use um addon editor de ficheiros (ex. Studio Code Server) para abrir
+      /addon_configs/appdaemon/appdaemon.yaml e definir app_dir:
 
-      Ambos os addons têm o volume "config" mapeado por padrão.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Defina esta opção com o mesmo caminho: /homeassistant/apps
 
   api_password:
     name: Palavra-passe da API AppDaemon
     description: >-
       O api_password da configuração HTTP API do AppDaemon.
-      Deixe em branco se a HTTP API do AppDaemon não tem palavra-passe (padrão).
+      Deixe em branco se não há palavra-passe (padrão).
       Necessário apenas para a funcionalidade de reinício de aplicações.

@@ -14,21 +14,18 @@ configuration:
     name: Folder aplikacji
     description: >-
       Ścieżka do katalogu aplikacji AppDaemon wewnątrz tego kontenera.
-      AppDaemon Studio i AppDaemon muszą współdzielić ten sam folder przez
-      wolumen config (/homeassistant wewnątrz kontenerów dodatków).
 
-      Konfiguracja w dodatku AppDaemon:
-        1. Otwórz dodatek AppDaemon → zakładka Konfiguracja
-        2. Edytuj appdaemon.yaml, ustaw app_dir na /homeassistant:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Ustaw tę opcję na tę samą ścieżkę: /homeassistant/apps
+      Użyj dodatku edytora plików (np. Studio Code Server), aby otworzyć
+      /addon_configs/appdaemon/appdaemon.yaml i ustawić app_dir:
 
-      Oba dodatki mają domyślnie zamontowany wolumen "config".
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Ustaw tę opcję na tę samą ścieżkę: /homeassistant/apps
 
   api_password:
     name: Hasło API AppDaemon
     description: >-
       Wartość api_password z konfiguracji HTTP API AppDaemon.
-      Pozostaw puste, jeśli HTTP API AppDaemon nie ma hasła (domyślnie).
+      Pozostaw puste, jeśli nie ma hasła (domyślnie).
       Wymagane tylko do funkcji ponownego uruchamiania aplikacji.

@@ -14,21 +14,18 @@ configuration:
     name: アプリフォルダ
     description: >-
       このアドオンコンテナ内の AppDaemon アプリディレクトリのパス。
-      AppDaemon Studio と AppDaemon は config ボリューム（コンテナ内では
-      /homeassistant）を通じて同じフォルダを共有する必要があります。
 
-      AppDaemon アドオンでの設定方法：
-        1. AppDaemon アドオン → 「設定」タブを開く
-        2. appdaemon.yaml を編集して app_dir を /homeassistant に設定：
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. このオプションを同じパスに設定：/homeassistant/apps
+      ファイルエディタアドオン（例：Studio Code Server）を使用して
+      /addon_configs/appdaemon/appdaemon.yaml を開き、app_dir を設定してください：
 
-      両アドオンはデフォルトで「config」ボリュームがマウントされています。
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      このオプションを同じパスに設定してください：/homeassistant/apps
 
   api_password:
     name: AppDaemon API パスワード
     description: >-
       AppDaemon の HTTP API 設定の api_password。
-      AppDaemon HTTP API にパスワードがない場合（デフォルト）は空のままにしてください。
+      パスワードがない場合（デフォルト）は空のままにしてください。
       アプリの再起動機能にのみ必要です。

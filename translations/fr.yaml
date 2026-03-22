@@ -14,21 +14,18 @@ configuration:
     name: Dossier des applications
     description: >-
       Chemin vers le répertoire des applications AppDaemon dans ce conteneur.
-      AppDaemon Studio et AppDaemon doivent partager le même dossier via le
-      volume config (/homeassistant dans les conteneurs d'extensions).
 
-      Configuration dans l'extension AppDaemon :
-        1. Ouvrez votre extension AppDaemon → onglet Configuration
-        2. Modifiez appdaemon.yaml pour que app_dir pointe vers /homeassistant :
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Définissez cette option sur le même chemin : /homeassistant/apps
+      Utilisez un éditeur de fichiers (ex. Studio Code Server) pour ouvrir
+      /addon_configs/appdaemon/appdaemon.yaml et définir app_dir :
 
-      Les deux extensions ont le volume "config" monté par défaut.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Définissez ensuite cette option sur le même chemin : /homeassistant/apps
 
   api_password:
     name: Mot de passe de l'API AppDaemon
     description: >-
       Le api_password de la configuration HTTP API d'AppDaemon.
-      Laissez vide si votre API HTTP AppDaemon n'a pas de mot de passe (défaut).
+      Laissez vide si aucun mot de passe n'est défini (défaut).
       Nécessaire uniquement pour la fonction de redémarrage d'application.

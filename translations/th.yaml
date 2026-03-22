@@ -14,21 +14,18 @@ configuration:
     name: โฟลเดอร์แอปพลิเคชัน
     description: >-
       เส้นทางไปยังไดเรกทอรีแอปพลิเคชัน AppDaemon ภายในคอนเทนเนอร์แอดดอนนี้
-      AppDaemon Studio และ AppDaemon ต้องใช้โฟลเดอร์เดียวกันผ่าน
-      โวลุม config (/homeassistant ภายในคอนเทนเนอร์แอดดอน)
 
-      การตั้งค่าในแอดดอน AppDaemon:
-        1. เปิดแอดดอน AppDaemon → แท็บการกำหนดค่า
-        2. แก้ไข appdaemon.yaml ให้ app_dir ชี้ไปที่ /homeassistant:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. ตั้งค่าตัวเลือกนี้เป็นเส้นทางเดียวกัน: /homeassistant/apps
+      ใช้แอดดอนแก้ไขไฟล์ (เช่น Studio Code Server) เพื่อเปิด
+      /addon_configs/appdaemon/appdaemon.yaml และตั้งค่า app_dir:
 
-      แอดดอนทั้งสองมีโวลุม "config" ที่แมปไว้ตามค่าเริ่มต้น
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      จากนั้นตั้งค่าตัวเลือกนี้เป็นเส้นทางเดียวกัน: /homeassistant/apps
 
   api_password:
     name: รหัสผ่าน AppDaemon API
     description: >-
       api_password จากการกำหนดค่า HTTP API ของ AppDaemon
-      เว้นว่างไว้หาก HTTP API ของ AppDaemon ไม่มีรหัสผ่าน (ค่าเริ่มต้น)
+      เว้นว่างไว้หากไม่มีรหัสผ่าน (ค่าเริ่มต้น)
       จำเป็นเฉพาะสำหรับฟีเจอร์รีสตาร์ทแอปพลิเคชันเท่านั้น

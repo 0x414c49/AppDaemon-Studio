@@ -8,27 +8,24 @@ configuration:
     description: >-
       آپ کے AppDaemon ایڈ-آن کا اندرونی شناخت کنندہ (مثلاً a0d7b954_appdaemon)۔
       Supervisor API کے ذریعے لاگز حاصل کرنے کے لیے استعمال ہوتا ہے۔
-      اگر آپ معیاری AppDaemon ایڈ-آن استعمال کر رہے ہیں تو ڈیفالٹ رہنے دیں۔
+      اگر معیاری AppDaemon ایڈ-آن استعمال کر رہے ہیں تو ڈیفالٹ رہنے دیں۔
 
   apps_folder:
     name: ایپس فولڈر
     description: >-
       اس ایڈ-آن کنٹینر کے اندر AppDaemon ایپس ڈائریکٹری کا راستہ۔
-      AppDaemon Studio اور AppDaemon کو config والیوم کے ذریعے
-      ایک ہی فولڈر شیئر کرنا ہوگا (/homeassistant کنٹینر کے اندر)۔
 
-      AppDaemon ایڈ-آن میں ترتیب:
-        1. AppDaemon ایڈ-آن → کنفیگریشن ٹیب کھولیں
-        2. appdaemon.yaml ترمیم کریں، app_dir کو /homeassistant پر سیٹ کریں:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. یہ آپشن اسی راستے پر سیٹ کریں: /homeassistant/apps
+      ایک فائل ایڈیٹر ایڈ-آن (مثلاً Studio Code Server) استعمال کریں تا کہ
+      /addon_configs/appdaemon/appdaemon.yaml کھولیں اور app_dir سیٹ کریں:
 
-      دونوں ایڈ-آنز میں ڈیفالٹ طور پر "config" والیوم میپ ہوتا ہے۔
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      پھر یہ آپشن اسی راستے پر سیٹ کریں: /homeassistant/apps
 
   api_password:
     name: AppDaemon API پاسورڈ
     description: >-
       AppDaemon HTTP API ترتیب کا api_password۔
-      اگر HTTP API میں کوئی پاسورڈ نہیں (ڈیفالٹ) تو خالی چھوڑیں۔
+      اگر کوئی پاسورڈ نہیں (ڈیفالٹ) تو خالی چھوڑیں۔
       صرف ایپ دوبارہ شروع کرنے کی خصوصیت کے لیے ضروری ہے۔

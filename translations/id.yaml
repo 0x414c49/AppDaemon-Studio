@@ -14,21 +14,18 @@ configuration:
     name: Folder aplikasi
     description: >-
       Path ke direktori aplikasi AppDaemon di dalam kontainer addon ini.
-      AppDaemon Studio dan AppDaemon harus berbagi folder yang sama melalui
-      volume config (/homeassistant di dalam kontainer addon).
 
-      Pengaturan di addon AppDaemon:
-        1. Buka addon AppDaemon → tab Konfigurasi
-        2. Edit appdaemon.yaml agar app_dir mengarah ke /homeassistant:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Atur opsi ini ke path yang sama: /homeassistant/apps
+      Gunakan addon editor file (mis. Studio Code Server) untuk membuka
+      /addon_configs/appdaemon/appdaemon.yaml dan atur app_dir:
 
-      Kedua addon memiliki volume "config" yang dipetakan secara default.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Lalu atur opsi ini ke path yang sama: /homeassistant/apps
 
   api_password:
     name: Kata sandi API AppDaemon
     description: >-
       api_password dari konfigurasi HTTP API AppDaemon.
-      Biarkan kosong jika HTTP API AppDaemon tidak memiliki kata sandi (default).
+      Biarkan kosong jika tidak ada kata sandi (default).
       Hanya diperlukan untuk fitur restart aplikasi.

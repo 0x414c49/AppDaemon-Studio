@@ -14,21 +14,18 @@ configuration:
     name: Cartella delle applicazioni
     description: >-
       Percorso alla directory delle applicazioni AppDaemon all'interno di questo container.
-      AppDaemon Studio e AppDaemon devono condividere la stessa cartella tramite
-      il volume config (/homeassistant nei container degli add-on).
 
-      Configurazione nell'add-on AppDaemon:
-        1. Apri l'add-on AppDaemon → scheda Configurazione
-        2. Modifica appdaemon.yaml in modo che app_dir punti a /homeassistant:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Imposta questa opzione sullo stesso percorso: /homeassistant/apps
+      Usa un add-on editor di file (es. Studio Code Server) per aprire
+      /addon_configs/appdaemon/appdaemon.yaml e impostare app_dir:
 
-      Entrambi gli add-on hanno il volume "config" montato per impostazione predefinita.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Imposta questa opzione sullo stesso percorso: /homeassistant/apps
 
   api_password:
     name: Password API AppDaemon
     description: >-
       Il api_password dalla configurazione HTTP API di AppDaemon.
-      Lascia vuoto se la HTTP API AppDaemon non ha password (predefinito).
+      Lascia vuoto se non c'è password (predefinito).
       Necessario solo per la funzione di riavvio delle applicazioni.

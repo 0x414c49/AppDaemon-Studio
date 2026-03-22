@@ -14,21 +14,18 @@ configuration:
     name: Thư mục ứng dụng
     description: >-
       Đường dẫn đến thư mục ứng dụng AppDaemon bên trong container tiện ích này.
-      AppDaemon Studio và AppDaemon phải chia sẻ cùng thư mục qua
-      volume config (/homeassistant bên trong container tiện ích).
 
-      Cài đặt trong tiện ích AppDaemon:
-        1. Mở tiện ích AppDaemon → tab Cấu hình
-        2. Sửa appdaemon.yaml để app_dir trỏ đến /homeassistant:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Đặt tùy chọn này cùng đường dẫn: /homeassistant/apps
+      Dùng tiện ích chỉnh sửa file (ví dụ Studio Code Server) để mở
+      /addon_configs/appdaemon/appdaemon.yaml và đặt app_dir:
 
-      Cả hai tiện ích đều có volume "config" được gắn kết mặc định.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Sau đó đặt tùy chọn này cùng đường dẫn: /homeassistant/apps
 
   api_password:
     name: Mật khẩu API AppDaemon
     description: >-
       api_password từ cấu hình HTTP API của AppDaemon.
-      Để trống nếu HTTP API AppDaemon không có mật khẩu (mặc định).
+      Để trống nếu không có mật khẩu (mặc định).
       Chỉ cần thiết cho tính năng khởi động lại ứng dụng.

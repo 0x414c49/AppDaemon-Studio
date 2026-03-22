@@ -14,21 +14,18 @@ configuration:
     name: 应用文件夹
     description: >-
       此插件容器内 AppDaemon 应用目录的路径。
-      AppDaemon Studio 和 AppDaemon 必须通过 config 卷（插件容器内为
-      /homeassistant）共享同一文件夹。
 
-      在 AppDaemon 插件中设置方法：
-        1. 打开 AppDaemon 插件 → 配置选项卡
-        2. 编辑 appdaemon.yaml，将 app_dir 指向 /homeassistant：
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. 将此选项设置为相同路径：/homeassistant/apps
+      使用文件编辑器插件（如 Studio Code Server）打开
+      /addon_configs/appdaemon/appdaemon.yaml，并设置 app_dir：
 
-      两个插件默认均已映射 "config" 卷。
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      然后将此选项设置为相同路径：/homeassistant/apps
 
   api_password:
     name: AppDaemon API 密码
     description: >-
       AppDaemon HTTP API 配置中的 api_password。
-      如果 AppDaemon HTTP API 没有密码（默认），请留空。
+      如果没有密码（默认），请留空。
       仅用于应用重启功能。

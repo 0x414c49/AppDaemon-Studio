@@ -34,9 +34,9 @@ public class AppSettings
     /// <summary>
     /// AppDaemon apps directory (contains *.py files and apps.yaml).
     /// Set via the addon "apps_folder" option or the APPS_DIR env var.
-    /// Defaults to /homeassistant/apps (the /homeassistant volume is the HA config dir, shared across addons).
+    /// Defaults to /config/apps (standard HA AppDaemon setup with config volume).
     /// </summary>
-    public string AppsDir => Get("apps_folder", "APPS_DIR") ?? "/homeassistant/apps";
+    public string AppsDir => Get("apps_folder", "APPS_DIR") ?? "/config/apps";
 
     public string AppsYaml => Path.Combine(AppsDir, "apps.yaml");
     public string VersionsDir => Path.Combine(AppsDir, ".versions");

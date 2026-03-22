@@ -14,21 +14,18 @@ configuration:
     name: Appmapp
     description: >-
       Sökväg till AppDaemon-appmappen inuti den här tilläggsbehållaren.
-      AppDaemon Studio och AppDaemon måste dela samma mapp via
-      config-volymen (/homeassistant inuti tilläggsbehållare).
 
-      Konfiguration i AppDaemon-tillägget:
-        1. Öppna ditt AppDaemon-tillägg → fliken Konfiguration
-        2. Redigera appdaemon.yaml så att app_dir pekar på /homeassistant:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Ange det här alternativet till samma sökväg: /homeassistant/apps
+      Använd ett filredigeringstillägg (t.ex. Studio Code Server) för att öppna
+      /addon_configs/appdaemon/appdaemon.yaml och ange app_dir:
 
-      Båda tilläggen har config-volymen monterad som standard.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Ange det här alternativet till samma sökväg: /homeassistant/apps
 
   api_password:
     name: AppDaemon API-lösenord
     description: >-
       api_password från AppDaemon HTTP API-konfigurationen.
-      Lämna tomt om AppDaemon HTTP API inte har något lösenord (standard).
+      Lämna tomt om inget lösenord finns (standard).
       Behövs bara för funktionen att starta om appar.

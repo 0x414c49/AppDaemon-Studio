@@ -14,21 +14,18 @@ configuration:
     name: Carpeta de aplicaciones
     description: >-
       Ruta al directorio de aplicaciones de AppDaemon dentro de este contenedor.
-      AppDaemon Studio y AppDaemon deben compartir la misma carpeta a través del
-      volumen config (/homeassistant dentro de los contenedores de complementos).
 
-      Configuración en el complemento AppDaemon:
-        1. Abre tu complemento AppDaemon → pestaña Configuración
-        2. Edita appdaemon.yaml para que app_dir apunte a /homeassistant:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Establece esta opción con la misma ruta: /homeassistant/apps
+      Usa un complemento editor de archivos (p. ej. Studio Code Server) para abrir
+      /addon_configs/appdaemon/appdaemon.yaml y establecer app_dir:
 
-      Ambos complementos tienen el volumen "config" mapeado por defecto.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Luego establece esta opción con la misma ruta: /homeassistant/apps
 
   api_password:
     name: Contraseña de la API de AppDaemon
     description: >-
       El api_password de la configuración de la API HTTP de AppDaemon.
-      Déjalo en blanco si tu API HTTP de AppDaemon no tiene contraseña (por defecto).
+      Déjalo en blanco si no tiene contraseña (por defecto).
       Solo es necesario para la función de reinicio de aplicaciones.

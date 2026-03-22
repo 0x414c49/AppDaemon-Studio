@@ -14,21 +14,18 @@ configuration:
     name: Uygulamalar klasörü
     description: >-
       Bu eklenti kapsayıcısı içindeki AppDaemon uygulamaları dizininin yolu.
-      AppDaemon Studio ve AppDaemon, config birimi üzerinden
-      aynı klasörü paylaşmalıdır (kapsayıcılarda /homeassistant).
 
-      AppDaemon eklentisinde kurulum:
-        1. AppDaemon eklentinizi açın → Yapılandırma sekmesi
-        2. appdaemon.yaml dosyasını düzenleyin, app_dir'i /homeassistant olarak ayarlayın:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Bu seçeneği aynı yola ayarlayın: /homeassistant/apps
+      Bir dosya düzenleyici eklentisi (örn. Studio Code Server) kullanarak
+      /addon_configs/appdaemon/appdaemon.yaml dosyasını açın ve app_dir'i ayarlayın:
 
-      Her iki eklentide de "config" birimi varsayılan olarak bağlıdır.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Ardından bu seçeneği aynı yola ayarlayın: /homeassistant/apps
 
   api_password:
     name: AppDaemon API şifresi
     description: >-
       AppDaemon HTTP API yapılandırmasındaki api_password.
-      AppDaemon HTTP API'sinin şifresi yoksa (varsayılan) boş bırakın.
+      Şifre yoksa (varsayılan) boş bırakın.
       Yalnızca uygulama yeniden başlatma özelliği için gereklidir.

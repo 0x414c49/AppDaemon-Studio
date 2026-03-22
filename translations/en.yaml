@@ -14,18 +14,14 @@ configuration:
     name: Apps folder
     description: >-
       Path to your AppDaemon apps directory as seen from inside this addon.
-      AppDaemon Studio and AppDaemon must share the same folder via the
-      config volume (/homeassistant inside addon containers).
 
-      To set this up in your AppDaemon addon:
-        1. Open your AppDaemon addon → Configuration tab
-        2. Set "Config directory" (or edit appdaemon.yaml directly) so that
-           the apps_dir points inside /homeassistant, e.g.:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. Set this option to match: /homeassistant/apps
+      Use a file editor addon (e.g. Studio Code Server) to open
+      /addon_configs/appdaemon/appdaemon.yaml and set app_dir:
 
-      Both addons must have "config" mapped (they do by default).
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      Then set this option to the same path: /homeassistant/apps
 
   api_password:
     name: AppDaemon API password

@@ -14,21 +14,18 @@ configuration:
     name: مجلد التطبيقات
     description: >-
       المسار إلى مجلد تطبيقات AppDaemon داخل حاوية هذه الإضافة.
-      يجب أن تتشارك AppDaemon Studio وAppDaemon نفس المجلد عبر
-      وحدة تخزين config (/homeassistant داخل حاويات الإضافات).
 
-      الإعداد في إضافة AppDaemon:
-        1. افتح إضافة AppDaemon → تبويب الإعدادات
-        2. عدّل appdaemon.yaml بحيث يشير app_dir إلى /homeassistant:
-             appdaemon:
-               app_dir: /homeassistant/apps
-        3. اضبط هذا الخيار على نفس المسار: /homeassistant/apps
+      استخدم إضافة محرر ملفات (مثل Studio Code Server) لفتح
+      /addon_configs/appdaemon/appdaemon.yaml وضبط app_dir:
 
-      كلتا الإضافتين تمتلكان وحدة تخزين "config" مربوطة افتراضيًا.
+        appdaemon:
+          app_dir: "/homeassistant/apps"
+
+      ثم اضبط هذا الخيار على نفس المسار: /homeassistant/apps
 
   api_password:
     name: كلمة مرور AppDaemon API
     description: >-
       api_password من إعدادات HTTP API لـ AppDaemon.
-      اتركها فارغة إذا لم يكن لـ HTTP API كلمة مرور (الافتراضي).
+      اتركها فارغة إذا لم يكن هناك كلمة مرور (الافتراضي).
       مطلوبة فقط لميزة إعادة تشغيل التطبيق.
