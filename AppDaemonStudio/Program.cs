@@ -41,8 +41,23 @@ var app = builder.Build();
 app.UseCors("ApiCors");
 app.UseMiddleware<IngressGuardMiddleware>();
 app.UseWebSockets();
-app.UseStaticFiles();        // serves wwwroot/
+
+// Cache-busting: index.html must never be cached (browser would serve stale JS hashes).
+// Vite-hashed assets (*.js, *.css) can be cached forever — their hash changes with content.
+var staticFileOptions = new Microsoft.AspNetCore.Builder.StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var headers = ctx.Context.Response.Headers;
+        if (ctx.File.Name == "index.html")
+            headers.CacheControl = "no-store";
+        else if (Path.GetExtension(ctx.File.Name) is ".js" or ".css")
+            headers.CacheControl = "public, max-age=31536000, immutable";
+    }
+};
+
+app.UseStaticFiles(staticFileOptions);
 app.MapControllers();
-app.MapFallbackToFile("index.html");   // SPA fallback
+app.MapFallbackToFile("index.html", staticFileOptions);
 
 app.Run();

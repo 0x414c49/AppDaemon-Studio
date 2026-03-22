@@ -14,6 +14,14 @@ export default defineConfig({
     // Disable esbuild CSS minifier to avoid false CSS syntax warnings
     // triggered by Tailwind's CSS custom property declarations.
     cssMinify: false,
+    rollupOptions: {
+      output: {
+        // Explicit content hashes — ensures cache busting on every deploy
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][ext]',
+      },
+    },
   },
   server: {
     // Dev proxy: forward API calls to .NET backend
