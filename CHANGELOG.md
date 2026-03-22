@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.51] - 2026-03-22
+
+- feat: addon config options — apps_folder and api_password
+- feat: ingress security — restrict API to HA admin users
+- feat: HA template tester tab
+- feat: live log streaming via SSE
+- feat: per-app enable/disable toggle and app restart via AppDaemon HTTP API
+
+
 ## [v0.3.50] - 2026-03-21
 
 - fix: add hassapi shorthand import and repair isStartingKeyword regex
