@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.58] - 2026-03-22
+
+- fix: add Cache-Control no-store meta tag to index.html
+
+
 ## [v0.3.57] - 2026-03-22
 
 - feat: add translations for 21 languages
