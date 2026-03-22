@@ -40,7 +40,8 @@ public record HealthResponse(
     bool HaConfigured,
     bool LspReady,
     bool AdApiConfigured,
-    PackageSyncStatus? PackageSync);
+    PackageSyncStatus? PackageSync,
+    string? AppsDir = null);
 
 // ── Template ──────────────────────────────────────────────────────────────────
 public record TemplateRequest(string Template);

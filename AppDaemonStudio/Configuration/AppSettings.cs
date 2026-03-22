@@ -32,12 +32,12 @@ public class AppSettings
     // ── Paths ─────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Root of the AppDaemon config folder containing appdaemon.yaml and the apps/ subfolder.
+    /// AppDaemon apps directory (contains *.py files and apps.yaml).
     /// Set via the addon "apps_folder" option or the APPS_DIR env var.
+    /// Defaults to /config/apps (standard HA AppDaemon setup with config volume).
     /// </summary>
-    public string ConfigDir => Get("apps_folder", "APPS_DIR") ?? "/config";
+    public string AppsDir => Get("apps_folder", "APPS_DIR") ?? "/config/apps";
 
-    public string AppsDir => Path.Combine(ConfigDir, "apps");
     public string AppsYaml => Path.Combine(AppsDir, "apps.yaml");
     public string VersionsDir => Path.Combine(AppsDir, ".versions");
 

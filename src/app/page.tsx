@@ -21,7 +21,6 @@ export default function Home() {
   const [apps, setApps] = useState<AppInfo[]>([]);
   const [activeApp, setActiveApp] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [editorSettings, setEditorSettings] = useState<EditorSettings>(DEFAULT_SETTINGS);
   const [adApiConfigured, setAdApiConfigured] = useState(false);
@@ -98,14 +97,15 @@ export default function Home() {
     try {
       setLoading(true);
       const response = await fetch('api/apps');
-      if (!response.ok) throw new Error('Failed to fetch apps');
+      if (!response.ok) throw new Error(`Failed to fetch apps (${response.status})`);
       const data = await response.json();
       setApps(data.apps);
       if (data.apps.length > 0 && !activeApp) {
         setActiveApp(data.apps[0].name);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setAlertDialog({ isOpen: true, title: 'Failed to load apps', message: msg, variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -189,23 +189,6 @@ export default function Home() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ha-primary mx-auto mb-4"></div>
           <p>Loading AppDaemon Studio…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-ha-bg text-ha-text">
-        <div className="text-center text-ha-error">
-          <p className="text-xl mb-2">Error</p>
-          <p>{error}</p>
-          <button
-            onClick={fetchApps}
-            className="mt-4 px-4 py-2 bg-ha-primary rounded hover:bg-ha-primary-dark text-white"
-          >
-            Retry
-          </button>
         </div>
       </div>
     );

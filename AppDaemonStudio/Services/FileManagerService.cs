@@ -140,6 +140,7 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
     public async Task<List<AppInfo>> ListAppsAsync()
     {
         EnsureAppsDir();
+        logger.LogInformation("Listing apps from {AppsDir}", settings.AppsDir);
         var config = await ReadAppsConfigAsync();
         var apps = new List<AppInfo>();
         var seenNames = new HashSet<string>(StringComparer.Ordinal);
