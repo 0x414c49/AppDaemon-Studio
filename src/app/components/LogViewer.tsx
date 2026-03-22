@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { RefreshCw, AlertTriangle, Info, XCircle, Play, Pause } from 'lucide-react';
+import { AlertTriangle, Info, XCircle, Wifi, WifiOff } from 'lucide-react';
 import { ParsedLogEntry } from '@/lib/log-reader';
 
-const NORMAL_POLL_INTERVAL = 5000;
-const FAST_POLL_INTERVAL = 1500;
-const FAST_POLL_DURATION = 10000;
+const MAX_LOG_ENTRIES = 1000;
 
 const LEVEL_CONFIG = {
   INFO: { color: 'text-ha-text', bg: 'bg-ha-surface', icon: Info },
@@ -17,120 +15,95 @@ const LEVEL_CONFIG = {
 export function LogViewer() {
   const [logs, setLogs] = useState<ParsedLogEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isAutoRefresh, setIsAutoRefresh] = useState(true);
+  const [connected, setConnected] = useState(false);
   const [selectedLevels, setSelectedLevels] = useState<Set<'INFO' | 'WARNING' | 'ERROR'>>(
     new Set(['INFO', 'WARNING', 'ERROR'])
   );
   const [isPaused, setIsPaused] = useState(false);
-  const [lastFileChange, setLastFileChange] = useState<number>(0);
 
   const logContainerRef = useRef<HTMLDivElement>(null);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const fastPollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sourceRef = useRef<EventSource | null>(null);
 
-  const fetchLogs = useCallback(async () => {
-    if (isPaused) return;
-
-    setIsLoading(true);
-    try {
-      const response = await fetch('api/appdaemon-logs');
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Failed to fetch logs');
-        return;
-      }
-
-      setLogs(data.logs);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch logs');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isPaused]);
-
-  useEffect(() => {
-    if (!isAutoRefresh || isPaused) {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
-      return;
-    }
-
-    const isFastPoll = Date.now() - lastFileChange < FAST_POLL_DURATION;
-    const interval = isFastPoll ? FAST_POLL_INTERVAL : NORMAL_POLL_INTERVAL;
-
-    fetchLogs();
-    pollIntervalRef.current = setInterval(fetchLogs, interval);
-
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-    };
-  }, [isAutoRefresh, isPaused, fetchLogs, lastFileChange]);
-
-  useEffect(() => {
-    if (lastFileChange === 0) return;
-
-    if (fastPollTimeoutRef.current) {
-      clearTimeout(fastPollTimeoutRef.current);
-    }
-
-    fastPollTimeoutRef.current = setTimeout(() => {
-      setLastFileChange(0);
-    }, FAST_POLL_DURATION);
-  }, [lastFileChange]);
-
-  useEffect(() => {
-    const handleFileChange = () => {
-      setLastFileChange(Date.now());
-    };
-
-    window.addEventListener('appdaemon-file-changed', handleFileChange);
-    return () => {
-      window.removeEventListener('appdaemon-file-changed', handleFileChange);
-    };
+  const appendLog = useCallback((entry: ParsedLogEntry) => {
+    setLogs(prev => prev.length >= MAX_LOG_ENTRIES
+      ? [...prev.slice(-(MAX_LOG_ENTRIES - 1)), entry]
+      : [...prev, entry]
+    );
   }, []);
 
+  // Fetch existing logs immediately so the view isn't blank while SSE connects
+  useEffect(() => {
+    fetch('api/appdaemon-logs')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.logs?.length) {
+          setLogs((data.logs as ParsedLogEntry[]).slice(-MAX_LOG_ENTRIES));
+        }
+      })
+      .catch(() => { /* non-critical */ });
+  }, []);
+
+  useEffect(() => {
+    const source = new EventSource('api/appdaemon-logs/stream');
+    sourceRef.current = source;
+
+    source.addEventListener('init', (e) => {
+      try {
+        const entries: ParsedLogEntry[] = JSON.parse(e.data);
+        setLogs(entries.slice(-MAX_LOG_ENTRIES));
+        setError(null);
+        setConnected(true);
+      } catch { /* malformed event */ }
+    });
+
+    source.addEventListener('log', (e) => {
+      try {
+        const entry: ParsedLogEntry = JSON.parse(e.data);
+        appendLog(entry);
+      } catch { /* malformed event */ }
+    });
+
+    source.addEventListener('error', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        setError(data.error ?? 'Stream error');
+      } catch { /* connection-level error, SSE will auto-reconnect */ }
+    });
+
+    source.onopen = () => setConnected(true);
+    source.onerror = () => setConnected(false);
+
+    return () => {
+      source.close();
+      sourceRef.current = null;
+    };
+  }, [appendLog]);
+
+  // Auto-scroll when not paused
   useEffect(() => {
     if (!isPaused && logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [logs, isPaused]);
 
+  const handleScroll = () => {
+    if (!logContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = logContainerRef.current;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+    if (!isAtBottom && !isPaused) setIsPaused(true);
+    if (isAtBottom && isPaused) setIsPaused(false);
+  };
+
   const toggleLevel = (level: 'INFO' | 'WARNING' | 'ERROR') => {
     setSelectedLevels(prev => {
       const next = new Set(prev);
-      if (next.has(level)) {
-        next.delete(level);
-      } else {
-        next.add(level);
-      }
+      if (next.has(level)) next.delete(level);
+      else next.add(level);
       return next;
     });
   };
 
-  const handleScroll = () => {
-    if (!logContainerRef.current) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = logContainerRef.current;
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
-
-    if (!isAtBottom && !isPaused) {
-      setIsPaused(true);
-    }
-  };
-
-  const handleResume = () => {
-    setIsPaused(false);
-    fetchLogs();
-  };
-
-  const filteredLogs = logs.filter(log => selectedLevels.has(log.level)).slice().reverse();
+  const filteredLogs = logs.filter(log => selectedLevels.has(log.level as 'INFO' | 'WARNING' | 'ERROR'));
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-ha-bg">
@@ -158,35 +131,16 @@ export function LogViewer() {
 
         <div className="flex-1" />
 
-        <button
-          onClick={fetchLogs}
-          disabled={isLoading}
-          className="flex items-center gap-1 px-2 py-1 bg-ha-surface hover:bg-ha-surface-hover rounded-lg text-xs text-ha-text transition-colors disabled:opacity-50"
-          title="Refresh"
+        {/* Connection status */}
+        <div
+          className={`flex items-center gap-1 text-xs ${connected ? 'text-green-500' : 'text-ha-text-secondary'}`}
+          title={connected ? 'Live' : 'Reconnecting…'}
         >
-          <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
-        </button>
-
-        <button
-          onClick={() => setIsAutoRefresh(!isAutoRefresh)}
-          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${
-            isAutoRefresh ? 'bg-ha-surface-active text-ha-primary' : 'bg-ha-surface text-ha-text-secondary'
-          }`}
-          title={isAutoRefresh ? 'Auto-refresh on' : 'Auto-refresh off'}
-        >
-          <Play className="w-3 h-3" />
-          Auto
-        </button>
-
-        {isPaused && (
-          <button
-            onClick={handleResume}
-            className="flex items-center gap-1 px-2 py-1 bg-ha-warning-bg hover:opacity-90 rounded-lg text-xs text-ha-warning transition-colors"
-          >
-            <Pause className="w-3 h-3" />
-            Resume
-          </button>
-        )}
+          {connected
+            ? <Wifi className="w-3 h-3" />
+            : <WifiOff className="w-3 h-3" />
+          }
+        </div>
       </div>
 
       <div
@@ -201,12 +155,13 @@ export function LogViewer() {
           </div>
         ) : filteredLogs.length === 0 ? (
           <div className="flex items-center justify-center h-full text-ha-text-secondary">
-            No logs to display
+            {connected ? 'No logs to display' : 'No logs yet…'}
           </div>
         ) : (
           <div className="space-y-0.5">
             {filteredLogs.map((log, index) => {
-              const config = LEVEL_CONFIG[log.level];
+              const level = log.level as 'INFO' | 'WARNING' | 'ERROR';
+              const config = LEVEL_CONFIG[level] ?? LEVEL_CONFIG.INFO;
               const Icon = config.icon;
               return (
                 <div
@@ -233,11 +188,14 @@ export function LogViewer() {
       {isPaused && (
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
           <button
-            onClick={handleResume}
+            onClick={() => {
+              setIsPaused(false);
+              if (logContainerRef.current)
+                logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-ha-warning-bg hover:opacity-90 rounded-full text-ha-warning text-sm shadow-lg transition-colors"
           >
-            <Play className="w-4 h-4" />
-            Resume
+            ↓ Scroll to bottom
           </button>
         </div>
       )}
