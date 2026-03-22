@@ -1,6 +1,12 @@
 name: Build Docker Image
 
 on:
+  workflow_dispatch:
+    inputs:
+      skip_arm:
+        description: 'Skip ARM (aarch64) build for faster iteration'
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths-ignore:
@@ -162,9 +168,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
+        platform: ${{ fromJSON(github.event.inputs.skip_arm == 'true' && '["linux/amd64"]' || '["linux/amd64","linux/arm64"]') }}
 
     steps:
       - name: Checkout code
@@ -232,11 +236,14 @@ jobs:
 
       - name: Create manifest list and push
         run: |
+          IMAGES="${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}-linux-amd64"
+          if [ "${{ github.event.inputs.skip_arm }}" != "true" ]; then
+            IMAGES="$IMAGES ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}-linux-arm64"
+          fi
           docker buildx imagetools create \
             -t ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }} \
             -t ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:latest \
-            ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}-linux-arm64
+            $IMAGES
 
       - name: Inspect image
         run: docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}
