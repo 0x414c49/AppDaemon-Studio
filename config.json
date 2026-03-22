@@ -24,7 +24,7 @@
   "options": {
     "log_level": "info",
     "appdaemon_addon_slug": "a0d7b954_appdaemon",
-    "apps_folder": "/config/apps",
+    "apps_folder": "/homeassistant/apps",
     "api_password": ""
   },
   "schema": {

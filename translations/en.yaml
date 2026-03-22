@@ -1,0 +1,35 @@
+configuration:
+  log_level:
+    name: Log level
+    description: Verbosity of AppDaemon Studio's own logs.
+
+  appdaemon_addon_slug:
+    name: AppDaemon addon slug
+    description: >-
+      The internal slug of your AppDaemon addon (e.g. a0d7b954_appdaemon).
+      Used to fetch logs via the Supervisor API. Leave as default if you are
+      using the standard AppDaemon addon.
+
+  apps_folder:
+    name: Apps folder
+    description: >-
+      Path to your AppDaemon apps directory as seen from inside this addon.
+      AppDaemon Studio and AppDaemon must share the same folder via the
+      config volume (/homeassistant inside addon containers).
+
+      To set this up in your AppDaemon addon:
+        1. Open your AppDaemon addon → Configuration tab
+        2. Set "Config directory" (or edit appdaemon.yaml directly) so that
+           the apps_dir points inside /homeassistant, e.g.:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. Set this option to match: /homeassistant/apps
+
+      Both addons must have "config" mapped (they do by default).
+
+  api_password:
+    name: AppDaemon API password
+    description: >-
+      The api_password from your AppDaemon HTTP API configuration.
+      Leave blank if your AppDaemon HTTP API has no password (default).
+      Only needed for the app restart feature.
