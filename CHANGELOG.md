@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.53] - 2026-03-22
+
+- fix: remove X-Hass-Is-Admin check from ingress guard
+
+
 ## [v0.3.52] - 2026-03-22
 
 - ci: add workflow_dispatch with skip_arm input for faster builds
