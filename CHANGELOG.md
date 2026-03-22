@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.3.57] - 2026-03-22
+
+- feat: add translations for 21 languages
+- fix: apps_folder default /homeassistant/apps; add option descriptions
+
+
 ## [v0.3.56] - 2026-03-22
 
 - fix: cache-bust on deploy — no-store for index.html, immutable for hashed assets
