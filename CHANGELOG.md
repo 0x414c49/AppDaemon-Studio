@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.56] - 2026-03-22
+
+- fix: cache-bust on deploy — no-store for index.html, immutable for hashed assets
+
+
 ## [v0.3.55] - 2026-03-22
 
 - fix: apps_folder is the apps dir itself; tabs survive load errors; push builds amd64-only
