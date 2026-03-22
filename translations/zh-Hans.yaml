@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: 日志级别
+    description: AppDaemon Studio 自身日志的详细程度。
+
+  appdaemon_addon_slug:
+    name: AppDaemon 插件标识符
+    description: >-
+      您的 AppDaemon 插件的内部标识符（例如 a0d7b954_appdaemon）。
+      用于通过 Supervisor API 获取日志。
+      如果使用标准 AppDaemon 插件，保持默认值即可。
+
+  apps_folder:
+    name: 应用文件夹
+    description: >-
+      此插件容器内 AppDaemon 应用目录的路径。
+      AppDaemon Studio 和 AppDaemon 必须通过 config 卷（插件容器内为
+      /homeassistant）共享同一文件夹。
+
+      在 AppDaemon 插件中设置方法：
+        1. 打开 AppDaemon 插件 → 配置选项卡
+        2. 编辑 appdaemon.yaml，将 app_dir 指向 /homeassistant：
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. 将此选项设置为相同路径：/homeassistant/apps
+
+      两个插件默认均已映射 "config" 卷。
+
+  api_password:
+    name: AppDaemon API 密码
+    description: >-
+      AppDaemon HTTP API 配置中的 api_password。
+      如果 AppDaemon HTTP API 没有密码（默认），请留空。
+      仅用于应用重启功能。

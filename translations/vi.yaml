@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: Mức nhật ký
+    description: Mức độ chi tiết của nhật ký AppDaemon Studio.
+
+  appdaemon_addon_slug:
+    name: Slug tiện ích AppDaemon
+    description: >-
+      Mã định danh nội bộ của tiện ích AppDaemon (ví dụ a0d7b954_appdaemon).
+      Dùng để lấy nhật ký qua Supervisor API.
+      Để mặc định nếu bạn dùng tiện ích AppDaemon tiêu chuẩn.
+
+  apps_folder:
+    name: Thư mục ứng dụng
+    description: >-
+      Đường dẫn đến thư mục ứng dụng AppDaemon bên trong container tiện ích này.
+      AppDaemon Studio và AppDaemon phải chia sẻ cùng thư mục qua
+      volume config (/homeassistant bên trong container tiện ích).
+
+      Cài đặt trong tiện ích AppDaemon:
+        1. Mở tiện ích AppDaemon → tab Cấu hình
+        2. Sửa appdaemon.yaml để app_dir trỏ đến /homeassistant:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. Đặt tùy chọn này cùng đường dẫn: /homeassistant/apps
+
+      Cả hai tiện ích đều có volume "config" được gắn kết mặc định.
+
+  api_password:
+    name: Mật khẩu API AppDaemon
+    description: >-
+      api_password từ cấu hình HTTP API của AppDaemon.
+      Để trống nếu HTTP API AppDaemon không có mật khẩu (mặc định).
+      Chỉ cần thiết cho tính năng khởi động lại ứng dụng.

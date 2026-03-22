@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: سطح گزارش
+    description: سطح جزئیات گزارش‌های خود AppDaemon Studio.
+
+  appdaemon_addon_slug:
+    name: شناسه افزونه AppDaemon
+    description: >-
+      شناسه داخلی افزونه AppDaemon شما (مثلاً a0d7b954_appdaemon).
+      برای دریافت گزارش‌ها از طریق Supervisor API استفاده می‌شود.
+      اگر از افزونه استاندارد AppDaemon استفاده می‌کنید، مقدار پیش‌فرض را نگه دارید.
+
+  apps_folder:
+    name: پوشه برنامه‌ها
+    description: >-
+      مسیر دایرکتوری برنامه‌های AppDaemon درون کانتینر این افزونه.
+      AppDaemon Studio و AppDaemon باید از طریق والیوم config
+      یک پوشه مشترک داشته باشند (/homeassistant درون کانتینرها).
+
+      راه‌اندازی در افزونه AppDaemon:
+        ۱. افزونه AppDaemon را باز کنید → تب پیکربندی
+        ۲. فایل appdaemon.yaml را ویرایش کنید تا app_dir به /homeassistant اشاره کند:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        ۳. این گزینه را به همان مسیر تنظیم کنید: /homeassistant/apps
+
+      هر دو افزونه به‌صورت پیش‌فرض والیوم "config" را دارند.
+
+  api_password:
+    name: رمز عبور API AppDaemon
+    description: >-
+      مقدار api_password از پیکربندی HTTP API افزونه AppDaemon.
+      اگر HTTP API افزونه AppDaemon رمز عبور ندارد (پیش‌فرض) خالی بگذارید.
+      فقط برای قابلیت راه‌اندازی مجدد برنامه‌ها لازم است.

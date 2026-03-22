@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: Уровень журнала
+    description: Детализация журналов самого AppDaemon Studio.
+
+  appdaemon_addon_slug:
+    name: Слаг дополнения AppDaemon
+    description: >-
+      Внутренний идентификатор вашего дополнения AppDaemon (например, a0d7b954_appdaemon).
+      Используется для получения журналов через Supervisor API.
+      Оставьте значение по умолчанию, если вы используете стандартное дополнение AppDaemon.
+
+  apps_folder:
+    name: Папка приложений
+    description: >-
+      Путь к директории приложений AppDaemon внутри контейнера этого дополнения.
+      AppDaemon Studio и AppDaemon должны использовать одну папку через
+      том config (/homeassistant внутри контейнеров дополнений).
+
+      Настройка в дополнении AppDaemon:
+        1. Откройте дополнение AppDaemon → вкладка Конфигурация
+        2. Отредактируйте appdaemon.yaml, укажите app_dir на /homeassistant:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. Установите этот параметр на тот же путь: /homeassistant/apps
+
+      Оба дополнения имеют том "config" по умолчанию.
+
+  api_password:
+    name: Пароль API AppDaemon
+    description: >-
+      Значение api_password из конфигурации HTTP API AppDaemon.
+      Оставьте пустым, если HTTP API AppDaemon не требует пароля (по умолчанию).
+      Нужен только для функции перезапуска приложений.

@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: Logniveau
+    description: Uitgebreidheid van de eigen logboeken van AppDaemon Studio.
+
+  appdaemon_addon_slug:
+    name: AppDaemon-add-on slug
+    description: >-
+      De interne identificatie van je AppDaemon-add-on (bijv. a0d7b954_appdaemon).
+      Wordt gebruikt om logboeken op te halen via de Supervisor API.
+      Laat de standaardwaarde als je de standaard AppDaemon-add-on gebruikt.
+
+  apps_folder:
+    name: Apps-map
+    description: >-
+      Pad naar de AppDaemon-appmap in deze add-on-container.
+      AppDaemon Studio en AppDaemon moeten dezelfde map delen via het
+      config-volume (/homeassistant in add-on-containers).
+
+      Instellen in de AppDaemon-add-on:
+        1. Open de AppDaemon-add-on → tabblad Configuratie
+        2. Bewerk appdaemon.yaml zodat app_dir naar /homeassistant verwijst:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. Stel deze optie in op hetzelfde pad: /homeassistant/apps
+
+      Beide add-ons hebben het "config"-volume standaard gekoppeld.
+
+  api_password:
+    name: AppDaemon API-wachtwoord
+    description: >-
+      Het api_password uit de HTTP API-configuratie van AppDaemon.
+      Laat leeg als de AppDaemon HTTP API geen wachtwoord heeft (standaard).
+      Alleen nodig voor de functie om apps opnieuw te starten.

@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: Protokollstufe
+    description: Ausführlichkeit der eigenen Protokolle von AppDaemon Studio.
+
+  appdaemon_addon_slug:
+    name: AppDaemon-Add-on-Slug
+    description: >-
+      Der interne Bezeichner deines AppDaemon-Add-ons (z. B. a0d7b954_appdaemon).
+      Wird verwendet, um Protokolle über die Supervisor-API abzurufen.
+      Behalte den Standardwert, wenn du das Standard-AppDaemon-Add-on verwendest.
+
+  apps_folder:
+    name: Apps-Ordner
+    description: >-
+      Pfad zum AppDaemon-Apps-Verzeichnis innerhalb dieses Add-on-Containers.
+      AppDaemon Studio und AppDaemon müssen denselben Ordner über das
+      config-Volume teilen (/homeassistant innerhalb von Add-on-Containern).
+
+      Einrichtung im AppDaemon-Add-on:
+        1. Öffne dein AppDaemon-Add-on → Reiter Konfiguration
+        2. Bearbeite appdaemon.yaml, sodass app_dir auf /homeassistant zeigt:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. Setze diese Option auf denselben Pfad: /homeassistant/apps
+
+      Beide Add-ons haben das „config"-Volume standardmäßig eingebunden.
+
+  api_password:
+    name: AppDaemon-API-Passwort
+    description: >-
+      Das api_password aus der HTTP-API-Konfiguration von AppDaemon.
+      Leer lassen, wenn die HTTP-API von AppDaemon kein Passwort hat (Standard).
+      Nur für die App-Neustart-Funktion erforderlich.

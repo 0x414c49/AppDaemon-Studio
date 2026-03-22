@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: ระดับบันทึก
+    description: ระดับความละเอียดของบันทึกของ AppDaemon Studio เอง
+
+  appdaemon_addon_slug:
+    name: สลัก AppDaemon แอดดอน
+    description: >-
+      ตัวระบุภายในของแอดดอน AppDaemon ของคุณ (เช่น a0d7b954_appdaemon)
+      ใช้สำหรับดึงบันทึกผ่าน Supervisor API
+      เว้นค่าเริ่มต้นไว้หากคุณใช้แอดดอน AppDaemon มาตรฐาน
+
+  apps_folder:
+    name: โฟลเดอร์แอปพลิเคชัน
+    description: >-
+      เส้นทางไปยังไดเรกทอรีแอปพลิเคชัน AppDaemon ภายในคอนเทนเนอร์แอดดอนนี้
+      AppDaemon Studio และ AppDaemon ต้องใช้โฟลเดอร์เดียวกันผ่าน
+      โวลุม config (/homeassistant ภายในคอนเทนเนอร์แอดดอน)
+
+      การตั้งค่าในแอดดอน AppDaemon:
+        1. เปิดแอดดอน AppDaemon → แท็บการกำหนดค่า
+        2. แก้ไข appdaemon.yaml ให้ app_dir ชี้ไปที่ /homeassistant:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. ตั้งค่าตัวเลือกนี้เป็นเส้นทางเดียวกัน: /homeassistant/apps
+
+      แอดดอนทั้งสองมีโวลุม "config" ที่แมปไว้ตามค่าเริ่มต้น
+
+  api_password:
+    name: รหัสผ่าน AppDaemon API
+    description: >-
+      api_password จากการกำหนดค่า HTTP API ของ AppDaemon
+      เว้นว่างไว้หาก HTTP API ของ AppDaemon ไม่มีรหัสผ่าน (ค่าเริ่มต้น)
+      จำเป็นเฉพาะสำหรับฟีเจอร์รีสตาร์ทแอปพลิเคชันเท่านั้น

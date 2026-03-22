@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: Livello di registro
+    description: Livello di dettaglio dei registri di AppDaemon Studio.
+
+  appdaemon_addon_slug:
+    name: Slug dell'add-on AppDaemon
+    description: >-
+      L'identificatore interno del tuo add-on AppDaemon (es. a0d7b954_appdaemon).
+      Usato per recuperare i registri tramite l'API Supervisor.
+      Lascia il valore predefinito se usi l'add-on AppDaemon standard.
+
+  apps_folder:
+    name: Cartella delle applicazioni
+    description: >-
+      Percorso alla directory delle applicazioni AppDaemon all'interno di questo container.
+      AppDaemon Studio e AppDaemon devono condividere la stessa cartella tramite
+      il volume config (/homeassistant nei container degli add-on).
+
+      Configurazione nell'add-on AppDaemon:
+        1. Apri l'add-on AppDaemon → scheda Configurazione
+        2. Modifica appdaemon.yaml in modo che app_dir punti a /homeassistant:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. Imposta questa opzione sullo stesso percorso: /homeassistant/apps
+
+      Entrambi gli add-on hanno il volume "config" montato per impostazione predefinita.
+
+  api_password:
+    name: Password API AppDaemon
+    description: >-
+      Il api_password dalla configurazione HTTP API di AppDaemon.
+      Lascia vuoto se la HTTP API AppDaemon non ha password (predefinito).
+      Necessario solo per la funzione di riavvio delle applicazioni.

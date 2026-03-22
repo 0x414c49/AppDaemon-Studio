@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: Poziom dziennika
+    description: Szczegółowość własnych dzienników AppDaemon Studio.
+
+  appdaemon_addon_slug:
+    name: Slug dodatku AppDaemon
+    description: >-
+      Wewnętrzny identyfikator Twojego dodatku AppDaemon (np. a0d7b954_appdaemon).
+      Używany do pobierania dzienników przez API Supervisora.
+      Pozostaw domyślną wartość, jeśli używasz standardowego dodatku AppDaemon.
+
+  apps_folder:
+    name: Folder aplikacji
+    description: >-
+      Ścieżka do katalogu aplikacji AppDaemon wewnątrz tego kontenera.
+      AppDaemon Studio i AppDaemon muszą współdzielić ten sam folder przez
+      wolumen config (/homeassistant wewnątrz kontenerów dodatków).
+
+      Konfiguracja w dodatku AppDaemon:
+        1. Otwórz dodatek AppDaemon → zakładka Konfiguracja
+        2. Edytuj appdaemon.yaml, ustaw app_dir na /homeassistant:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. Ustaw tę opcję na tę samą ścieżkę: /homeassistant/apps
+
+      Oba dodatki mają domyślnie zamontowany wolumen "config".
+
+  api_password:
+    name: Hasło API AppDaemon
+    description: >-
+      Wartość api_password z konfiguracji HTTP API AppDaemon.
+      Pozostaw puste, jeśli HTTP API AppDaemon nie ma hasła (domyślnie).
+      Wymagane tylko do funkcji ponownego uruchamiania aplikacji.

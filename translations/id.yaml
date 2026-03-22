@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: Tingkat log
+    description: Tingkat verbositas log AppDaemon Studio sendiri.
+
+  appdaemon_addon_slug:
+    name: Slug addon AppDaemon
+    description: >-
+      Pengenal internal addon AppDaemon Anda (mis. a0d7b954_appdaemon).
+      Digunakan untuk mengambil log melalui Supervisor API.
+      Biarkan default jika Anda menggunakan addon AppDaemon standar.
+
+  apps_folder:
+    name: Folder aplikasi
+    description: >-
+      Path ke direktori aplikasi AppDaemon di dalam kontainer addon ini.
+      AppDaemon Studio dan AppDaemon harus berbagi folder yang sama melalui
+      volume config (/homeassistant di dalam kontainer addon).
+
+      Pengaturan di addon AppDaemon:
+        1. Buka addon AppDaemon → tab Konfigurasi
+        2. Edit appdaemon.yaml agar app_dir mengarah ke /homeassistant:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. Atur opsi ini ke path yang sama: /homeassistant/apps
+
+      Kedua addon memiliki volume "config" yang dipetakan secara default.
+
+  api_password:
+    name: Kata sandi API AppDaemon
+    description: >-
+      api_password dari konfigurasi HTTP API AppDaemon.
+      Biarkan kosong jika HTTP API AppDaemon tidak memiliki kata sandi (default).
+      Hanya diperlukan untuk fitur restart aplikasi.

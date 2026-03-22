@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: Loggnivå
+    description: Detaljnivå för AppDaemon Studios egna loggar.
+
+  appdaemon_addon_slug:
+    name: AppDaemon-tilläggets slug
+    description: >-
+      Den interna identifieraren för ditt AppDaemon-tillägg (t.ex. a0d7b954_appdaemon).
+      Används för att hämta loggar via Supervisor API.
+      Lämna standardvärdet om du använder det vanliga AppDaemon-tillägget.
+
+  apps_folder:
+    name: Appmapp
+    description: >-
+      Sökväg till AppDaemon-appmappen inuti den här tilläggsbehållaren.
+      AppDaemon Studio och AppDaemon måste dela samma mapp via
+      config-volymen (/homeassistant inuti tilläggsbehållare).
+
+      Konfiguration i AppDaemon-tillägget:
+        1. Öppna ditt AppDaemon-tillägg → fliken Konfiguration
+        2. Redigera appdaemon.yaml så att app_dir pekar på /homeassistant:
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. Ange det här alternativet till samma sökväg: /homeassistant/apps
+
+      Båda tilläggen har config-volymen monterad som standard.
+
+  api_password:
+    name: AppDaemon API-lösenord
+    description: >-
+      api_password från AppDaemon HTTP API-konfigurationen.
+      Lämna tomt om AppDaemon HTTP API inte har något lösenord (standard).
+      Behövs bara för funktionen att starta om appar.

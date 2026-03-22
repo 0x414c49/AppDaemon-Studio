@@ -1,0 +1,34 @@
+configuration:
+  log_level:
+    name: Niveau de journalisation
+    description: Niveau de verbosité des journaux d'AppDaemon Studio.
+
+  appdaemon_addon_slug:
+    name: Slug de l'extension AppDaemon
+    description: >-
+      L'identifiant interne de votre extension AppDaemon (ex. a0d7b954_appdaemon).
+      Utilisé pour récupérer les journaux via l'API Supervisor.
+      Laissez la valeur par défaut si vous utilisez l'extension AppDaemon standard.
+
+  apps_folder:
+    name: Dossier des applications
+    description: >-
+      Chemin vers le répertoire des applications AppDaemon dans ce conteneur.
+      AppDaemon Studio et AppDaemon doivent partager le même dossier via le
+      volume config (/homeassistant dans les conteneurs d'extensions).
+
+      Configuration dans l'extension AppDaemon :
+        1. Ouvrez votre extension AppDaemon → onglet Configuration
+        2. Modifiez appdaemon.yaml pour que app_dir pointe vers /homeassistant :
+             appdaemon:
+               app_dir: /homeassistant/apps
+        3. Définissez cette option sur le même chemin : /homeassistant/apps
+
+      Les deux extensions ont le volume "config" monté par défaut.
+
+  api_password:
+    name: Mot de passe de l'API AppDaemon
+    description: >-
+      Le api_password de la configuration HTTP API d'AppDaemon.
+      Laissez vide si votre API HTTP AppDaemon n'a pas de mot de passe (défaut).
+      Nécessaire uniquement pour la fonction de redémarrage d'application.
