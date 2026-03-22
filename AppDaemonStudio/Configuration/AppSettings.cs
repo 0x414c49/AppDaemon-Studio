@@ -1,25 +1,74 @@
 using System.Reflection;
+using System.Text.Json;
 
 namespace AppDaemonStudio.Configuration;
 
 public class AppSettings
 {
-    /// <summary>Root config directory. Defaults to /config. Apps live at {AppsDir}/apps/</summary>
-    public string ConfigDir => Environment.GetEnvironmentVariable("APPS_DIR") ?? "/config";
+    // ── HA addon options (/data/options.json) with env-var fallback ───────────
+    // In addon mode HA writes options.json; env vars work for standalone/dev.
+
+    private static readonly Lazy<Dictionary<string, JsonElement>> _options = new(() =>
+    {
+        const string path = "/data/options.json";
+        if (!File.Exists(path)) return [];
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            return doc.RootElement.EnumerateObject()
+                .ToDictionary(p => p.Name, p => p.Value.Clone());
+        }
+        catch { return []; }
+    });
+
+    private static string? Opt(string key) =>
+        _options.Value.TryGetValue(key, out var v) && v.ValueKind == JsonValueKind.String
+            ? v.GetString()
+            : null;
+
+    private static string? Get(string optKey, string envKey) =>
+        Opt(optKey) ?? Environment.GetEnvironmentVariable(envKey);
+
+    // ── Paths ─────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Root of the AppDaemon config folder containing appdaemon.yaml and the apps/ subfolder.
+    /// Set via the addon "apps_folder" option or the APPS_DIR env var.
+    /// </summary>
+    public string ConfigDir => Get("apps_folder", "APPS_DIR") ?? "/config";
 
     public string AppsDir => Path.Combine(ConfigDir, "apps");
     public string AppsYaml => Path.Combine(AppsDir, "apps.yaml");
     public string VersionsDir => Path.Combine(AppsDir, ".versions");
 
-    /// <summary>HA Supervisor token (addon mode). Checks SUPERVISOR_TOKEN then HASSIO_TOKEN.</summary>
+    // ── Supervisor / HA ───────────────────────────────────────────────────────
+
+    /// <summary>HA Supervisor token (injected automatically in addon mode).</summary>
     public string? SupervisorToken =>
         Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN") ??
         Environment.GetEnvironmentVariable("HASSIO_TOKEN");
 
     public string? HaUrl => Environment.GetEnvironmentVariable("HA_URL");
     public string? HaToken => Environment.GetEnvironmentVariable("HA_TOKEN");
-    public string? AddonSlug => Environment.GetEnvironmentVariable("APPDAEMON_ADDON_SLUG");
-    public string? LogFilePath => Environment.GetEnvironmentVariable("APPDAEMON_LOG_FILE");
+
+    /// <summary>AppDaemon addon slug. Resolved automatically if not set.</summary>
+    public string? AddonSlug => Get("appdaemon_addon_slug", "APPDAEMON_ADDON_SLUG");
+
+    // ── AppDaemon HTTP API ────────────────────────────────────────────────────
+
+    /// <summary>AppDaemon HTTP API base URL. Auto-discovered in addon mode if not set.</summary>
+    public string? AdHttpUrl => Environment.GetEnvironmentVariable("APPDAEMON_HTTP_URL");
+
+    /// <summary>
+    /// AppDaemon HTTP API password (api_password in appdaemon.yaml).
+    /// Leave blank if the API has no password (default).
+    /// Set via the addon "api_password" option or APPDAEMON_HTTP_TOKEN env var.
+    /// </summary>
+    public string? AdHttpToken =>
+        Get("api_password", "APPDAEMON_HTTP_TOKEN") is { Length: > 0 } t ? t : null;
+
+    // ── Misc ──────────────────────────────────────────────────────────────────
+
     public string Version
     {
         get
@@ -27,7 +76,6 @@ public class AppSettings
             var v = typeof(AppSettings).Assembly
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                 ?.InformationalVersion ?? "unknown";
-            // Strip the +<commithash> build metadata that .NET appends automatically
             var plus = v.IndexOf('+');
             return plus > 0 ? v[..plus] : v;
         }

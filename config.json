@@ -23,11 +23,15 @@
   ],
   "options": {
     "log_level": "info",
-    "appdaemon_addon_slug": "a0d7b954_appdaemon"
+    "appdaemon_addon_slug": "a0d7b954_appdaemon",
+    "apps_folder": "/addon_configs/a0d7b954_appdaemon/apps",
+    "api_password": ""
   },
   "schema": {
     "log_level": "list(debug|info|warning|error)?",
-    "appdaemon_addon_slug": "str"
+    "appdaemon_addon_slug": "str",
+    "apps_folder": "str",
+    "api_password": "str?"
   },
   "init": false,
   "hassio_api": true,
