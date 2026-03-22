@@ -39,4 +39,9 @@ public record HealthResponse(
     string Version,
     bool HaConfigured,
     bool LspReady,
+    bool AdApiConfigured,
     PackageSyncStatus? PackageSync);
+
+// ── Template ──────────────────────────────────────────────────────────────────
+public record TemplateRequest(string Template);
+public record TemplateResponse(string Result);

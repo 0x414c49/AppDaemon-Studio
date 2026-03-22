@@ -8,5 +8,6 @@ public record AppInfo(
     bool HasYaml,
     string LastModified,
     int VersionCount,
-    string? Icon = null
+    string? Icon = null,
+    bool Disabled = false
 );

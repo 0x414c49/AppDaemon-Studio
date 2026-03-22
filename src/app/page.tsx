@@ -8,6 +8,7 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 import { AlertDialog } from './components/AlertDialog';
 import { TabBar, TabId } from './components/TabBar';
 import { LogViewer } from './components/LogViewer';
+import { TemplateTester } from './components/TemplateTester';
 import { AppInfo } from '@/types';
 import { EditorSettings, getSettings, DEFAULT_SETTINGS, subscribeToSettings } from '@/lib/settings-store';
 
@@ -23,6 +24,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [editorSettings, setEditorSettings] = useState<EditorSettings>(DEFAULT_SETTINGS);
+  const [adApiConfigured, setAdApiConfigured] = useState(false);
+  const [yamlReloadKey, setYamlReloadKey] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     appName: string | null;
@@ -33,26 +36,24 @@ export default function Home() {
     message: string;
     variant: 'success' | 'error' | 'info';
   }>({ isOpen: false, title: '', message: '', variant: 'info' });
-  
+
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
       if (saved) {
         const width = parseInt(saved, 10);
-        if (!isNaN(width) && width >= MIN_SIDEBAR_WIDTH && width <= MAX_SIDEBAR_WIDTH) {
+        if (!isNaN(width) && width >= MIN_SIDEBAR_WIDTH && width <= MAX_SIDEBAR_WIDTH)
           return width;
-        }
       }
     }
     return DEFAULT_SIDEBAR_WIDTH;
   });
-  
+
   const [activeTab, setActiveTab] = useState<TabId>('editor');
-  
   const isResizing = useRef(false);
 
   useEffect(() => {
-    fetchApps();
+    Promise.all([fetchApps(), fetchHealth()]);
   }, []);
 
   useEffect(() => {
@@ -75,11 +76,9 @@ export default function Home() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing.current) return;
-      
       const newWidth = Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, e.clientX));
       setSidebarWidth(newWidth);
     };
-
     const handleMouseUp = () => {
       if (isResizing.current) {
         isResizing.current = false;
@@ -87,10 +86,8 @@ export default function Home() {
         document.body.style.userSelect = '';
       }
     };
-
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -114,6 +111,15 @@ export default function Home() {
     }
   };
 
+  const fetchHealth = async () => {
+    try {
+      const response = await fetch('api/health');
+      if (!response.ok) return;
+      const data = await response.json();
+      setAdApiConfigured(data.ad_api_configured ?? false);
+    } catch { /* non-critical */ }
+  };
+
   const handleCreateApp = async (name: string, className: string, icon?: string, description?: string) => {
     try {
       const response = await fetch('api/apps', {
@@ -124,52 +130,56 @@ export default function Home() {
       if (!response.ok) throw new Error('Failed to create app');
       await fetchApps();
       setActiveApp(name);
-      setAlertDialog({
-        isOpen: true,
-        title: 'Success',
-        message: `App "${name}" created successfully`,
-        variant: 'success',
-      });
+      setAlertDialog({ isOpen: true, title: 'Success', message: `App "${name}" created successfully`, variant: 'success' });
     } catch (err) {
-      setAlertDialog({
-        isOpen: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to create app',
-        variant: 'error',
-      });
+      setAlertDialog({ isOpen: true, title: 'Error', message: err instanceof Error ? err.message : 'Failed to create app', variant: 'error' });
     }
   };
 
-  const handleDeleteApp = async (name: string) => {
+  const handleDeleteApp = (name: string) => {
     setConfirmDialog({ isOpen: true, appName: name });
   };
 
   const confirmDeleteApp = async () => {
     const appName = confirmDialog.appName;
     if (!appName) return;
-    
     try {
-      const response = await fetch(`api/files/${appName}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(`api/files/${appName}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete app');
       await fetchApps();
       if (activeApp === appName) setActiveApp(null);
-      setAlertDialog({
-        isOpen: true,
-        title: 'Success',
-        message: `App "${appName}" deleted successfully`,
-        variant: 'success',
-      });
+      setAlertDialog({ isOpen: true, title: 'Success', message: `App "${appName}" deleted successfully`, variant: 'success' });
     } catch (err) {
-      setAlertDialog({
-        isOpen: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to delete app',
-        variant: 'error',
-      });
+      setAlertDialog({ isOpen: true, title: 'Error', message: err instanceof Error ? err.message : 'Failed to delete app', variant: 'error' });
     } finally {
       setConfirmDialog({ isOpen: false, appName: null });
+    }
+  };
+
+  const handleToggleDisabled = async (name: string, disabled: boolean) => {
+    // Optimistic update
+    setApps(prev => prev.map(a => a.name === name ? { ...a, disabled } : a));
+    try {
+      const action = disabled ? 'disable' : 'enable';
+      const response = await fetch(`api/apps/${name}/${action}`, { method: 'POST' });
+      if (!response.ok) throw new Error(`Failed to ${action} app`);
+      // Reload YAML editor if open — apps.yaml just changed
+      setYamlReloadKey(k => k + 1);
+    } catch (err) {
+      // Revert on failure
+      setApps(prev => prev.map(a => a.name === name ? { ...a, disabled: !disabled } : a));
+      setAlertDialog({ isOpen: true, title: 'Error', message: err instanceof Error ? err.message : 'Failed to update app', variant: 'error' });
+    }
+  };
+
+  const handleRestartApp = async (name: string) => {
+    try {
+      const response = await fetch(`api/apps/${name}/restart`, { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Failed to restart app');
+      setAlertDialog({ isOpen: true, title: 'Restarted', message: `App "${name}" restarted`, variant: 'success' });
+    } catch (err) {
+      setAlertDialog({ isOpen: true, title: 'Error', message: err instanceof Error ? err.message : 'Failed to restart app', variant: 'error' });
     }
   };
 
@@ -178,7 +188,7 @@ export default function Home() {
       <div className="flex h-screen items-center justify-center bg-ha-bg text-ha-text">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ha-primary mx-auto mb-4"></div>
-          <p>Loading AppDaemon Studio...</p>
+          <p>Loading AppDaemon Studio…</p>
         </div>
       </div>
     );
@@ -209,7 +219,10 @@ export default function Home() {
         onSelectApp={setActiveApp}
         onCreateApp={handleCreateApp}
         onDeleteApp={handleDeleteApp}
+        onToggleDisabled={handleToggleDisabled}
+        onRestartApp={handleRestartApp}
         onOpenSettings={() => setShowSettings(true)}
+        adApiConfigured={adApiConfigured}
         width={sidebarWidth}
         fontSize={editorSettings.sidebarFontSize}
       />
@@ -225,8 +238,10 @@ export default function Home() {
         />
         {activeTab === 'logs' ? (
           <LogViewer />
+        ) : activeTab === 'template' ? (
+          <TemplateTester />
         ) : activeApp ? (
-          <Editor appName={activeApp} settings={editorSettings} />
+          <Editor appName={activeApp} settings={editorSettings} yamlReloadKey={yamlReloadKey} />
         ) : (
           <div className="flex-1 flex items-center justify-center text-ha-text-secondary">
             <div className="text-center">
@@ -236,12 +251,12 @@ export default function Home() {
           </div>
         )}
       </main>
+
       <Settings
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         onSettingsChange={setEditorSettings}
       />
-      
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="Delete App"
@@ -252,7 +267,6 @@ export default function Home() {
         onCancel={() => setConfirmDialog({ isOpen: false, appName: null })}
         variant="danger"
       />
-
       <AlertDialog
         isOpen={alertDialog.isOpen}
         title={alertDialog.title}

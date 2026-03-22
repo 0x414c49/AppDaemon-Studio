@@ -11,4 +11,5 @@ public interface IFileManagerService
     Task WritePythonFileAsync(string appName, string content);
     Task<FileContent> ReadAppsYamlAsync();
     Task WriteAppsYamlAsync(string content);
+    Task SetAppDisabledAsync(string name, bool disabled);
 }

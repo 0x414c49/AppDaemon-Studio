@@ -7,7 +7,7 @@ import {
   Home, Lock, Bell, Calendar, Clock,
   Wifi, Music, Camera, Tv, Power,
   Activity, Gauge, Cpu, Database, Check, Settings,
-  ChevronDown
+  ChevronDown, RotateCcw
 } from 'lucide-react';
 import { AppInfo } from '@/types';
 
@@ -17,7 +17,10 @@ interface SidebarProps {
   onSelectApp: (name: string) => void;
   onCreateApp: (name: string, className: string, icon?: string, description?: string) => void;
   onDeleteApp: (name: string) => void;
+  onToggleDisabled: (name: string, disabled: boolean) => void;
+  onRestartApp?: (name: string) => void;
   onOpenSettings: () => void;
+  adApiConfigured?: boolean;
   width?: number;
   fontSize?: number;
 }
@@ -51,7 +54,11 @@ function getIconComponent(iconName?: string) {
   return icon?.component || Folder;
 }
 
-export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp, onOpenSettings, width = 256, fontSize = 14 }: SidebarProps) {
+export function Sidebar({
+  apps, activeApp, onSelectApp, onCreateApp, onDeleteApp,
+  onToggleDisabled, onRestartApp, onOpenSettings,
+  adApiConfigured, width = 256, fontSize = 14,
+}: SidebarProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newAppName, setNewAppName] = useState('');
   const [newClassName, setNewClassName] = useState('');
@@ -70,19 +77,15 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
     }
   };
 
-  const toSnakeCase = (name: string) => {
-    return name
-      .replace(/([a-z])([A-Z])/g, '$1_$2')
-      .replace(/[\s\-]+/g, '_')
-      .toLowerCase();
-  };
+  const toSnakeCase = (name: string) => name
+    .replace(/([a-z])([A-Z])/g, '$1_$2')
+    .replace(/[\s\-]+/g, '_')
+    .toLowerCase();
 
-  const generateClassName = (name: string) => {
-    return name
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join('');
-  };
+  const generateClassName = (name: string) => name
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join('');
 
   return (
     <aside
@@ -146,18 +149,48 @@ export function Sidebar({ apps, activeApp, onSelectApp, onCreateApp, onDeleteApp
                     key={app.name}
                     className={`group flex items-center h-[22px] px-2 cursor-pointer rounded-sm ${
                       isActive ? 'bg-ha-surface-active' : 'hover:bg-ha-surface-hover'
-                    }`}
+                    } ${app.disabled ? 'opacity-50' : ''}`}
                     onClick={() => onSelectApp(app.name)}
                     title={app.description || app.name}
                   >
-                    <Icon className={`w-4 h-4 mr-2 ${
+                    <Icon className={`w-4 h-4 mr-2 flex-shrink-0 ${
                       isActive ? 'text-ha-primary' : 'text-ha-text-secondary'
                     }`} />
                     <span className={`flex-1 truncate ${
                       isActive ? 'text-ha-text font-medium' : 'text-ha-text'
-                    }`}>
+                    } ${app.disabled ? 'line-through' : ''}`}>
                       {app.name}
                     </span>
+
+                    {/* Enable/disable toggle */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleDisabled(app.name, !app.disabled);
+                      }}
+                      className={`flex-shrink-0 transition-opacity ${app.disabled ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                      title={app.disabled ? 'Enable app' : 'Disable app'}
+                    >
+                      <span className={`flex items-center w-7 h-4 rounded-full transition-colors ${app.disabled ? 'bg-ha-text-disabled' : 'bg-green-500'}`}>
+                        <span className={`block w-3 h-3 bg-white rounded-full shadow transition-transform mx-0.5 ${app.disabled ? '' : 'translate-x-3'}`} />
+                      </span>
+                    </button>
+
+                    {/* Restart button (only if AD API configured) */}
+                    {adApiConfigured && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRestartApp?.(app.name);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-0.5 text-ha-text-secondary hover:text-ha-primary transition-all"
+                        title="Restart app"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+
+                    {/* Delete button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

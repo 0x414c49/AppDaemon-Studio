@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AppDaemonStudio.Configuration;
+using AppDaemonStudio.Middleware;
 using AppDaemonStudio.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +29,8 @@ builder.Services.AddSingleton<IHomeAssistantService, HomeAssistantService>();
 builder.Services.AddScoped<IVersionControlService, VersionControlService>();
 builder.Services.AddSingleton<ILogReaderService, LogReaderService>();
 
+builder.Services.AddSingleton<IAppDaemonApiService, AppDaemonApiService>();
+
 // LSP service (no-op when pylsp venv is absent)
 builder.Services.AddSingleton<LspService>();
 builder.Services.AddSingleton<ILspService>(sp => sp.GetRequiredService<LspService>());
@@ -36,6 +39,7 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<LspService>());
 var app = builder.Build();
 
 app.UseCors("ApiCors");
+app.UseMiddleware<IngressGuardMiddleware>();
 app.UseWebSockets();
 app.UseStaticFiles();        // serves wwwroot/
 app.MapControllers();

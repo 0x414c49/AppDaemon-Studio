@@ -156,23 +156,26 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
             config.TryGetValue(appName, out var appConfig);
 
             string className, description, icon;
+            bool disabled;
             if (appConfig != null)
             {
                 appConfig.TryGetValue("class", out var c); className = c ?? appName;
                 appConfig.TryGetValue("description", out var d); description = d ?? "";
                 appConfig.TryGetValue("icon", out var i); icon = i ?? "mdi:application";
+                appConfig.TryGetValue("disable", out var dis); disabled = dis == "true";
             }
             else
             {
                 className = await ExtractClassNameAsync(pyFile);
                 description = "";
                 icon = "mdi:application";
+                disabled = false;
             }
 
             var mtime = File.GetLastWriteTimeUtc(pyFile);
             var versionCount = Directory.EnumerateFiles(settings.VersionsDir, $"{appName}_*.py").Count();
 
-            apps.Add(new AppInfo(appName, className, description, true, true, mtime.ToString("O"), versionCount, icon));
+            apps.Add(new AppInfo(appName, className, description, true, true, mtime.ToString("O"), versionCount, icon, disabled));
         }
 
         // Apps in yaml but no .py file
@@ -182,7 +185,8 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
             appConfig.TryGetValue("class", out var cls);
             appConfig.TryGetValue("description", out var desc);
             appConfig.TryGetValue("icon", out var icon);
-            apps.Add(new AppInfo(appName, cls ?? appName, desc ?? "", false, true, DateTime.UtcNow.ToString("O"), 0, icon));
+            appConfig.TryGetValue("disable", out var dis);
+            apps.Add(new AppInfo(appName, cls ?? appName, desc ?? "", false, true, DateTime.UtcNow.ToString("O"), 0, icon, dis == "true"));
         }
 
         apps.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
@@ -270,5 +274,21 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
     {
         EnsureAppsDir();
         await File.WriteAllTextAsync(settings.AppsYaml, content);
+    }
+
+    public async Task SetAppDisabledAsync(string name, bool disabled)
+    {
+        ValidateName(name);
+        var config = await ReadAppsConfigAsync();
+        if (!config.TryGetValue(name, out var appConfig))
+            throw new FileNotFoundException($"App '{name}' not found");
+
+        if (disabled)
+            appConfig["disable"] = "true";
+        else
+            appConfig.Remove("disable");
+
+        await WriteAppsConfigAsync(config);
+        logger.LogInformation("App {AppName} {Action}", name, disabled ? "disabled" : "enabled");
     }
 }

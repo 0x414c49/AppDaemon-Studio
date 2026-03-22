@@ -6,7 +6,8 @@ export interface AppInfo {
   has_yaml: boolean;
   last_modified: string;
   version_count: number;
-  icon?: string; // Icon name from lucide-react
+  icon?: string;
+  disabled?: boolean;
 }
 
 export interface CreateAppData {

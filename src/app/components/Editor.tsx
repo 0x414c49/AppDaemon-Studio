@@ -15,9 +15,10 @@ import { useToast } from './Toast';
 interface EditorProps {
   appName: string;
   settings: EditorSettings;
+  yamlReloadKey?: number;
 }
 
-export function Editor({ appName, settings }: EditorProps) {
+export function Editor({ appName, settings, yamlReloadKey }: EditorProps) {
   const { addToast } = useToast();
   const [content, setContent] = useState('');
   const [originalContent, setOriginalContent] = useState('');
@@ -53,6 +54,11 @@ export function Editor({ appName, settings }: EditorProps) {
   useEffect(() => {
     loadFile();
   }, [appName, activeTab]);
+
+  // Reload YAML when parent signals a change (e.g. disable toggle modifies apps.yaml)
+  useEffect(() => {
+    if (yamlReloadKey && activeTab === 'yaml') loadFile();
+  }, [yamlReloadKey]);
 
   const handleEditorDidMount = (editorInstance: editor.IStandaloneCodeEditor, monacoInstance: any) => {
     editorRef.current = editorInstance;

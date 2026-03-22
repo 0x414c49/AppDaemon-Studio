@@ -7,7 +7,7 @@ namespace AppDaemonStudio.Controllers;
 
 [ApiController]
 [Route("api/health")]
-public class HealthController(AppSettings settings, ILspService lspService) : ControllerBase
+public class HealthController(AppSettings settings, ILspService lspService, IAppDaemonApiService adApi) : ControllerBase
 {
     [HttpGet]
     public IActionResult Get() =>
@@ -17,5 +17,6 @@ public class HealthController(AppSettings settings, ILspService lspService) : Co
             Version: settings.Version,
             HaConfigured: settings.SupervisorToken != null || settings.HaToken != null,
             LspReady: lspService.IsReady,
+            AdApiConfigured: adApi.IsConfigured,
             PackageSync: lspService.SyncStatus));
 }
