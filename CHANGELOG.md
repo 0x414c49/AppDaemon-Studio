@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.60] - 2026-03-22
+
+- fix: default apps_folder to /config/apps; update setup guide in all 21 translations; re-enable arm64 builds
+
+
 ## [v0.3.59] - 2026-03-22
 
 - fix: use [extname] (not [ext]) in assetFileNames — restores dot in .css extension
