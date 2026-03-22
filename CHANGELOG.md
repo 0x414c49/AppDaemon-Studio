@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.54] - 2026-03-22
+
+- fix: ingress guard — use X-Remote-User-Id, not the non-existent X-Ingress-Path
+
+
 ## [v0.3.53] - 2026-03-22
 
 - fix: remove X-Hass-Is-Admin check from ingress guard
