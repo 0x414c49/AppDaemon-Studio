@@ -19,7 +19,7 @@ export default defineConfig({
         // Explicit content hashes — ensures cache busting on every deploy
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash][ext]',
+        assetFileNames: 'assets/[name]-[hash][extname]',
       },
     },
   },
