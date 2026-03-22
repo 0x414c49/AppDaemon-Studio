@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.3.52] - 2026-03-22
+
+- ci: add workflow_dispatch with skip_arm input for faster builds
+- fix: ingress guard — loopback bypass for healthcheck, accept X-Hass-Is-Admin: 1
+
+
 ## [v0.3.51] - 2026-03-22
 
 - feat: addon config options — apps_folder and api_password
