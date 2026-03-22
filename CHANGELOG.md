@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.55] - 2026-03-22
+
+- fix: apps_folder is the apps dir itself; tabs survive load errors; push builds amd64-only
+
+
 ## [v0.3.54] - 2026-03-22
 
 - fix: ingress guard — use X-Remote-User-Id, not the non-existent X-Ingress-Path
