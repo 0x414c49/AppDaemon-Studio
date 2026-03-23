@@ -168,6 +168,8 @@ jobs:
     permissions:
       packages: write
       contents: read
+      id-token: write
+      attestations: write
     strategy:
       fail-fast: false
       matrix:
@@ -204,6 +206,7 @@ jobs:
           echo "name=$PLATFORM_NAME" >> $GITHUB_OUTPUT
 
       - name: Build and push
+        id: build-push
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -217,6 +220,21 @@ jobs:
             BUILD_VERSION=${{ needs.release.outputs.version }}
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
 
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign image
+        run: |
+          cosign sign --yes \
+            ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}@${{ steps.build-push.outputs.digest }}
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}
+          subject-digest: ${{ steps.build-push.outputs.digest }}
+          push-to-registry: true
+
   # Job 3: Merge multi-platform manifests
   merge:
     name: Create Multi-Platform Manifest
@@ -225,6 +243,8 @@ jobs:
     permissions:
       packages: write
       contents: read
+      id-token: write
+      attestations: write
 
     steps:
       - name: Set up Docker Buildx
@@ -250,6 +270,29 @@ jobs:
 
       - name: Inspect image
         run: docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}
+
+      - name: Get manifest digest
+        id: manifest
+        run: |
+          DIGEST=$(docker buildx imagetools inspect \
+            ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }} \
+            --format '{{json .Manifest}}' | jq -r '.digest')
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign manifest
+        run: |
+          cosign sign --yes \
+            ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}@${{ steps.manifest.outputs.digest }}
+
+      - name: Attest manifest provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}
+          subject-digest: ${{ steps.manifest.outputs.digest }}
+          push-to-registry: true
 
   # Job 4: Create GitHub Release
   create-github-release:

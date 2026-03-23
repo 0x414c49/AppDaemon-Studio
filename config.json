@@ -36,6 +36,5 @@
   "init": false,
   "hassio_api": true,
   "homeassistant_api": true,
-  "hassio_role": "manager",
-  "auth_api": true
+  "hassio_role": "manager"
 }
