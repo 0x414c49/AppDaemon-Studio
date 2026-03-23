@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.65] - 2026-03-23
+
+- fix: correct create app dialog screenshot — use exact button title selector
+
+
 ## [v0.3.64] - 2026-03-23
 
 - docs: refresh screenshots, update README with full feature set
