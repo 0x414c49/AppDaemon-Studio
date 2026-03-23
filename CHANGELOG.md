@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.63] - 2026-03-23
+
+- chore: add cosign signing, build attestation, and drop unused auth_api
+
+
 ## [v0.3.62] - 2026-03-23
 
 - chore: add AGENTS.md as agent source of truth; add Copilot and Cursor config
