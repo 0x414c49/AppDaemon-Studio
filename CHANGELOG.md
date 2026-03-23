@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.3.61] - 2026-03-23
+
+- chore: restructure repository into src/ layout
+- test: isolate env vars with EnvScope helper
+- fix: handle CRLF line endings in log parser
+
+
 ## [v0.3.60] - 2026-03-22
 
 - fix: default apps_folder to /config/apps; update setup guide in all 21 translations; re-enable arm64 builds
