@@ -96,19 +96,6 @@ Customize the editor theme, font family, font size, and ligatures. Switch betwee
 
 ![Settings](docs/screenshots/05-settings-dialog.png)
 
-## Standalone mode (without Supervisor)
-
-AppDaemon Studio can also run outside of Home Assistant by setting environment variables:
-
-| Variable | Description |
-|---|---|
-| `HA_URL` | Your Home Assistant URL, e.g. `http://192.168.1.10:8123` |
-| `HA_TOKEN` | A long-lived access token from your HA profile |
-| `APPS_DIR` | Path to your AppDaemon apps directory (default `/config/apps`) |
-| `APPDAEMON_HTTP_URL` | AppDaemon HTTP API URL, e.g. `http://192.168.1.10:5050` |
-| `APPDAEMON_HTTP_TOKEN` | AppDaemon HTTP API token (if set in `appdaemon.yaml`) |
-| `APPDAEMON_ADDON_SLUG` | Override addon slug for log fetching (auto-detected if omitted) |
-
 ## Support
 
 Found a bug or have a feature request? [Open an issue](https://github.com/0x414c49/AppDaemon-Studio/issues)
