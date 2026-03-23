@@ -13,7 +13,7 @@
 
 A web-based IDE for writing and managing [AppDaemon](https://appdaemon.readthedocs.io/) apps, built as a Home Assistant add-on. Runs entirely inside Home Assistant — no external services, no configuration required.
 
-![AppDaemon Studio](docs/screenshots/01-app-list.png)
+![AppDaemon Studio](docs/screenshots/02-python-editor.png)
 
 ## Features
 
