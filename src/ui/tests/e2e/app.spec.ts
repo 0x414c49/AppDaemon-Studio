@@ -58,15 +58,7 @@ test.describe('AppDaemon Studio', () => {
   // ── 4. Create app dialog ─────────────────────────────────────────────────────
   test('opens create app dialog', async ({ page }) => {
     await page.goto('/')
-    // Click the + / new app button in the sidebar
-    const newBtn = page.locator('button[title*="new" i], button[aria-label*="new" i], button[title*="create" i], button[aria-label*="create" i]').first()
-    if (await newBtn.count() === 0) {
-      // fallback: look for a + icon button in the sidebar
-      await page.locator('aside button, [class*="sidebar"] button').last().click()
-    } else {
-      await newBtn.click()
-    }
-    // Wait for a dialog/modal
+    await page.locator('button[title="New App"]').click()
     await page.waitForSelector('[role="dialog"], [class*="dialog"], [class*="modal"]', { timeout: 5_000 })
       .catch(() => {})
     await page.screenshot({ path: shot('04-create-app-dialog') })
