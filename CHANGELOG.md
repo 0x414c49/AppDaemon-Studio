@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.3.62] - 2026-03-23
+
+- chore: add AGENTS.md as agent source of truth; add Copilot and Cursor config
+- chore: remove ARCHITECTURE.md
+
+
 ## [v0.3.61] - 2026-03-23
 
 - chore: restructure repository into src/ layout
