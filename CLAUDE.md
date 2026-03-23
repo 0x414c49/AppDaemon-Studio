@@ -1,35 +1,25 @@
 # AppDaemon Studio — Claude Instructions
 
-## Hard Rules
+Read `AGENTS.md` first — it is the source of truth for project layout, invariants, conventions, and test patterns.
+The sections below are Claude Code-specific additions only.
 
-- **Never add `Co-Authored-By:` trailers to commits.** Do not sign or attribute commits to yourself in any way.
+## Hard Rules (Claude-specific)
+
+- **Never add `Co-Authored-By:` trailers** attributing yourself to commits, in any form.
 - Never force-push to `main`.
 - Never skip hooks (`--no-verify`).
 
-## Stack
+## Behaviour
 
-- **Frontend:** React 19 + Vite, served as static files from `AppDaemonStudio/wwwroot/`
-- **Backend:** ASP.NET Core (.NET 10) — single project, single process
-- **Runtime:** `mcr.microsoft.com/dotnet/aspnet:10.0` — do not downgrade to 8 or 9
+- Go straight to the point. Lead with the action, not the reasoning.
+- Do not summarise what you just did at the end of a response.
+- Do not add docstrings, comments, or type annotations to code you did not change.
+- Do not over-engineer: no helpers for one-off operations, no abstractions for hypothetical reuse.
+- Only add error handling at real system boundaries (user input, external APIs) — not for impossible internal cases.
 
-## Critical Constraints
+## Stack Reminder
 
-### HA Ingress — Paths Must Be Relative
-HA assigns a dynamic ingress prefix (e.g. `/api/hassio_ingress/abc123/`) per restart and strips it before forwarding. The container never sees the prefix.
-- Vite config: `base: './'` — all built assets use relative paths
-- All `fetch()` calls: `fetch('api/apps')` not `fetch('/api/apps')`
-- Do NOT add `UsePathBase()` or any base-path config in .NET
-
-### API Contract
-The frontend uses hardcoded relative paths — never change the route shapes. Error responses must use `{ "detail": "message" }`. Full contract in `ARCHITECTURE.md`.
-
-### .NET Coding Style
-- Prefer `record struct` for small value types, `record` class for API DTOs
-- `ILogger<T>` with structured logging; never log tokens or secrets
-- No unnecessary allocation in hot paths (avoid LINQ hidden allocs, use spans where sensible)
-- Small focused methods, no god classes, no magic strings
-- Validate inputs at controller boundary; sanitize all file paths against traversal
-- KISS/DRY — three similar lines is fine; abstract only at 3+ genuine reuses
-
-## Architecture Reference
-`ARCHITECTURE.md` in the project root has full detail on project structure, API reference, migration plan, Dockerfile, and CI pipeline.
+- **Frontend:** React 19 + Vite — `src/ui/`
+- **Backend:** ASP.NET Core .NET 10 — `src/AppDaemonStudio/`
+- **Tests:** xUnit (`src/AppDaemonStudio.Tests/`) — use `EnvScope` for env var isolation
+- **Runtime:** `mcr.microsoft.com/dotnet/aspnet:10.0-alpine` — do not downgrade
