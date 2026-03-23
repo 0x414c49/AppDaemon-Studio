@@ -6,11 +6,11 @@ FROM --platform=$BUILDPLATFORM node:20-alpine AS node-build
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY src/ui/package.json src/ui/package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --prefer-offline --no-audit
 
-COPY . .
+COPY src/ui/ .
 RUN npm run build
 # Output: /app/dist (pure HTML/CSS/JS — no arch dependency)
 
@@ -27,7 +27,7 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS backe
 
 WORKDIR /src
 
-COPY AppDaemonStudio/ .
+COPY src/AppDaemonStudio/ .
 
 # TARGETARCH injected by docker buildx: amd64 | arm64
 ARG TARGETARCH

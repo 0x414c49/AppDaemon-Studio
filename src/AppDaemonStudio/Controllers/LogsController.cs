@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using AppDaemonStudio.Configuration;
 using AppDaemonStudio.Models;
 using AppDaemonStudio.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +9,8 @@ namespace AppDaemonStudio.Controllers;
 [ApiController]
 [Route("api/appdaemon-logs")]
 public class LogsController(
-    AppSettings settings,
     ILogReaderService logReader,
-    IHttpClientFactory httpClientFactory,
+    ISupervisorClient supervisor,
     ILogger<LogsController> logger) : ControllerBase
 {
     private static readonly JsonSerializerOptions SseJsonOptions = new()
@@ -25,33 +23,18 @@ public class LogsController(
     [HttpGet]
     public async Task<IActionResult> GetLogs([FromQuery] string? slug = null)
     {
-        var token = settings.SupervisorToken;
-        if (token == null)
+        if (!supervisor.IsAvailable)
             return StatusCode(503, new LogsErrorResponse("Logs require Home Assistant Supervisor (addon mode)."));
 
-        var resolvedSlug = slug ?? settings.AddonSlug ?? await FindSlugAsync(token);
+        var resolvedSlug = slug ?? await supervisor.FindAddonSlugAsync();
         if (resolvedSlug == null)
             return NotFound(new LogsErrorResponse("Could not find AppDaemon addon."));
 
-        try
-        {
-            using var client = CreateClient(token);
-            var resp = await client.GetAsync($"http://supervisor/addons/{resolvedSlug}/logs");
-            if (!resp.IsSuccessStatusCode)
-                return StatusCode((int)resp.StatusCode,
-                    new LogsErrorResponse($"Supervisor returned {(int)resp.StatusCode}"));
+        var raw = await supervisor.GetAddonLogsRawAsync(resolvedSlug);
+        if (raw == null)
+            return StatusCode(502, new LogsErrorResponse("Failed to fetch logs from supervisor."));
 
-            var raw = await resp.Content.ReadAsStringAsync();
-            return Ok(new LogsResponse(logReader.ParseLogs(raw)));
-        }
-        catch (TaskCanceledException)
-        {
-            return StatusCode(504, new LogsErrorResponse("Timeout fetching logs from supervisor."));
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new LogsErrorResponse(ex.Message));
-        }
+        return Ok(new LogsResponse(logReader.ParseLogs(raw)));
     }
 
     // ── SSE stream ────────────────────────────────────────────────────────────
@@ -65,18 +48,16 @@ public class LogsController(
         HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>()
             ?.DisableBuffering();
 
-        // Write immediately so the browser receives the 200 + headers and fires onopen
         await WriteKeepAliveAsync(ct);
 
-        var token = settings.SupervisorToken;
-        if (token == null)
+        if (!supervisor.IsAvailable)
         {
             await WriteSseAsync("error", """{"error":"Logs require Home Assistant Supervisor (addon mode)."}""", ct);
             try { await Task.Delay(Timeout.Infinite, ct); } catch (OperationCanceledException) { }
             return;
         }
 
-        var resolvedSlug = slug ?? settings.AddonSlug ?? await FindSlugAsync(token);
+        var resolvedSlug = slug ?? await supervisor.FindAddonSlugAsync(ct);
         if (resolvedSlug == null)
         {
             await WriteSseAsync("error", """{"error":"Could not find AppDaemon addon."}""", ct);
@@ -91,7 +72,7 @@ public class LogsController(
 
             while (!ct.IsCancellationRequested)
             {
-                await PollAndPushAsync(token, resolvedSlug, lastCount, ct);
+                await PollAndPushAsync(resolvedSlug, lastCount, ct);
 
                 await Task.Delay(2000, ct);
 
@@ -106,19 +87,17 @@ public class LogsController(
         catch (Exception ex) { logger.LogError(ex, "Error in log SSE stream"); }
     }
 
-    private async Task PollAndPushAsync(string token, string slug, int[] lastCount, CancellationToken ct)
+    private async Task PollAndPushAsync(string slug, int[] lastCount, CancellationToken ct)
     {
         try
         {
-            using var client = CreateClient(token);
-            var resp = await client.GetAsync($"http://supervisor/addons/{slug}/logs", ct);
-            if (!resp.IsSuccessStatusCode) return;
+            var raw = await supervisor.GetAddonLogsRawAsync(slug, ct);
+            if (raw == null) return;
 
-            var all = logReader.ParseLogs(await resp.Content.ReadAsStringAsync(ct));
+            var all = logReader.ParseLogs(raw);
 
             if (lastCount[0] == 0 || all.Count < lastCount[0])
             {
-                // First batch or log rotation — send last 200 as init
                 var tail = all.Count > 200 ? all.GetRange(all.Count - 200, 200) : all;
                 await WriteSseAsync("init", JsonSerializer.Serialize(tail, SseJsonOptions), ct);
                 lastCount[0] = all.Count;
@@ -135,43 +114,6 @@ public class LogsController(
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private async Task<string?> FindSlugAsync(string token)
-    {
-        try
-        {
-            using var client = CreateClient(token);
-            var resp = await client.GetAsync("http://supervisor/addons");
-            if (!resp.IsSuccessStatusCode) return null;
-
-            using var doc = await JsonDocument.ParseAsync(await resp.Content.ReadAsStreamAsync());
-            var root = doc.RootElement;
-
-            if (!root.TryGetProperty("addons", out var addons) &&
-                (!root.TryGetProperty("data", out var data) || !data.TryGetProperty("addons", out addons)))
-                return null;
-
-            foreach (var addon in addons.EnumerateArray())
-            {
-                var name = addon.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
-                var s = addon.TryGetProperty("slug", out var sl) ? sl.GetString() ?? "" : "";
-                if (name.Contains("appdaemon", StringComparison.OrdinalIgnoreCase) ||
-                    s.Contains("appdaemon", StringComparison.OrdinalIgnoreCase))
-                    return s;
-            }
-        }
-        catch (Exception ex) { logger.LogWarning(ex, "Error finding AppDaemon slug"); }
-        return null;
-    }
-
-    private HttpClient CreateClient(string token)
-    {
-        var client = httpClientFactory.CreateClient();
-        client.Timeout = TimeSpan.FromSeconds(10);
-        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
-        client.DefaultRequestHeaders.Add("Accept", "text/plain");
-        return client;
-    }
 
     private async Task WriteSseAsync(string eventType, string data, CancellationToken ct)
     {

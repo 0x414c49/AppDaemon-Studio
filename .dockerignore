@@ -12,9 +12,11 @@ node_modules
 dist
 
 # .NET build artifacts (built inside Docker)
-AppDaemonStudio/bin
-AppDaemonStudio/obj
-AppDaemonStudio/wwwroot
+src/AppDaemonStudio/bin
+src/AppDaemonStudio/obj
+src/AppDaemonStudio/wwwroot
+src/AppDaemonStudio.Tests/bin
+src/AppDaemonStudio.Tests/obj
 
 # Secrets and local env
 .env

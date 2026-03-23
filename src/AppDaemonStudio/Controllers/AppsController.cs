@@ -55,6 +55,37 @@ public class AppsController(
         return StatusCode(adApi.IsConfigured ? 500 : 503, new ErrorResponse(error ?? "Unknown error"));
     }
 
+    [HttpPost("{name}/start")]
+    public async Task<IActionResult> StartApp(string name)
+    {
+        var (success, error) = await adApi.StartAppAsync(name);
+        if (success) return Ok(new SuccessResponse(true, $"App '{name}' started"));
+        return StatusCode(adApi.IsConfigured ? 500 : 503, new ErrorResponse(error ?? "Unknown error"));
+    }
+
+    [HttpPost("{name}/stop")]
+    public async Task<IActionResult> StopApp(string name)
+    {
+        var (success, error) = await adApi.StopAppAsync(name);
+        if (success) return Ok(new SuccessResponse(true, $"App '{name}' stopped"));
+        return StatusCode(adApi.IsConfigured ? 500 : 503, new ErrorResponse(error ?? "Unknown error"));
+    }
+
+    [HttpPost("reload")]
+    public async Task<IActionResult> ReloadApps()
+    {
+        var (success, error) = await adApi.ReloadAppsAsync();
+        if (success) return Ok(new SuccessResponse(true, "Apps reloaded"));
+        return StatusCode(adApi.IsConfigured ? 500 : 503, new ErrorResponse(error ?? "Unknown error"));
+    }
+
+    [HttpGet("{name}/status")]
+    public async Task<IActionResult> GetAppStatus(string name)
+    {
+        var status = await adApi.GetAppStatusAsync(name);
+        return Ok(status);
+    }
+
     private async Task<IActionResult> SetDisabled(string name, bool disabled)
     {
         try

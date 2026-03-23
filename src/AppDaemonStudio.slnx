@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="AppDaemonStudio/AppDaemonStudio.csproj" />
+  <Project Path="AppDaemonStudio.Tests/AppDaemonStudio.Tests.csproj" />
+</Solution>

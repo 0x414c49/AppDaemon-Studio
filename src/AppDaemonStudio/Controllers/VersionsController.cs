@@ -87,5 +87,3 @@ public class VersionsController(IVersionControlService versionControl, ILogger<V
         }
     }
 }
-
-public record RestoreRequest(string VersionId);

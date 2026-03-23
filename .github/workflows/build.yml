@@ -87,8 +87,8 @@ jobs:
           jq --arg version "$NEW_VERSION" '.version = $version' config.json > config.json.tmp
           mv config.json.tmp config.json
 
-          jq --arg version "$NEW_VERSION" '.version = $version' package.json > package.json.tmp
-          mv package.json.tmp package.json
+          jq --arg version "$NEW_VERSION" '.version = $version' src/ui/package.json > src/ui/package.json.tmp
+          mv src/ui/package.json.tmp src/ui/package.json
 
           CHANGELOG="${{ steps.changelog.outputs.changelog }}"
           CHANGELOG="${CHANGELOG//'%0A'/$'\n'}"
@@ -117,7 +117,7 @@ jobs:
 
           mv CHANGELOG_new.md CHANGELOG.md
 
-          git add config.json package.json CHANGELOG.md
+          git add config.json src/ui/package.json CHANGELOG.md
           git commit -m "chore: release $NEW_TAG"
           git tag "$NEW_TAG"
           git push
@@ -140,18 +140,21 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: src/ui/package-lock.json
 
       - name: Install dependencies
+        working-directory: src/ui
         run: npm ci --prefer-offline --no-audit
 
       - name: Build
+        working-directory: src/ui
         run: npm run build
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: dist/
+          path: src/ui/dist/
           retention-days: 1
 
   # Job 3: Build Docker images (parallel matrix)

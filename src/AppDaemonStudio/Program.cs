@@ -24,11 +24,11 @@ builder.Services.AddCors(opt => opt.AddPolicy("ApiCors", p =>
 
 // App services
 builder.Services.AddSingleton<AppSettings>();
+builder.Services.AddSingleton<ISupervisorClient, SupervisorClient>();
 builder.Services.AddScoped<IFileManagerService, FileManagerService>();
 builder.Services.AddSingleton<IHomeAssistantService, HomeAssistantService>();
 builder.Services.AddScoped<IVersionControlService, VersionControlService>();
 builder.Services.AddSingleton<ILogReaderService, LogReaderService>();
-
 builder.Services.AddSingleton<IAppDaemonApiService, AppDaemonApiService>();
 
 // LSP service (no-op when pylsp venv is absent)
@@ -61,3 +61,6 @@ app.MapControllers();
 app.MapFallbackToFile("index.html", staticFileOptions);
 
 app.Run();
+
+// Needed by WebApplicationFactory<Program> in the test project
+public partial class Program { }

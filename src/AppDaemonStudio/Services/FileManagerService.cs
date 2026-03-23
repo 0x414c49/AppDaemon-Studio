@@ -66,7 +66,6 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
     {
         var sb = new StringBuilder();
         sb.AppendLine("# AppDaemon Apps Configuration");
-        sb.AppendLine($"# Generated: {DateTime.UtcNow:O}");
         sb.AppendLine();
 
         foreach (var (appName, appConfig) in config)

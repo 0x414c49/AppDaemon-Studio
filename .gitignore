@@ -7,9 +7,11 @@ dist/
 *.tsbuildinfo
 
 # .NET
-AppDaemonStudio/bin/
-AppDaemonStudio/obj/
-AppDaemonStudio/wwwroot/
+src/AppDaemonStudio/bin/
+src/AppDaemonStudio/obj/
+src/AppDaemonStudio/wwwroot/
+src/AppDaemonStudio.Tests/bin/
+src/AppDaemonStudio.Tests/obj/
 
 # Environment / secrets
 .env
@@ -29,8 +31,8 @@ AppDaemonStudio/wwwroot/
 Thumbs.db
 
 # Playwright
-tests/results/
-tests/screenshots/
+src/ui/tests/results/
+src/ui/tests/screenshots/
 playwright-report/
 
 # Misc

@@ -111,5 +111,3 @@ public class FilesController(
         }
     }
 }
-
-public record ContentRequest(string Content);

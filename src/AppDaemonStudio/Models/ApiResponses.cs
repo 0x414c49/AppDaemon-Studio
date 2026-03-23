@@ -43,6 +43,13 @@ public record HealthResponse(
     PackageSyncStatus? PackageSync,
     string? AppsDir = null);
 
+// ── AppDaemon runtime ─────────────────────────────────────────────────────────
+public record AppRuntimeStatus(bool Available, string? State, string? Error = null);
+
+// ── Request bodies ────────────────────────────────────────────────────────────
+public record ContentRequest(string Content);
+public record RestoreRequest(string VersionId);
+
 // ── Template ──────────────────────────────────────────────────────────────────
 public record TemplateRequest(string Template);
 public record TemplateResponse(string Result);

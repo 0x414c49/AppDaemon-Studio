@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Net.Http.Json;
-using System.Text.Json;
 using AppDaemonStudio.Configuration;
 using AppDaemonStudio.Models;
 
@@ -14,23 +12,22 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
 
     private readonly ILogger<LspService> _logger;
     private readonly AppSettings _settings;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ISupervisorClient _supervisor;
     private Process? _process;
     private CancellationTokenSource _cts = new();
     private Task _monitorTask = Task.CompletedTask;
     private volatile bool _isReady;
     private volatile PackageSyncStatus? _syncStatus;
-    private string? _resolvedAddonSlug;
 
     public bool IsReady => _isReady;
     public int Port => LspPort;
     public PackageSyncStatus? SyncStatus => _syncStatus;
 
-    public LspService(ILogger<LspService> logger, AppSettings settings, IHttpClientFactory httpClientFactory)
+    public LspService(ILogger<LspService> logger, AppSettings settings, ISupervisorClient supervisor)
     {
         _logger = logger;
         _settings = settings;
-        _httpClientFactory = httpClientFactory;
+        _supervisor = supervisor;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -70,35 +67,24 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
         var packages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // ── Source 1: AppDaemon addon options via Supervisor API ──────────
-        if (_settings.SupervisorToken is { } token)
+        if (_supervisor.IsAvailable)
         {
             try
             {
-                using var client = _httpClientFactory.CreateClient();
-                client.BaseAddress = new Uri("http://supervisor/");
-                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
-                client.Timeout = TimeSpan.FromSeconds(10);
-
-                _resolvedAddonSlug ??= _settings.AddonSlug ?? await DiscoverAddonSlugAsync(client, ct);
-                var slug = _resolvedAddonSlug;
+                var slug = await _supervisor.FindAddonSlugAsync(ct);
                 if (slug != null)
                 {
-                    var response = await client.GetAsync($"addons/{slug}/info", ct);
-                    if (response.IsSuccessStatusCode)
+                    var info = await _supervisor.GetAddonInfoAsync(slug, ct);
+                    if (info is { } data &&
+                        data.TryGetProperty("options", out var opts) &&
+                        opts.TryGetProperty("python_packages", out var pkgs))
                     {
-                        var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(ct);
-                        var dataProp = doc?.RootElement.TryGetProperty("data", out var data) == true ? data : doc?.RootElement;
-
-                        if (dataProp?.TryGetProperty("options", out var opts) == true &&
-                            opts.TryGetProperty("python_packages", out var pkgs) == true)
+                        foreach (var pkg in pkgs.EnumerateArray())
                         {
-                            foreach (var pkg in pkgs.EnumerateArray())
-                            {
-                                var name = pkg.GetString();
-                                if (!string.IsNullOrWhiteSpace(name)) packages.Add(name);
-                            }
-                            _logger.LogInformation("Found {Count} package(s) in AppDaemon addon options", packages.Count);
+                            var name = pkg.GetString();
+                            if (!string.IsNullOrWhiteSpace(name)) packages.Add(name);
                         }
+                        _logger.LogInformation("Found {Count} package(s) in AppDaemon addon options", packages.Count);
                     }
                 }
             }
@@ -116,7 +102,6 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
             foreach (var line in lines)
             {
                 var trimmed = line.Trim();
-                // Skip blank lines and comments
                 if (!string.IsNullOrEmpty(trimmed) && !trimmed.StartsWith('#'))
                     packages.Add(trimmed);
             }
@@ -124,40 +109,6 @@ public sealed class LspService : ILspService, IHostedService, IDisposable
         }
 
         return [.. packages];
-    }
-
-    private async Task<string?> DiscoverAddonSlugAsync(HttpClient client, CancellationToken ct)
-    {
-        try
-        {
-            var response = await client.GetAsync("addons", ct);
-            if (!response.IsSuccessStatusCode) return null;
-
-            using var doc = await response.Content.ReadFromJsonAsync<JsonDocument>(ct);
-            if (doc is null) return null;
-
-            var root = doc.RootElement;
-            if (!root.TryGetProperty("addons", out var addons) &&
-                (!root.TryGetProperty("data", out var data) || !data.TryGetProperty("addons", out addons)))
-                return null;
-
-            foreach (var addon in addons.EnumerateArray())
-            {
-                var name = addon.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
-                var slug = addon.TryGetProperty("slug", out var s) ? s.GetString() ?? "" : "";
-                if (name.Contains("appdaemon", StringComparison.OrdinalIgnoreCase) ||
-                    slug.Contains("appdaemon", StringComparison.OrdinalIgnoreCase))
-                {
-                    _logger.LogInformation("Auto-discovered AppDaemon addon slug: {Slug}", slug);
-                    return slug;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogDebug(ex, "Could not auto-discover AppDaemon addon slug");
-        }
-        return null;
     }
 
     private async Task SyncPackagesAsync(List<string> packages, CancellationToken ct)
