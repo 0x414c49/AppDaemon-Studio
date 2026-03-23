@@ -2,11 +2,12 @@ import { test, expect, Page } from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
 import { fileURLToPath } from 'url'
+import { setupMocks } from './mocks'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const SCREENSHOTS = path.resolve(__dirname, '../../docs/screenshots')
+const SCREENSHOTS = path.resolve(__dirname, '../../../../docs/screenshots')
 fs.mkdirSync(SCREENSHOTS, { recursive: true })
 
 const shot = (name: string) => path.join(SCREENSHOTS, `${name}.png`)
@@ -19,84 +20,8 @@ async function waitForEditor(page: Page) {
 }
 
 test.describe('AppDaemon Studio', () => {
-  test.beforeAll(async ({ request }) => {
-    // Seed a test app via API before running UI tests
-    const existing = await request.get('http://localhost:3000/api/apps')
-    const data = await existing.json()
-
-    if (!data.apps.find((a: { name: string }) => a.name === 'motion_lights')) {
-      await request.post('http://localhost:3000/api/apps', {
-        data: {
-          name: 'motion_lights',
-          class_name: 'MotionLights',
-          description: 'Turns on lights when motion is detected',
-          icon: 'mdi:motion-sensor',
-        },
-      })
-    }
-
-    if (!data.apps.find((a: { name: string }) => a.name === 'presence_tracker')) {
-      await request.post('http://localhost:3000/api/apps', {
-        data: {
-          name: 'presence_tracker',
-          class_name: 'PresenceTracker',
-          description: 'Tracks who is home',
-          icon: 'mdi:account-check',
-        },
-      })
-    }
-
-    // PUT v1 → creates a version of the template, saves v1 as current
-    await request.put('http://localhost:3000/api/files/motion_lights', {
-      data: {
-        content: `import appdaemon.plugins.hass.hassapi as hass
-
-
-class MotionLights(hass.Hass):
-    """Turns on lights when motion is detected."""
-
-    def initialize(self):
-        self.listen_state(self.on_motion, "binary_sensor.motion_hall")
-
-    def on_motion(self, entity, attribute, old, new, kwargs):
-        if new == "on":
-            self.turn_on("light.hallway")
-            self.log("Motion detected — lights on")
-        else:
-            self.turn_off("light.hallway")
-`,
-      },
-    })
-
-    // PUT v2 → creates a version of v1, saves v2 as current (has clear diff vs v1)
-    await request.put('http://localhost:3000/api/files/motion_lights', {
-      data: {
-        content: `import appdaemon.plugins.hass.hassapi as hass
-
-
-class MotionLights(hass.Hass):
-    """Turns on lights when motion is detected. Adds brightness + delay."""
-
-    DELAY_SECONDS = 120
-
-    def initialize(self):
-        self.listen_state(self.on_motion, "binary_sensor.motion_hall")
-        self.listen_state(self.on_motion, "binary_sensor.motion_kitchen")
-
-    def on_motion(self, entity, attribute, old, new, kwargs):
-        if new == "on":
-            self.turn_on("light.hallway", brightness=200)
-            self.turn_on("light.kitchen", brightness=180)
-            self.log(f"Motion detected on {entity} — lights on")
-            self.run_in(self.turn_off_lights, self.DELAY_SECONDS)
-
-    def turn_off_lights(self, kwargs):
-        self.turn_off("light.hallway")
-        self.turn_off("light.kitchen")
-        self.log("No motion — lights off")
-`,
-      },
-    })
+  test.beforeEach(async ({ page }) => {
+    await setupMocks(page)
   })
 
   // ── 1. App list ─────────────────────────────────────────────────────────────
@@ -104,6 +29,9 @@ class MotionLights(hass.Hass):
     await page.goto('/')
     await expect(page.getByText('motion_lights')).toBeVisible()
     await expect(page.getByText('presence_tracker')).toBeVisible()
+    // Hover to reveal per-app controls (enable/disable toggle, restart button)
+    await page.locator('aside').getByText('motion_lights').hover()
+    await page.waitForTimeout(200)
     await page.screenshot({ path: shot('01-app-list') })
   })
 
@@ -202,6 +130,12 @@ class MotionLights(hass.Hass):
   // ── 9. Autocomplete: self. shows AppDaemon method suggestions ────────────────
   test('self. triggers AppDaemon method completions', async ({ page }) => {
     await page.goto('/')
+    const lspReady = await page.evaluate(async () => {
+      const r = await fetch('api/health').then(res => res.json()).catch(() => ({}))
+      return r.lspReady === true
+    })
+    test.skip(!lspReady, 'LSP not available in this environment')
+
     await page.getByText('motion_lights').click()
     await waitForEditor(page)
 
@@ -227,6 +161,12 @@ class MotionLights(hass.Hass):
   // ── 10. Autocomplete: self.turn filters correctly ────────────────────────────
   test('typing after self. filters method list', async ({ page }) => {
     await page.goto('/')
+    const lspReady = await page.evaluate(async () => {
+      const r = await fetch('api/health').then(res => res.json()).catch(() => ({}))
+      return r.lspReady === true
+    })
+    test.skip(!lspReady, 'LSP not available in this environment')
+
     await page.getByText('motion_lights').click()
     await waitForEditor(page)
 

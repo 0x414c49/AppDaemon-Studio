@@ -13,14 +13,17 @@
 
 A web-based IDE for writing and managing [AppDaemon](https://appdaemon.readthedocs.io/) apps, built as a Home Assistant add-on. Runs entirely inside Home Assistant — no external services, no configuration required.
 
-![AppDaemon Studio](docs/screenshots/01-app-list-v2.png)
+![AppDaemon Studio](docs/screenshots/01-app-list.png)
 
 ## Features
 
 - **Monaco Editor** — The same editor as VS Code, with Python and YAML syntax highlighting, bracket matching, and multi-cursor editing
-- **Entity Autocomplete** — As you type, your Home Assistant entity IDs appear as suggestions in the editor
-- **Version Control** — Every save creates a snapshot. Compare any two versions side-by-side and restore with one click
-- **Log Viewer** — Live AppDaemon logs with INFO / WARNING / ERROR filtering and per-app filtering
+- **Python Language Server** — Full LSP support powered by pylsp: inline error highlighting (pyflakes + pycodestyle), hover docs, go-to-definition, and AppDaemon method completions via `self.`
+- **Entity Autocomplete** — Type a quote inside any AppDaemon call to get live entity ID suggestions from your Home Assistant instance
+- **Version Control** — Every save snapshots the previous file. Compare any two versions side-by-side in a diff view and restore with one click
+- **App Controls** — Restart, start, stop, enable, and disable individual apps directly from the sidebar (requires AppDaemon HTTP API)
+- **Log Viewer** — Live AppDaemon logs with INFO / WARNING / ERROR filtering and per-app search
+- **Template Evaluator** — Test Jinja2 templates against your live Home Assistant instance from the Template tab
 - **Multiple Themes** — VS Light, VS Dark, One Dark Pro, Dracula, GitHub Dark, Nord, Monokai, and more
 - **Font Options** — Fira Code, JetBrains Mono, Cascadia Code (all with ligature support)
 
@@ -44,33 +47,54 @@ No configuration needed. The add-on automatically connects to your Home Assistan
 
 Select an app from the sidebar to open it in the editor. Switch between the **Python** and **YAML** tabs to edit the code or the `apps.yaml` config. Press **Save** (or `Ctrl+S`) to save.
 
+![Python editor](docs/screenshots/02-python-editor.png)
+
 ### Creating a new app
 
 Click the **+** button in the sidebar. Give it a name (lowercase, underscores only), a class name, an icon, and an optional description. A boilerplate Python file and a `apps.yaml` entry are created automatically.
 
-![Create app](docs/screenshots/04-create-app-dialog-v2.png)
+![Create app](docs/screenshots/04-create-app-dialog.png)
+
+### App controls
+
+Hover over any app in the sidebar to reveal its controls:
+
+- **Enable / Disable** — toggle the app on or off in `apps.yaml` without deleting it
+- **Restart** — hot-restart the app via the AppDaemon HTTP API (visible when the API is configured)
+- **Delete** — remove the app and its files permanently
 
 ### Entity autocomplete
 
 While editing Python, type any quote character to trigger entity ID suggestions pulled live from your Home Assistant instance. Works for `entity_id`, `listen_state`, `turn_on`, etc.
 
-![Autocomplete](docs/screenshots/09-autocomplete-v2.png)
+### Python language server
+
+The editor connects to a bundled pylsp instance that has the full AppDaemon source installed. You get:
+
+- Method completions when you type `self.` — all AppDaemon `hass.Hass` methods
+- Hover documentation for any AppDaemon method
+- Go-to-definition (`F12`)
+- Inline pyflakes errors and pycodestyle warnings
 
 ### Version history and diff
 
 Every time you save a Python file, the previous version is automatically snapshotted. Click **Compare** to open the diff viewer and select any saved version to see a side-by-side diff against the current file.
 
-![Version Compare](docs/screenshots/07-version-diff-v2.png)
+![Version Compare](docs/screenshots/07-version-diff.png)
 
 ### Log viewer
 
-Click the **Logs** tab to see live AppDaemon output. Filter by level (INFO / WARNING / ERROR) or by a specific app name.
+Click the **Logs** tab to see live AppDaemon output. Filter by level (INFO / WARNING / ERROR) or search by app name.
+
+### Template evaluator
+
+Click the **Template** tab to open a Jinja2 template sandbox. Write any template and evaluate it against your live Home Assistant instance — useful for debugging automations and testing expressions before using them in AppDaemon apps.
 
 ### Settings
 
 Customize the editor theme, font family, font size, and ligatures. Switch between light and dark UI themes.
 
-![Settings](docs/screenshots/05-settings-dialog-v2.png)
+![Settings](docs/screenshots/05-settings-dialog.png)
 
 ## Standalone mode (without Supervisor)
 
@@ -80,8 +104,10 @@ AppDaemon Studio can also run outside of Home Assistant by setting environment v
 |---|---|
 | `HA_URL` | Your Home Assistant URL, e.g. `http://192.168.1.10:8123` |
 | `HA_TOKEN` | A long-lived access token from your HA profile |
-| `APPS_DIR` | Path to your config root (default `/config`) |
-| `APPDAEMON_LOG_FILE` | Path to AppDaemon log file (if not using Supervisor) |
+| `APPS_DIR` | Path to your AppDaemon apps directory (default `/config/apps`) |
+| `APPDAEMON_HTTP_URL` | AppDaemon HTTP API URL, e.g. `http://192.168.1.10:5050` |
+| `APPDAEMON_HTTP_TOKEN` | AppDaemon HTTP API token (if set in `appdaemon.yaml`) |
+| `APPDAEMON_ADDON_SLUG` | Override addon slug for log fetching (auto-detected if omitted) |
 
 ## Support
 
