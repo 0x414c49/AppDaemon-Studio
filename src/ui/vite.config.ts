@@ -24,6 +24,7 @@ export default defineConfig({
     },
   },
   server: {
+    port: 3000,
     // Dev proxy: forward API calls to .NET backend
     proxy: {
       '/api': 'http://localhost:5000',
