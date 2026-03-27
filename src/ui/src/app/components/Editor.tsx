@@ -14,11 +14,13 @@ import { useToast } from './Toast';
 
 interface EditorProps {
   appName: string;
+  module: string;
   settings: EditorSettings;
   yamlReloadKey?: number;
+  onYamlSaved?: () => void;
 }
 
-export function Editor({ appName, settings, yamlReloadKey }: EditorProps) {
+export function Editor({ appName, module, settings, yamlReloadKey, onYamlSaved }: EditorProps) {
   const { addToast } = useToast();
   const [content, setContent] = useState('');
   const [originalContent, setOriginalContent] = useState('');
@@ -26,9 +28,11 @@ export function Editor({ appName, settings, yamlReloadKey }: EditorProps) {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'python' | 'yaml'>('python');
   const [showVersionCompare, setShowVersionCompare] = useState(false);
+  const [yamlIssues, setYamlIssues] = useState<import('@/types').YamlIssue[]>([]);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const lspClientRef = useRef<LspClientHandle | null>(null);
   const docVersionRef = useRef(0);
+  const validateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [monaco, setMonaco] = useState<typeof import('monaco-editor') | null>(null);
 
   const { entities, loading: entitiesLoading, error: entitiesError, available: entitiesAvailable, refresh, lastUpdated } = useEntities();
@@ -52,6 +56,7 @@ export function Editor({ appName, settings, yamlReloadKey }: EditorProps) {
   }, [monaco]);
 
   useEffect(() => {
+    setYamlIssues([]);
     loadFile();
   }, [appName, activeTab]);
 
@@ -72,7 +77,7 @@ export function Editor({ appName, settings, yamlReloadKey }: EditorProps) {
     // File may already be loaded (loadFile runs before onMount); send didOpen now
     const currentText = editorInstance.getValue();
     if (currentText) {
-      lsp.notifyOpen(`file:///apps/${appName}.py`, currentText);
+      lsp.notifyOpen(`file:///apps/${module}.py`, currentText);
     }
   };
 
@@ -86,9 +91,54 @@ export function Editor({ appName, settings, yamlReloadKey }: EditorProps) {
       monaco.editor.setTheme(settings.theme);
     }
   }, [settings.theme, monaco]);
-  
+
+  // Debounced yaml validation
+  useEffect(() => {
+    if (activeTab !== 'yaml') return;
+    if (validateTimerRef.current) clearTimeout(validateTimerRef.current);
+    validateTimerRef.current = setTimeout(async () => {
+      try {
+        const r = await fetch('api/yaml/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        });
+        if (r.ok) {
+          const data = await r.json();
+          setYamlIssues(data.issues ?? []);
+        }
+      } catch { /* non-critical */ }
+    }, 500);
+    return () => {
+      if (validateTimerRef.current) clearTimeout(validateTimerRef.current);
+    };
+  }, [content, activeTab]);
+
+  // Set Monaco markers from yamlIssues
+  useEffect(() => {
+    if (!monaco) return;
+    const model = editorRef.current?.getModel();
+    if (!model) return;
+    if (activeTab !== 'yaml') {
+      monaco.editor.setModelMarkers(model, 'yaml-validate', []);
+      return;
+    }
+    monaco.editor.setModelMarkers(model, 'yaml-validate', yamlIssues.map(issue => ({
+      startLineNumber: issue.line,
+      endLineNumber: issue.line,
+      startColumn: 1,
+      endColumn: 200,
+      message: issue.message,
+      severity: issue.severity === 'error'
+        ? monaco.MarkerSeverity.Error
+        : issue.severity === 'warning'
+        ? monaco.MarkerSeverity.Warning
+        : monaco.MarkerSeverity.Info,
+    })));
+  }, [yamlIssues, monaco, activeTab]);
+
   const lspUri = (tab: 'python' | 'yaml') =>
-    `file:///apps/${appName}.${tab === 'python' ? 'py' : 'yaml'}`;
+    `file:///apps/${module}.${tab === 'python' ? 'py' : 'yaml'}`;
 
   const loadFile = async () => {
     try {
@@ -98,7 +148,8 @@ export function Editor({ appName, settings, yamlReloadKey }: EditorProps) {
         lspClientRef.current.notifyClose(lspUri(activeTab));
       }
       const fileType = activeTab === 'python' ? 'python' : 'yaml';
-      const response = await fetch(`api/files/${appName}/${fileType}`);
+      const fileId = activeTab === 'python' ? module : appName;
+      const response = await fetch(`api/files/${fileId}/${fileType}`);
       if (!response.ok) throw new Error('Failed to load file');
       const data = await response.json();
       setContent(data.content);
@@ -117,18 +168,42 @@ export function Editor({ appName, settings, yamlReloadKey }: EditorProps) {
   const saveFile = async () => {
     try {
       setSaving(true);
-      const fileType = activeTab === 'python' ? 'python' : 'yaml';
-      const response = await fetch(`api/files/${appName}/${fileType}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-      if (!response.ok) throw new Error('Failed to save file');
-      setOriginalContent(content);
-      addToast({
-        type: 'success',
-        message: `${activeTab === 'python' ? 'Python' : 'YAML'} file saved successfully`,
-      });
+      if (activeTab === 'yaml') {
+        const response = await fetch(`api/files/${appName}/yaml`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          if (data.issues) {
+            for (const issue of data.issues as import('@/types').YamlIssue[]) {
+              addToast({ type: 'error', message: issue.message, duration: 6000 });
+            }
+          } else {
+            addToast({ type: 'error', message: data.detail || 'Failed to save YAML', duration: 5000 });
+          }
+          return;
+        }
+        const data = await response.json();
+        setOriginalContent(content);
+        for (const file of (data.created_files ?? []) as string[]) {
+          addToast({ type: 'success', message: `Created ${file}` });
+        }
+        if (!(data.created_files?.length)) {
+          addToast({ type: 'success', message: 'YAML file saved successfully' });
+        }
+        onYamlSaved?.();
+      } else {
+        const response = await fetch(`api/files/${module}/python`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        });
+        if (!response.ok) throw new Error('Failed to save file');
+        setOriginalContent(content);
+        addToast({ type: 'success', message: 'Python file saved successfully' });
+      }
     } catch (err) {
       addToast({
         type: 'error',
@@ -182,7 +257,7 @@ export function Editor({ appName, settings, yamlReloadKey }: EditorProps) {
         <div className="flex items-center gap-4">
           <h2 className="text-base font-semibold text-ha-text flex items-center gap-2">
             <FileCode className="w-4 h-4 text-ha-primary" />
-            {activeTab === 'python' ? `${appName}.py` : 'apps.yaml'}
+            {activeTab === 'python' ? `${module}.py` : 'apps.yaml'}
             {isDirty && (
               <span className="px-2 py-0.5 text-xs rounded-full bg-ha-warning-bg text-ha-warning font-medium">
                 Modified
@@ -347,7 +422,7 @@ export function Editor({ appName, settings, yamlReloadKey }: EditorProps) {
 
       {/* Version Compare Modal */}
       <VersionCompare
-        appName={appName}
+        appName={module}
         currentCode={content}
         isOpen={showVersionCompare}
         onClose={() => setShowVersionCompare(false)}

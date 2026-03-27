@@ -49,6 +49,14 @@ export default function Home() {
   });
 
   const [activeTab, setActiveTab] = useState<TabId>('editor');
+  const [templateContent, setTemplateContent] = useState(() =>
+    localStorage.getItem('appdaemon-studio-template') ?? '{{ states("sun.sun") }}'
+  );
+
+  const handleTemplateChange = useCallback((v: string) => {
+    setTemplateContent(v);
+    localStorage.setItem('appdaemon-studio-template', v);
+  }, []);
   const isResizing = useRef(false);
 
   useEffect(() => {
@@ -102,6 +110,10 @@ export default function Home() {
       setApps(data.apps);
       if (data.apps.length > 0 && !activeApp) {
         setActiveApp(data.apps[0].name);
+      }
+      // Clear activeApp if it's no longer in the list
+      if (activeApp && !data.apps.find((a: AppInfo) => a.name === activeApp)) {
+        setActiveApp(null);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
@@ -220,11 +232,17 @@ export default function Home() {
           disabled={!activeApp && activeTab === 'editor'}
         />
         {activeTab === 'logs' ? (
-          <LogViewer />
+          <LogViewer activeApp={activeApp} />
         ) : activeTab === 'template' ? (
-          <TemplateTester />
+          <TemplateTester template={templateContent} onTemplateChange={handleTemplateChange} />
         ) : activeApp ? (
-          <Editor appName={activeApp} settings={editorSettings} yamlReloadKey={yamlReloadKey} />
+          <Editor
+            appName={activeApp}
+            module={apps.find(a => a.name === activeApp)?.module ?? activeApp}
+            settings={editorSettings}
+            yamlReloadKey={yamlReloadKey}
+            onYamlSaved={fetchApps}
+          />
         ) : (
           <div className="flex-1 flex items-center justify-center text-ha-text-secondary">
             <div className="text-center">

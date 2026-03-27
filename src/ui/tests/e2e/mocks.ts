@@ -69,6 +69,7 @@ presence_tracker:
 const APPS = [
   {
     name: 'motion_lights',
+    module: 'motion_lights',
     class_name: 'MotionLights',
     description: 'Turns on lights when motion is detected. Adds brightness + delay.',
     has_python: true,
@@ -80,6 +81,7 @@ const APPS = [
   },
   {
     name: 'presence_tracker',
+    module: 'presence_tracker',
     class_name: 'PresenceTracker',
     description: 'Tracks who is home.',
     has_python: true,
@@ -138,7 +140,7 @@ export async function setupMocks(page: Page) {
   await page.route('**/api/apps', route => {
     if (route.request().method() !== 'GET') {
       return route.fulfill(json({
-        name: 'new_app', class_name: 'NewApp', description: '',
+        name: 'new_app', module: 'new_app', class_name: 'NewApp', description: '',
         has_python: true, has_yaml: false,
         last_modified: new Date().toISOString(),
         version_count: 0, icon: null, disabled: false,
@@ -162,11 +164,19 @@ export async function setupMocks(page: Page) {
   )
 
   // Files — YAML
-  await page.route('**/api/files/*/yaml', route =>
-    route.fulfill(json({ content: APPS_YAML, last_modified: '2026-03-23T09:30:00.000Z' }))
-  )
+  await page.route('**/api/files/*/yaml', route => {
+    if (route.request().method() === 'PUT') {
+      return route.fulfill(json({ success: true, created_files: [] }))
+    }
+    return route.fulfill(json({ content: APPS_YAML, last_modified: '2026-03-23T09:30:00.000Z' }))
+  })
   await page.route('**/api/files/*/yml', route =>
     route.fulfill(json({ content: APPS_YAML, last_modified: '2026-03-23T09:30:00.000Z' }))
+  )
+
+  // Yaml validate
+  await page.route('**/api/yaml/validate', route =>
+    route.fulfill(json({ issues: [] }))
   )
 
   // Files — Python (frontend always calls /python subpath)
@@ -198,12 +208,25 @@ export async function setupMocks(page: Page) {
     }))
   )
 
-  // Logs (supervisor not available)
-  await page.route('**/api/logs/**', route =>
+  // Logs
+  const LOGS = [
+    { raw: '2026-03-21 10:26:58.036625 INFO AppDaemon: Starting apps', timestamp: '2026-03-21 10:26:58.036625', level: 'INFO', source: 'AppDaemon', message: 'Starting apps' },
+    { raw: '2026-03-21 10:27:01.123456 INFO motion_lights: Motion detected on binary_sensor.motion_hall — lights on', timestamp: '2026-03-21 10:27:01.123456', level: 'INFO', source: 'motion_lights', message: 'Motion detected on binary_sensor.motion_hall — lights on' },
+    { raw: '2026-03-21 10:29:01.234567 INFO motion_lights: No motion — lights off', timestamp: '2026-03-21 10:29:01.234567', level: 'INFO', source: 'motion_lights', message: 'No motion — lights off' },
+    { raw: '2026-03-21 10:30:00.345678 WARNING motion_lights: Callback overdue by 120ms', timestamp: '2026-03-21 10:30:00.345678', level: 'WARNING', source: 'motion_lights', message: 'Callback overdue by 120ms' },
+    { raw: '2026-03-21 10:31:00.456789 INFO presence_tracker: person.alice changed from home to away', timestamp: '2026-03-21 10:31:00.456789', level: 'INFO', source: 'presence_tracker', message: 'person.alice changed from home to away' },
+  ]
+
+  await page.route('**/api/appdaemon-logs', route =>
+    route.fulfill(json({ logs: LOGS }))
+  )
+
+  const sseBody = `event: init\ndata: ${JSON.stringify(LOGS)}\n\n`
+  await page.route('**/api/appdaemon-logs/stream', route =>
     route.fulfill({
-      status: 503,
-      contentType: 'application/json',
-      body: JSON.stringify({ error: 'Logs require Home Assistant Supervisor (addon mode).' }),
+      status: 200,
+      contentType: 'text/event-stream; charset=utf-8',
+      body: sseBody,
     })
   )
 }

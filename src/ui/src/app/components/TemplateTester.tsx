@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { Play } from 'lucide-react';
 
-export function TemplateTester() {
-  const [template, setTemplate] = useState('{{ states("sun.sun") }}');
+export function TemplateTester({ template, onTemplateChange }: { template: string; onTemplateChange: (v: string) => void }) {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +40,7 @@ export function TemplateTester() {
       <div className="p-3 border-b border-ha-border bg-ha-card">
         <textarea
           value={template}
-          onChange={(e) => setTemplate(e.target.value)}
+          onChange={(e) => onTemplateChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Enter Jinja2 template, e.g. {{ states('sensor.temperature') }}"
           className="w-full h-32 px-3 py-2 bg-ha-surface border border-ha-border rounded text-ha-text font-mono text-sm focus:outline-none focus:border-ha-primary resize-none"

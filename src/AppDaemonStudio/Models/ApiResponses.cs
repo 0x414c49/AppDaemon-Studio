@@ -53,3 +53,9 @@ public record RestoreRequest(string VersionId);
 // ── Template ──────────────────────────────────────────────────────────────────
 public record TemplateRequest(string Template);
 public record TemplateResponse(string Result);
+
+// ── Yaml validation ───────────────────────────────────────────────────────────
+public record YamlIssue(string App, string Message, string Severity, int Line);
+public record YamlValidateResponse(List<YamlIssue> Issues);
+public record YamlSaveResponse(bool Success, List<string> CreatedFiles);
+public record YamlSaveErrorResponse(string Detail, List<YamlIssue> Issues);

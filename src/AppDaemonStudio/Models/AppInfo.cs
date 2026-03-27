@@ -2,6 +2,7 @@ namespace AppDaemonStudio.Models;
 
 public record AppInfo(
     string Name,
+    string Module,
     string ClassName,
     string Description,
     bool HasPython,
