@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.68] - 2026-03-27
+
+- fix: remove custom Python completion provider; keep only HA-specific completions
+
+
 ## [v0.3.67] - 2026-03-27
 
 - fix: detect stray lines in YAML validator and prevent tab reset on save
