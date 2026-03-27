@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.67] - 2026-03-27
+
+- fix: detect stray lines in YAML validator and prevent tab reset on save
+
+
 ## [v0.3.66] - 2026-03-27
 
 - fix: set vite dev server port to 3000 for CI and Playwright
