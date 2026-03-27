@@ -181,6 +181,7 @@ export async function listApps(): Promise<AppInfo[]> {
     
     apps.push({
       name: appName,
+      module: appConfig.module || appName,
       class_name: appConfig.class,
       description: appConfig.description || '',
       icon: appConfig.icon,
@@ -195,6 +196,7 @@ export async function listApps(): Promise<AppInfo[]> {
     if (!apps.find(a => a.name === appName)) {
       apps.push({
         name: appName,
+        module: appConfig.module || appName,
         class_name: appConfig.class,
         description: appConfig.description || '',
         icon: appConfig.icon,
@@ -239,6 +241,7 @@ export async function createApp(data: CreateAppData): Promise<AppInfo> {
   
   return {
     name: data.name,
+    module: data.name,
     class_name: data.class_name,
     description: data.description || '',
     icon: data.icon,

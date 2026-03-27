@@ -1,5 +1,6 @@
 export interface AppInfo {
   name: string;
+  module: string;
   class_name: string;
   description: string;
   has_python: boolean;
@@ -52,4 +53,21 @@ export interface AppConfig {
 
 export interface AppsConfig {
   [appName: string]: AppConfig;
+}
+
+export interface YamlIssue {
+  app: string;
+  message: string;
+  severity: 'error' | 'warning' | 'info';
+  line: number;
+}
+
+export interface YamlSaveResponse {
+  success: boolean;
+  created_files: string[];
+}
+
+export interface YamlSaveErrorResponse {
+  detail: string;
+  issues: YamlIssue[];
 }

@@ -81,8 +81,12 @@ public class FilesController(
     {
         try
         {
-            await fileManager.WriteAppsYamlAsync(body.Content);
-            return Ok(new SuccessResponse(true, "YAML config updated"));
+            var createdFiles = await fileManager.WriteAppsYamlAsync(body.Content);
+            return Ok(new YamlSaveResponse(true, createdFiles));
+        }
+        catch (YamlValidationException ex)
+        {
+            return BadRequest(new YamlSaveErrorResponse("YAML validation failed", ex.Issues));
         }
         catch (Exception ex)
         {

@@ -62,6 +62,42 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
         return config;
     }
 
+    private static List<(string Name, Dictionary<string, string> Fields, int Line)> ParseAppsYamlRaw(string content)
+    {
+        var result = new List<(string, Dictionary<string, string>, int)>();
+        string? currentApp = null;
+        Dictionary<string, string>? currentFields = null;
+        int currentLine = 0;
+
+        var lines = content.Split('\n');
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var raw = lines[i];
+            var trimmed = raw.TrimEnd();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed.TrimStart().StartsWith('#'))
+                continue;
+
+            if (!raw.StartsWith(' ') && trimmed.EndsWith(':'))
+            {
+                if (currentApp != null && currentFields != null)
+                    result.Add((currentApp, currentFields, currentLine));
+                currentApp = trimmed[..^1];
+                currentFields = new Dictionary<string, string>();
+                currentLine = i + 1; // 1-based
+            }
+            else if (currentApp != null && currentFields != null && raw.StartsWith("  "))
+            {
+                var t = trimmed.TrimStart();
+                var colonIdx = t.IndexOf(':');
+                if (colonIdx > 0)
+                    currentFields[t[..colonIdx].Trim()] = t[(colonIdx + 1)..].Trim();
+            }
+        }
+        if (currentApp != null && currentFields != null)
+            result.Add((currentApp, currentFields, currentLine));
+        return result;
+    }
+
     private static string StringifyAppsYaml(Dictionary<string, Dictionary<string, string>> config)
     {
         var sb = new StringBuilder();
@@ -142,51 +178,36 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
         logger.LogInformation("Listing apps from {AppsDir}", settings.AppsDir);
         var config = await ReadAppsConfigAsync();
         var apps = new List<AppInfo>();
-        var seenNames = new HashSet<string>(StringComparer.Ordinal);
-
+        var claimedModules = new HashSet<string>(StringComparer.Ordinal);
         EnsureVersionsDir();
 
-        foreach (var pyFile in Directory.EnumerateFiles(settings.AppsDir, "*.py"))
+        // Primary: yaml entries
+        foreach (var (instanceName, appConfig) in config)
         {
-            var fileName = Path.GetFileName(pyFile);
-            if (fileName.StartsWith('.')) continue;
-
-            var appName = Path.GetFileNameWithoutExtension(pyFile);
-            seenNames.Add(appName);
-            config.TryGetValue(appName, out var appConfig);
-
-            string className, description, icon;
-            bool disabled;
-            if (appConfig != null)
-            {
-                appConfig.TryGetValue("class", out var c); className = c ?? appName;
-                appConfig.TryGetValue("description", out var d); description = d ?? "";
-                appConfig.TryGetValue("icon", out var i); icon = i ?? "mdi:application";
-                appConfig.TryGetValue("disable", out var dis); disabled = dis == "true";
-            }
-            else
-            {
-                className = await ExtractClassNameAsync(pyFile);
-                description = "";
-                icon = "mdi:application";
-                disabled = false;
-            }
-
-            var mtime = File.GetLastWriteTimeUtc(pyFile);
-            var versionCount = Directory.EnumerateFiles(settings.VersionsDir, $"{appName}_*.py").Count();
-
-            apps.Add(new AppInfo(appName, className, description, true, true, mtime.ToString("O"), versionCount, icon, disabled));
-        }
-
-        // Apps in yaml but no .py file
-        foreach (var (appName, appConfig) in config)
-        {
-            if (seenNames.Contains(appName)) continue;
+            var moduleName = appConfig.TryGetValue("module", out var m) && !string.IsNullOrEmpty(m) ? m : instanceName;
+            claimedModules.Add(moduleName);
             appConfig.TryGetValue("class", out var cls);
             appConfig.TryGetValue("description", out var desc);
             appConfig.TryGetValue("icon", out var icon);
             appConfig.TryGetValue("disable", out var dis);
-            apps.Add(new AppInfo(appName, cls ?? appName, desc ?? "", false, true, DateTime.UtcNow.ToString("O"), 0, icon, dis == "true"));
+            var pyPath = Path.Combine(settings.AppsDir, $"{moduleName}.py");
+            var hasPython = File.Exists(pyPath);
+            var mtime = hasPython ? File.GetLastWriteTimeUtc(pyPath).ToString("O") : DateTime.UtcNow.ToString("O");
+            var versionCount = Directory.EnumerateFiles(settings.VersionsDir, $"{moduleName}_*.py").Count();
+            apps.Add(new AppInfo(instanceName, moduleName, cls ?? instanceName, desc ?? "", hasPython, true, mtime, versionCount, icon ?? "mdi:application", dis == "true"));
+        }
+
+        // Secondary: orphaned py files (not claimed by any yaml entry)
+        foreach (var pyFile in Directory.EnumerateFiles(settings.AppsDir, "*.py"))
+        {
+            var fileName = Path.GetFileName(pyFile);
+            if (fileName.StartsWith('.')) continue;
+            var moduleName = Path.GetFileNameWithoutExtension(pyFile);
+            if (claimedModules.Contains(moduleName)) continue;
+            var className = await ExtractClassNameAsync(pyFile);
+            var mtime = File.GetLastWriteTimeUtc(pyFile);
+            var versionCount = Directory.EnumerateFiles(settings.VersionsDir, $"{moduleName}_*.py").Count();
+            apps.Add(new AppInfo(moduleName, moduleName, className, "", true, false, mtime.ToString("O"), versionCount, "mdi:application", false));
         }
 
         apps.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
@@ -216,25 +237,41 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
         EnsureVersionsDir();
 
         logger.LogInformation("Created app {AppName}", request.Name);
-        return new AppInfo(request.Name, request.ClassName, request.Description ?? "", true, true,
+        return new AppInfo(request.Name, request.Name, request.ClassName, request.Description ?? "", true, true,
             DateTime.UtcNow.ToString("O"), 0, request.Icon);
     }
 
     public async Task DeleteAppAsync(string name)
     {
         ValidateName(name);
-
-        var pyPath = Path.Combine(settings.AppsDir, $"{name}.py");
         var config = await ReadAppsConfigAsync();
 
-        if (!config.ContainsKey(name) && !File.Exists(pyPath))
-            throw new FileNotFoundException($"App '{name}' not found");
+        if (config.TryGetValue(name, out var appConfig))
+        {
+            var moduleName = appConfig.TryGetValue("module", out var m) && !string.IsNullOrEmpty(m) ? m : name;
+            config.Remove(name);
+            await WriteAppsConfigAsync(config);
+            // Only delete py file if no remaining yaml entry references this module
+            var stillUsed = config.Values.Any(c => (c.TryGetValue("module", out var mod) ? mod : "") == moduleName);
+            if (!stillUsed)
+            {
+                var pyPath = Path.Combine(settings.AppsDir, $"{moduleName}.py");
+                if (File.Exists(pyPath)) File.Delete(pyPath);
+            }
+            logger.LogInformation("Deleted app {AppName}", name);
+            return;
+        }
 
-        config.Remove(name);
-        await WriteAppsConfigAsync(config);
+        // Orphaned py file
+        var orphanPath = Path.Combine(settings.AppsDir, $"{name}.py");
+        if (File.Exists(orphanPath))
+        {
+            File.Delete(orphanPath);
+            logger.LogInformation("Deleted orphaned app {AppName}", name);
+            return;
+        }
 
-        if (File.Exists(pyPath)) File.Delete(pyPath);
-        logger.LogInformation("Deleted app {AppName}", name);
+        throw new FileNotFoundException($"App '{name}' not found");
     }
 
     public async Task<FileContent> ReadPythonFileAsync(string appName)
@@ -270,10 +307,78 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
         }
     }
 
-    public async Task WriteAppsYamlAsync(string content)
+    public async Task<List<YamlIssue>> ValidateAppsYamlAsync(string content)
     {
+        var issues = new List<YamlIssue>();
+        var entries = ParseAppsYamlRaw(content);
+        var existingConfig = await ReadAppsConfigAsync();
+
+        foreach (var (appName, fields, line) in entries)
+        {
+            if (!fields.TryGetValue("module", out var moduleName) || string.IsNullOrEmpty(moduleName))
+            {
+                issues.Add(new YamlIssue(appName, $"'{appName}': missing required 'module' field", "error", line));
+                continue;
+            }
+            if (!fields.TryGetValue("class", out var className) || string.IsNullOrEmpty(className))
+            {
+                issues.Add(new YamlIssue(appName, $"'{appName}': missing required 'class' field", "error", line));
+                continue;
+            }
+            var pyPath = Path.Combine(settings.AppsDir, $"{moduleName}.py");
+            if (!File.Exists(pyPath))
+            {
+                bool isNew = !existingConfig.ContainsKey(appName);
+                if (isNew)
+                    issues.Add(new YamlIssue(appName, $"'{appName}': module file '{moduleName}.py' will be created on save", "info", line));
+                else
+                    issues.Add(new YamlIssue(appName, $"'{appName}': module file '{moduleName}.py' not found — did you rename it? Update the 'module' field to match.", "error", line));
+            }
+        }
+        return issues;
+    }
+
+    public async Task<List<string>> WriteAppsYamlAsync(string content)
+    {
+        var oldConfig = await ReadAppsConfigAsync();
+        var entries = ParseAppsYamlRaw(content);
+        var hardErrors = new List<YamlIssue>();
+        var createdFiles = new List<string>();
+
+        foreach (var (appName, fields, line) in entries)
+        {
+            if (!fields.TryGetValue("module", out var moduleName) || string.IsNullOrEmpty(moduleName))
+            {
+                hardErrors.Add(new YamlIssue(appName, $"'{appName}': missing required 'module' field", "error", line));
+                continue;
+            }
+            if (!fields.TryGetValue("class", out var className) || string.IsNullOrEmpty(className))
+            {
+                hardErrors.Add(new YamlIssue(appName, $"'{appName}': missing required 'class' field", "error", line));
+                continue;
+            }
+            var pyPath = Path.Combine(settings.AppsDir, $"{moduleName}.py");
+            if (!File.Exists(pyPath))
+            {
+                if (!oldConfig.ContainsKey(appName))
+                {
+                    EnsureAppsDir();
+                    await File.WriteAllTextAsync(pyPath, GeneratePythonTemplate(moduleName, className, null));
+                    createdFiles.Add($"{moduleName}.py");
+                }
+                else
+                {
+                    hardErrors.Add(new YamlIssue(appName, $"'{appName}': module file '{moduleName}.py' not found — did you rename it? Update the 'module' field to match.", "error", line));
+                }
+            }
+        }
+
+        if (hardErrors.Count > 0)
+            throw new YamlValidationException(hardErrors);
+
         EnsureAppsDir();
         await File.WriteAllTextAsync(settings.AppsYaml, content);
+        return createdFiles;
     }
 
     public async Task SetAppDisabledAsync(string name, bool disabled)
