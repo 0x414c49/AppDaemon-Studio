@@ -63,15 +63,4 @@ export const YAML_APPDAEMON_SNIPPETS: YamlSnippet[] = [
     documentation: 'List of app names this app depends on (loaded first)',
     detail: 'AppDaemon key',
   },
-  // Full app skeleton snippet
-  {
-    label: 'app (new app skeleton)',
-    insertText: [
-      '${1:MyApp}:',
-      '  module: ${2:my_app}',
-      '  class: ${1:MyApp}',
-    ].join('\n'),
-    documentation: 'New AppDaemon app entry with module and class',
-    detail: 'Snippet',
-  },
 ];

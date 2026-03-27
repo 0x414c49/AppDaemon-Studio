@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import type { editor, Position } from 'monaco-editor';
 import type { HAEntity } from '@/lib/home-assistant';
 import {
-  createAppDaemonCompletions,
   createEntityCompletions,
   shouldTriggerEntityCompletion,
   filterEntitiesForContext,
@@ -12,114 +11,26 @@ import { YAML_APPDAEMON_SNIPPETS } from '@/lib/monaco/completions/yaml-appdaemon
 import { APPDAEMON_SIGNATURES } from '@/lib/monaco/completions/signatures';
 
 /**
- * Registers all Monaco completion and signature-help providers once.
- * Entity data is kept in a ref so providers always see the latest list
- * without ever being re-registered.
+ * Registers Monaco completion and signature-help providers once.
+ * Only provides what pylsp cannot: HA entities, HA services, AppDaemon
+ * signatures, and AppDaemon-specific YAML field completions.
  */
 export function useMonacoProviders(
   monaco: typeof import('monaco-editor') | null,
   entities: HAEntity[],
   entitiesLoading: boolean,
 ): void {
-  // Refs so provider closures see latest values without re-registration
   const entitiesRef = useRef(entities);
   const entitiesLoadingRef = useRef(entitiesLoading);
   entitiesRef.current = entities;
   entitiesLoadingRef.current = entitiesLoading;
-
-  // Computed once at hook init; doesn't change
-  const completionsRef = useRef(createAppDaemonCompletions());
 
   useEffect(() => {
     if (!monaco) return;
 
     const { CompletionItemKind, CompletionItemInsertTextRule } = monaco.languages;
 
-    // ── 1. AppDaemon API completions (Python) ──────────────────────────────
-    const appDaemonProvider = monaco.languages.registerCompletionItemProvider('python', {
-      triggerCharacters: ['.', '('],
-      provideCompletionItems: (model: editor.ITextModel, position: Position) => {
-        const lineContent = model.getLineContent(position.lineNumber);
-        const wordUntilPosition = model.getWordUntilPosition(position);
-        const textBeforeCursor = lineContent.substring(0, position.column - 1);
-
-        const selfDotMatch = /self\.(\w*)$/.exec(textBeforeCursor);
-        const isAfterSelf = selfDotMatch !== null;
-        const selfPartialWord = selfDotMatch?.[1] ?? '';
-        const isEmptyLine = /^\s*$/.test(textBeforeCursor);
-        const isStartingKeyword = /^\s*(import|from|class|def|if|for|while|try)\b/.test(textBeforeCursor);
-        const isAfterDot = !isAfterSelf && /\.$/.test(textBeforeCursor);
-
-        const allCompletions = completionsRef.current;
-
-        const createSuggestions = (items: typeof allCompletions) =>
-          items.map(item => ({
-            label: item.label,
-            kind: item.kind,
-            insertText: item.insertText,
-            insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation: item.documentation,
-            detail: item.detail,
-            sortText: isAfterSelf
-              ? (item.detail === 'Entity Control' ? `0_0_${item.label}` : `0_9_${item.label}`)
-              : `3_${item.label}`,
-            filterText: isAfterSelf && item.label.startsWith('self.')
-              ? item.label.slice(5)
-              : item.label,
-            range: {
-              startLineNumber: position.lineNumber,
-              endLineNumber: position.lineNumber,
-              startColumn: isAfterSelf && item.label.startsWith('self.')
-                ? position.column - 5 - selfPartialWord.length
-                : wordUntilPosition.startColumn,
-              endColumn: position.column,
-            },
-          }));
-
-        if (isAfterSelf) {
-          return { suggestions: createSuggestions(allCompletions.filter(item =>
-            item.label.startsWith('self.') ||
-            item.detail?.includes('AppDaemon') ||
-            item.detail?.includes('Time') ||
-            item.detail?.includes('Sun') ||
-            item.detail?.includes('Presence')
-          )) };
-        } else if (isAfterDot) {
-          return { suggestions: createSuggestions(allCompletions.filter(item =>
-            item.detail === 'JSON' ||
-            item.detail === 'OS' ||
-            item.detail === 'Datetime' ||
-            item.detail === 'HTTP'
-          )) };
-        } else if (isEmptyLine || isStartingKeyword) {
-          return { suggestions: createSuggestions(allCompletions.filter(item =>
-            item.detail === 'Import' ||
-            item.detail === 'Keyword' ||
-            item.detail === 'Snippet' ||
-            item.detail === 'Control Flow' ||
-            item.label.startsWith('class ') ||
-            item.label.startsWith('def ') ||
-            item.label.startsWith('import ')
-          )) };
-        } else {
-          return { suggestions: createSuggestions(allCompletions.filter(item =>
-            item.detail === 'JSON' ||
-            item.detail === 'JSON Pattern' ||
-            item.detail === 'OS' ||
-            item.detail === 'Datetime' ||
-            item.detail === 'HTTP' ||
-            item.detail === 'File I/O' ||
-            item.detail === 'Snippet' ||
-            item.detail === 'Path' ||
-            item.detail === 'Built-in' ||
-            item.detail === 'Python' ||
-            item.detail === 'Control Flow'
-          )) };
-        }
-      },
-    });
-
-    // ── 2. Entity completions (Python) ────────────────────────────────────
+    // ── 1. Entity completions (Python) ────────────────────────────────────
     const entityProvider = monaco.languages.registerCompletionItemProvider('python', {
       triggerCharacters: ['(', ',', "'", '"'],
       provideCompletionItems: (model: editor.ITextModel, position: Position) => {
@@ -139,36 +50,32 @@ export function useMonacoProviders(
           entitiesRef.current, lineContent, position.column, prefix
         );
 
-        // Find the column right after the opening quote so we replace the
-        // entire partial entity-id the user has typed, not just the last word.
-        // Without this fix the range only covers the word-part after the last
-        // dot, leaving a stale prefix in the editor.
         const textBeforeCursor = lineContent.substring(0, position.column - 1);
         const openQuoteMatch = /(["'])([^'"]*?)$/.exec(textBeforeCursor);
         const startColumn = openQuoteMatch
           ? position.column - openQuoteMatch[2].length
           : wordUntilPosition.startColumn;
 
-        const suggestions = createEntityCompletions(filteredEntities).map(item => ({
-          label: item.label,
-          kind: CompletionItemKind.Value,
-          insertText: item.label,
-          documentation: item.documentation,
-          detail: item.detail,
-          sortText: `1_${item.label}`,
-          range: {
-            startLineNumber: position.lineNumber,
-            endLineNumber: position.lineNumber,
-            startColumn,
-            endColumn: position.column,
-          },
-        }));
-
-        return { suggestions };
+        return {
+          suggestions: createEntityCompletions(filteredEntities).map(item => ({
+            label: item.label,
+            kind: CompletionItemKind.Value,
+            insertText: item.label,
+            documentation: item.documentation,
+            detail: item.detail,
+            sortText: `1_${item.label}`,
+            range: {
+              startLineNumber: position.lineNumber,
+              endLineNumber: position.lineNumber,
+              startColumn,
+              endColumn: position.column,
+            },
+          })),
+        };
       },
     });
 
-    // ── 3. call_service / call_action domain completions (Python) ─────────
+    // ── 2. call_service / call_action domain completions (Python) ─────────
     const callServiceProvider = monaco.languages.registerCompletionItemProvider('python', {
       triggerCharacters: ["'", '"', '/'],
       provideCompletionItems: (model: editor.ITextModel, position: Position) => {
@@ -205,7 +112,7 @@ export function useMonacoProviders(
       },
     });
 
-    // ── 4. Signature help (Python) ────────────────────────────────────────
+    // ── 3. Signature help (Python) ────────────────────────────────────────
     const signatureProvider = monaco.languages.registerSignatureHelpProvider('python', {
       signatureHelpTriggerCharacters: ['(', ','],
       provideSignatureHelp: (model: editor.ITextModel, position: Position) => {
@@ -256,7 +163,7 @@ export function useMonacoProviders(
       },
     });
 
-    // ── 5. YAML completions (apps.yaml) ───────────────────────────────────
+    // ── 4. YAML completions (apps.yaml) ───────────────────────────────────
     const yamlProvider = monaco.languages.registerCompletionItemProvider('yaml', {
       triggerCharacters: [':'],
       provideCompletionItems: (model: editor.ITextModel, position: Position) => {
@@ -282,11 +189,10 @@ export function useMonacoProviders(
     });
 
     return () => {
-      appDaemonProvider.dispose();
       entityProvider.dispose();
       callServiceProvider.dispose();
       signatureProvider.dispose();
       yamlProvider.dispose();
     };
-  }, [monaco]); // Register once when monaco becomes available
+  }, [monaco]);
 }
