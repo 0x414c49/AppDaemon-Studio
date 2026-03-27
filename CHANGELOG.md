@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.3.66] - 2026-03-27
+
+- fix: set vite dev server port to 3000 for CI and Playwright
+- ci: add coverage reporting and test/coverage badges to README
+- ci: add test job gating release — backend xUnit and frontend Playwright
+- docs: update screenshots
+- test: add 35 tests for yaml-as-truth, validation, and log parsing
+- feat: yaml as source of truth with smart save and inline validation
+- fix: log viewer filters to active app by default
+- fix: persist template tab content across navigation and page reloads
+- docs: use editor screenshot as hero image
+- docs: remove standalone mode section
+
+
 ## [v0.3.65] - 2026-03-23
 
 - fix: correct create app dialog screenshot — use exact button title selector
