@@ -101,9 +101,9 @@ export default function Home() {
     };
   }, []);
 
-  const fetchApps = async () => {
+  const fetchApps = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const response = await fetch('api/apps');
       if (!response.ok) throw new Error(`Failed to fetch apps (${response.status})`);
       const data = await response.json();
@@ -241,7 +241,7 @@ export default function Home() {
             module={apps.find(a => a.name === activeApp)?.module ?? activeApp}
             settings={editorSettings}
             yamlReloadKey={yamlReloadKey}
-            onYamlSaved={fetchApps}
+            onYamlSaved={() => fetchApps(false)}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-ha-text-secondary">

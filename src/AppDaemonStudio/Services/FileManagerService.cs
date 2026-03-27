@@ -307,9 +307,27 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
         }
     }
 
+    private static IEnumerable<YamlIssue> GetStrayLineIssues(string content)
+    {
+        var lines = content.Split('\n');
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var raw = lines[i];
+            var trimmed = raw.TrimEnd();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed.TrimStart().StartsWith('#'))
+                continue;
+            if (!raw.StartsWith(' ') && !raw.StartsWith('\t') && trimmed.EndsWith(':'))
+                continue;
+            if (raw.StartsWith(' ') || raw.StartsWith('\t'))
+                continue;
+            yield return new YamlIssue("", $"Unexpected content: '{trimmed}'", "error", i + 1);
+        }
+    }
+
     public async Task<List<YamlIssue>> ValidateAppsYamlAsync(string content)
     {
         var issues = new List<YamlIssue>();
+        issues.AddRange(GetStrayLineIssues(content));
         var entries = ParseAppsYamlRaw(content);
         var existingConfig = await ReadAppsConfigAsync();
 
@@ -343,6 +361,7 @@ public partial class FileManagerService(AppSettings settings, ILogger<FileManage
         var oldConfig = await ReadAppsConfigAsync();
         var entries = ParseAppsYamlRaw(content);
         var hardErrors = new List<YamlIssue>();
+        hardErrors.AddRange(GetStrayLineIssues(content));
         var createdFiles = new List<string>();
 
         foreach (var (appName, fields, line) in entries)
