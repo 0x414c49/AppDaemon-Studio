@@ -115,4 +115,54 @@ public class LogReaderServiceTests
         var entry = Assert.Single(result);
         Assert.Equal("key: value: extra", entry.Message);
     }
+
+    [Fact]
+    public void ParseLogs_RealFormatWithMicroseconds_ParsedCorrectly()
+    {
+        const string line = "2026-03-21 10:26:58.036625 INFO solar_raw_data: solar_data.json updated";
+        var result = _sut.ParseLogs(line);
+        var entry = Assert.Single(result);
+        Assert.Equal("2026-03-21 10:26:58.036625", entry.Timestamp);
+        Assert.Equal("INFO", entry.Level);
+        Assert.Equal("solar_raw_data", entry.Source);
+        Assert.Equal("solar_data.json updated", entry.Message);
+    }
+
+    [Fact]
+    public void ParseLogs_S6RcLines_AreIgnored()
+    {
+        const string raw = "s6-rc: info: service legacy-services: stopping\ns6-rc: info: service appdaemon: stopping";
+        var result = _sut.ParseLogs(raw);
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void ParseLogs_BannerLines_AreIgnored()
+    {
+        const string raw = "-----------------------------------------------------------\n App: AppDaemon\n-----------------------------------------------------------";
+        var result = _sut.ParseLogs(raw);
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void ParseLogs_HassWarningFormat_Parsed()
+    {
+        const string line = "2026-03-22 06:24:29.863914 WARNING HASS: Error with websocket result: unknown_error: Cannot connect";
+        var result = _sut.ParseLogs(line);
+        var entry = Assert.Single(result);
+        Assert.Equal("WARNING", entry.Level);
+        Assert.Equal("HASS", entry.Source);
+        Assert.Contains("Cannot connect", entry.Message);
+    }
+
+    [Fact]
+    public void ParseLogs_ShortTimestampDecimal_Parsed()
+    {
+        // Some AD log lines have only 3 decimal places
+        const string line = "2026-03-23 08:10:18.225 INFO AppDaemon: 172.30.33.1 [23/Mar/2026:08:10:18 +0100] \"GET /api/appdaemon HTTP/1.1\" 200 191";
+        var result = _sut.ParseLogs(line);
+        var entry = Assert.Single(result);
+        Assert.Equal("INFO", entry.Level);
+        Assert.Equal("AppDaemon", entry.Source);
+    }
 }

@@ -77,9 +77,10 @@ test.describe('AppDaemon Studio', () => {
   // ── 6. Logs tab ──────────────────────────────────────────────────────────────
   test('shows logs tab', async ({ page }) => {
     await page.goto('/')
+    await page.getByText('motion_lights').click()
     await page.getByRole('button', { name: 'Logs' }).click()
-    // Wait a moment for log fetch
-    await page.waitForTimeout(2_000)
+    // Wait for log entries to render (filtered to motion_lights by default)
+    await expect(page.getByText('Motion detected on binary_sensor.motion_hall')).toBeVisible({ timeout: 5_000 })
     await page.screenshot({ path: shot('06-logs-viewer') })
   })
 
@@ -174,6 +175,132 @@ test.describe('AppDaemon Studio', () => {
     await expect(suggestionWidget).toBeVisible({ timeout: 5_000 })
     await expect(suggestionWidget.getByText('turn_on', { exact: false })).toBeVisible()
     await expect(suggestionWidget.getByText('turn_off', { exact: false })).toBeVisible()
+  })
+
+  // ── 12. Sidebar shows instance name when it differs from module ──────────────
+  test('sidebar shows instance name when module name differs', async ({ page }) => {
+    // Override apps mock with instance ≠ module scenario
+    await page.route('**/api/apps', route => {
+      if (route.request().method() !== 'GET') return route.continue()
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          apps: [{
+            name: 'vp_vardagsrum',
+            module: 'pid_heatpump',
+            class_name: 'PIDHeatPump',
+            description: '',
+            has_python: true,
+            has_yaml: true,
+            last_modified: new Date().toISOString(),
+            version_count: 0,
+            icon: null,
+            disabled: false,
+          }],
+          count: 1,
+        }),
+      })
+    })
+    await page.route('**/api/files/pid_heatpump/python', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ content: 'class PIDHeatPump: pass\n', last_modified: new Date().toISOString() }),
+      })
+    )
+    await page.goto('/')
+    await expect(page.getByText('vp_vardagsrum')).toBeVisible()
+    await expect(page.getByText('pid_heatpump')).not.toBeVisible()
+  })
+
+  // ── 13. Yaml save shows toast for auto-created file ──────────────────────────
+  test('yaml save auto-creates file and shows toast', async ({ page }) => {
+    // Override yaml PUT to return created_files
+    await page.route('**/api/files/*/yaml', route => {
+      if (route.request().method() === 'PUT') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, created_files: ['new_module.py'] }),
+        })
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ content: 'motion_lights:\n  module: motion_lights\n  class: MotionLights\n', last_modified: new Date().toISOString() }),
+      })
+    })
+    await page.goto('/')
+    await page.getByText('motion_lights').click()
+    await page.getByRole('button', { name: 'YAML' }).click()
+    await page.waitForTimeout(800)
+    // Type a space in the editor to make content dirty
+    await page.locator('.monaco-editor').first().click()
+    await page.keyboard.press('End')
+    await page.keyboard.press('Space')
+    await page.waitForTimeout(200)
+    await page.keyboard.press('Control+s')
+    await page.waitForTimeout(500)
+    await expect(page.getByText('Created new_module.py')).toBeVisible({ timeout: 5000 })
+    await page.screenshot({ path: shot('13-yaml-save-created-toast') })
+  })
+
+  // ── 14. Yaml save with validation error shows error toast ────────────────────
+  test('yaml save with validation error shows error toast', async ({ page }) => {
+    await page.route('**/api/files/*/yaml', route => {
+      if (route.request().method() === 'PUT') {
+        return route.fulfill({
+          status: 400,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            detail: 'YAML validation failed',
+            issues: [{ app: 'my_app', message: "'my_app': module file 'old_module.py' not found — did you rename it?", severity: 'error', line: 1 }],
+          }),
+        })
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ content: 'motion_lights:\n  module: motion_lights\n  class: MotionLights\n', last_modified: new Date().toISOString() }),
+      })
+    })
+    await page.goto('/')
+    await page.getByText('motion_lights').click()
+    await page.getByRole('button', { name: 'YAML' }).click()
+    await page.waitForTimeout(800)
+    // Type a space in the editor to make content dirty
+    await page.locator('.monaco-editor').first().click()
+    await page.keyboard.press('End')
+    await page.keyboard.press('Space')
+    await page.waitForTimeout(200)
+    await page.keyboard.press('Control+s')
+    await page.waitForTimeout(500)
+    await expect(page.getByText(/not found/)).toBeVisible({ timeout: 5000 })
+    await page.screenshot({ path: shot('14-yaml-validation-error-toast') })
+  })
+
+  // ── 15. Log filter: default shows current app only ───────────────────────────
+  test('log filter shows only current app by default', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Logs' }).click()
+    await page.waitForTimeout(1000)
+    // Button should show the active app name (first app selected by default)
+    const filterBtn = page.locator('button', { hasText: 'motion_lights' })
+    await expect(filterBtn).toBeVisible()
+    await page.screenshot({ path: shot('15-log-filter-app') })
+  })
+
+  // ── 16. Log filter: toggle shows all ────────────────────────────────────────
+  test('log filter toggle shows all apps', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Logs' }).click()
+    await page.waitForTimeout(500)
+    // Click the filter toggle
+    const filterBtn = page.locator('button', { hasText: 'motion_lights' })
+    await filterBtn.click()
+    await expect(page.locator('button', { hasText: 'All apps' })).toBeVisible()
+    await page.screenshot({ path: shot('16-log-filter-all') })
   })
 
   // ── 11. Autocomplete: entity IDs inside string arguments ─────────────────────
