@@ -8,6 +8,8 @@
 ![Supports amd64 Architecture][amd64-shield]
 
 [![Github Actions][github-actions-shield]][github-actions]
+[![Tests][tests-shield]][github-actions]
+[![Coverage][coverage-shield]][coverage]
 ![Project Maintenance][maintenance-shield]
 [![GitHub Activity][commits-shield]][commits]
 
@@ -112,6 +114,9 @@ MIT
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green?style=for-the-badge
 [github-actions-shield]: https://img.shields.io/github/actions/workflow/status/0x414c49/AppDaemon-Studio/build.yml?style=for-the-badge
 [github-actions]: https://github.com/0x414c49/AppDaemon-Studio/actions
+[tests-shield]: https://img.shields.io/github/actions/workflow/status/0x414c49/AppDaemon-Studio/build.yml?style=for-the-badge&label=tests&job=Test
+[coverage-shield]: https://codecov.io/gh/0x414c49/AppDaemon-Studio/branch/main/graph/badge.svg?style=for-the-badge
+[coverage]: https://codecov.io/gh/0x414c49/AppDaemon-Studio
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2026?style=for-the-badge
 [commits-shield]: https://img.shields.io/github/commit-activity/y/0x414c49/AppDaemon-Studio.svg?style=for-the-badge
 [commits]: https://github.com/0x414c49/AppDaemon-Studio/commits/main
