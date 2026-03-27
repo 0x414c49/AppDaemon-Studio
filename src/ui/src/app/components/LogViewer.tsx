@@ -12,7 +12,7 @@ const LEVEL_CONFIG = {
   ERROR: { color: 'text-ha-error', bg: 'bg-ha-error-bg', icon: XCircle },
 };
 
-export function LogViewer() {
+export function LogViewer({ activeApp }: { activeApp: string | null }) {
   const [logs, setLogs] = useState<ParsedLogEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
@@ -20,6 +20,7 @@ export function LogViewer() {
     new Set(['INFO', 'WARNING', 'ERROR'])
   );
   const [isPaused, setIsPaused] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const logContainerRef = useRef<HTMLDivElement>(null);
   const sourceRef = useRef<EventSource | null>(null);
@@ -103,7 +104,10 @@ export function LogViewer() {
     });
   };
 
-  const filteredLogs = logs.filter(log => selectedLevels.has(log.level as 'INFO' | 'WARNING' | 'ERROR'));
+  const filteredLogs = logs.filter(log =>
+    selectedLevels.has(log.level as 'INFO' | 'WARNING' | 'ERROR') &&
+    (showAll || !activeApp || log.source === activeApp)
+  );
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-ha-bg">
@@ -128,6 +132,16 @@ export function LogViewer() {
             );
           })}
         </div>
+
+        <button
+          onClick={() => setShowAll(v => !v)}
+          className={`px-2 py-1 rounded-lg text-xs transition-colors ${
+            showAll ? 'bg-ha-primary text-white' : 'bg-ha-surface text-ha-text-secondary'
+          }`}
+          title={showAll ? 'Showing all apps — click to filter by current app' : 'Showing current app only — click to show all'}
+        >
+          {showAll ? 'All apps' : activeApp ?? 'All apps'}
+        </button>
 
         <div className="flex-1" />
 
