@@ -281,7 +281,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}@${{ steps.build-push.outputs.digest }}
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}
           subject-digest: ${{ steps.build-push.outputs.digest }}
@@ -340,7 +340,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}@${{ steps.manifest.outputs.digest }}
 
       - name: Attest manifest provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}
           subject-digest: ${{ steps.manifest.outputs.digest }}
