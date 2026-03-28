@@ -1,6 +1,6 @@
 {
   "name": "AppDaemon Studio",
-  "version": "0.3.70",
+  "version": "0.3.71",
   "slug": "appdaemon-studio",
   "description": "Web-based IDE for AppDaemon apps with real-time log streaming and file management",
   "arch": [

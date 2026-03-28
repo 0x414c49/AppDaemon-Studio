@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.71] - 2026-03-28
+
+- chore: bump upload-artifact to v7 and download-artifact to v8
+
+
 ## [v0.3.70] - 2026-03-28
 
 - chore: bump GitHub Actions to Node 24-compatible versions and fix xUnit2029 warning
