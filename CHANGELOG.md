@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.73] - 2026-03-28
+
+- chore: bump attest-build-provenance to v4 for Node 24 compatibility
+
+
 ## [v0.3.72] - 2026-03-28
 
 - chore: bump docker actions to Node 24-compatible versions
