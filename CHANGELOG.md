@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.3.69] - 2026-03-28
+
+- fix: scope sidebar instance name test to avoid strict mode violation
+- feat: local dev mode via compose with appsettings.Development support
+
+
 ## [v0.3.68] - 2026-03-27
 
 - fix: remove custom Python completion provider; keep only HA-specific completions
