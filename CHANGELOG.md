@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.70] - 2026-03-28
+
+- chore: bump GitHub Actions to Node 24-compatible versions and fix xUnit2029 warning
+
+
 ## [v0.3.69] - 2026-03-28
 
 - fix: scope sidebar instance name test to avoid strict mode violation
