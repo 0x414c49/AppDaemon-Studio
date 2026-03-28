@@ -44,3 +44,4 @@ playwright-report/
 run-local.sh
 compose.yml
 .env.local
+src/AppDaemonStudio/appsettings.Development.json

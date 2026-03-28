@@ -40,11 +40,14 @@ export function Editor({ appName, module, settings, yamlReloadKey, onYamlSaved }
 
   useMonacoProviders(monaco, entities, entitiesLoading);
 
-  // Track Monaco markers (pylsp diagnostics) for the badge
+  // Track Monaco markers (pylsp diagnostics + appdaemon-hints) for the badge
   useEffect(() => {
     if (!monaco) return;
     const update = () => {
-      const markers = monaco.editor.getModelMarkers({ owner: 'pylsp' });
+      const markers = [
+        ...monaco.editor.getModelMarkers({ owner: 'pylsp' }),
+        ...monaco.editor.getModelMarkers({ owner: 'appdaemon-hints' }),
+      ];
       setDiagnostics({
         errors: markers.filter(m => m.severity === monaco.MarkerSeverity.Error).length,
         warnings: markers.filter(m => m.severity === monaco.MarkerSeverity.Warning).length,
@@ -54,6 +57,31 @@ export function Editor({ appName, module, settings, yamlReloadKey, onYamlSaved }
     const sub = monaco.editor.onDidChangeMarkers(update);
     return () => sub.dispose();
   }, [monaco]);
+
+  // Warn on deprecated bare `import hassapi` — AppDaemon only resolves this at runtime
+  useEffect(() => {
+    if (!monaco) return;
+    const model = editorRef.current?.getModel();
+    if (!model) return;
+    if (activeTab !== 'python') {
+      monaco.editor.setModelMarkers(model, 'appdaemon-hints', []);
+      return;
+    }
+    const re = /^(\s*)(import\s+hassapi\b|from\s+hassapi\s+import\b)/;
+    const markers = content.split('\n').flatMap((line, i) => {
+      const m = re.exec(line);
+      if (!m) return [];
+      return [{
+        startLineNumber: i + 1,
+        endLineNumber: i + 1,
+        startColumn: m[1].length + 1,
+        endColumn: line.length + 1,
+        message: "'import hassapi' is deprecated. Use 'import appdaemon.plugins.hass.hassapi as hass' instead.",
+        severity: monaco.MarkerSeverity.Warning,
+      }];
+    });
+    monaco.editor.setModelMarkers(model, 'appdaemon-hints', markers);
+  }, [content, activeTab, monaco]);
 
   useEffect(() => {
     setYamlIssues([]);

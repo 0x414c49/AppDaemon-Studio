@@ -60,7 +60,11 @@ RUN apk add --no-cache python3 py3-pip py3-virtualenv && \
     python3 -m venv /opt/pylsp-venv && \
     /opt/pylsp-venv/bin/pip install --no-cache-dir \
         "python-lsp-server[pyflakes,pycodestyle]" \
-        appdaemon
+        appdaemon && \
+    # `import hassapi` works at runtime because AppDaemon adds its plugin dir to sys.path.
+    # Jedi only sees site-packages, so add a shim so the editor resolves it correctly.
+    echo "from appdaemon.plugins.hass.hassapi import Hass" \
+        > "$(/opt/pylsp-venv/bin/python -c 'import site; print(site.getsitepackages()[0])')/hassapi.py"
 
 # .NET backend binary (arch-specific)
 COPY --from=backend /publish .
