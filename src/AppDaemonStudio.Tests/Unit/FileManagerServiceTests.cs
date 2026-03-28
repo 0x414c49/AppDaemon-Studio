@@ -341,7 +341,7 @@ public sealed class FileManagerServiceTests : IDisposable
 
         var issues = await _sut.ValidateAppsYamlAsync(yaml);
 
-        Assert.Empty(issues.Where(i => i.Severity == "error"));
+        Assert.DoesNotContain(issues, i => i.Severity == "error");
     }
 
     [Fact]
