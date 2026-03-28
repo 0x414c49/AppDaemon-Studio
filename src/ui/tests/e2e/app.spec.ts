@@ -210,8 +210,9 @@ test.describe('AppDaemon Studio', () => {
       })
     )
     await page.goto('/')
-    await expect(page.getByText('vp_vardagsrum')).toBeVisible()
-    await expect(page.getByText('pid_heatpump')).not.toBeVisible()
+    const sidebar = page.getByRole('complementary')
+    await expect(sidebar.getByText('vp_vardagsrum')).toBeVisible()
+    await expect(sidebar.getByText('pid_heatpump')).not.toBeVisible()
   })
 
   // ── 13. Yaml save shows toast for auto-created file ──────────────────────────
