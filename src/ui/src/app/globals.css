@@ -1,6 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme inline {
+  --color-ha-bg: var(--ha-bg);
+  --color-ha-card: var(--ha-card);
+  --color-ha-surface: var(--ha-surface);
+  --color-ha-surface-hover: var(--ha-surface-hover);
+  --color-ha-surface-active: var(--ha-surface-active);
+  --color-ha-border: var(--ha-border);
+  --color-ha-primary: var(--ha-primary);
+  --color-ha-primary-dark: var(--ha-primary-dark);
+  --color-ha-accent: var(--ha-accent);
+  --color-ha-text: var(--ha-text);
+  --color-ha-text-secondary: var(--ha-text-secondary);
+  --color-ha-text-disabled: var(--ha-text-disabled);
+  --color-ha-error: var(--ha-error);
+  --color-ha-error-bg: var(--ha-error-bg);
+  --color-ha-success: var(--ha-success);
+  --color-ha-success-bg: var(--ha-success-bg);
+  --color-ha-warning: var(--ha-warning);
+  --color-ha-warning-bg: var(--ha-warning-bg);
+  --color-ha-info-bg: var(--ha-info-bg);
+  --color-ha-sidebar: var(--ha-sidebar);
+  --color-ha-topbar: var(--ha-topbar);
+  --color-ha-status: var(--ha-status);
+}
 
 /* ── Home Assistant Design Tokens ───────────────────────────────────────── */
 :root {
