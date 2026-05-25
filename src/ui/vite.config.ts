@@ -1,18 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
-    alias: { '@': path.resolve(__dirname, 'src') },
+    alias: { '@': path.resolve(import.meta.dirname, 'src') },
   },
   // No hardcoded base path — relative assets work under any HA ingress prefix
   base: './',
   build: {
     outDir: 'dist',
-    // Disable esbuild CSS minifier to avoid false CSS syntax warnings
-    // triggered by Tailwind's CSS custom property declarations.
     cssMinify: false,
     rollupOptions: {
       output: {

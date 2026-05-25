@@ -2,7 +2,7 @@
 
 # ── Stage 1: Build React frontend (architecture-independent static files) ──────
 # --platform=$BUILDPLATFORM: always runs on the builder host (x86), never QEMU
-FROM --platform=$BUILDPLATFORM node:20-alpine AS node-build
+FROM --platform=$BUILDPLATFORM node:22-alpine AS node-build
 
 WORKDIR /app
 
@@ -59,8 +59,8 @@ WORKDIR /app
 RUN apk add --no-cache python3 py3-pip py3-virtualenv && \
     python3 -m venv /opt/pylsp-venv && \
     /opt/pylsp-venv/bin/pip install --no-cache-dir \
-        "python-lsp-server[pyflakes,pycodestyle]" \
-        appdaemon && \
+        "python-lsp-server[pyflakes,pycodestyle]==1.14.0" \
+        "appdaemon==4.5.13" && \
     # `import hassapi` works at runtime because AppDaemon adds its plugin dir to sys.path.
     # Jedi only sees site-packages, so add a shim so the editor resolves it correctly.
     echo "from appdaemon.plugins.hass.hassapi import Hass" \
