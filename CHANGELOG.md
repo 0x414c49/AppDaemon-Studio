@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.74] - 2026-05-25
+
+- chore: update all dependencies and add centralized package management
+
+
 ## [v0.3.73] - 2026-03-28
 
 - chore: bump attest-build-provenance to v4 for Node 24 compatibility
