@@ -78,9 +78,8 @@ export function Sidebar({
   };
 
   const toSnakeCase = (name: string) => name
-    .replace(/([a-z])([A-Z])/g, '$1_$2')
-    .replace(/[\s\-]+/g, '_')
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[\s\-]+/g, '_');
 
   const generateClassName = (name: string) => name
     .split('_')
