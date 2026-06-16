@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.3.75] - 2026-06-16
+
+- test(e2e): scope motion_lights selectors to sidebar
+- fix: prevent underscores when typing app names
+
+
 ## [v0.3.74] - 2026-05-25
 
 - chore: update all dependencies and add centralized package management
