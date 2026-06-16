@@ -27,8 +27,8 @@ test.describe('AppDaemon Studio', () => {
   // ── 1. App list ─────────────────────────────────────────────────────────────
   test('shows app list in sidebar', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByText('motion_lights')).toBeVisible()
-    await expect(page.getByText('presence_tracker')).toBeVisible()
+    await expect(page.locator('aside').getByText('motion_lights')).toBeVisible()
+    await expect(page.locator('aside').getByText('presence_tracker')).toBeVisible()
     // Hover to reveal per-app controls (enable/disable toggle, restart button)
     await page.locator('aside').getByText('motion_lights').hover()
     await page.waitForTimeout(200)
@@ -38,7 +38,7 @@ test.describe('AppDaemon Studio', () => {
   // ── 2. Python editor ─────────────────────────────────────────────────────────
   test('loads python editor for selected app', async ({ page }) => {
     await page.goto('/')
-    await page.getByText('motion_lights').click()
+    await page.locator('aside').getByText('motion_lights').click()
     await waitForEditor(page)
     await expect(page.locator('.monaco-editor')).toBeVisible()
     await page.screenshot({ path: shot('02-python-editor') })
@@ -47,7 +47,7 @@ test.describe('AppDaemon Studio', () => {
   // ── 3. YAML editor ───────────────────────────────────────────────────────────
   test('switches to YAML tab', async ({ page }) => {
     await page.goto('/')
-    await page.getByText('motion_lights').click()
+    await page.locator('aside').getByText('motion_lights').click()
     await waitForEditor(page)
     // Click the YAML button inside the editor (plain button, not role=tab)
     await page.getByRole('button', { name: 'YAML' }).click()
@@ -77,7 +77,7 @@ test.describe('AppDaemon Studio', () => {
   // ── 6. Logs tab ──────────────────────────────────────────────────────────────
   test('shows logs tab', async ({ page }) => {
     await page.goto('/')
-    await page.getByText('motion_lights').click()
+    await page.locator('aside').getByText('motion_lights').click()
     await page.getByRole('button', { name: 'Logs' }).click()
     // Wait for log entries to render (filtered to motion_lights by default)
     await expect(page.getByText('Motion detected on binary_sensor.motion_hall')).toBeVisible({ timeout: 5_000 })
@@ -87,7 +87,7 @@ test.describe('AppDaemon Studio', () => {
   // ── 7. Version compare diff ──────────────────────────────────────────────────
   test('shows version diff in compare panel', async ({ page }) => {
     await page.goto('/')
-    await page.getByText('motion_lights').click()
+    await page.locator('aside').getByText('motion_lights').click()
     await waitForEditor(page)
 
     // Click the Compare button (top-right of editor)
@@ -129,7 +129,7 @@ test.describe('AppDaemon Studio', () => {
     })
     test.skip(!lspReady, 'LSP not available in this environment')
 
-    await page.getByText('motion_lights').click()
+    await page.locator('aside').getByText('motion_lights').click()
     await waitForEditor(page)
 
     // Click in the editor and navigate to end of file
@@ -160,7 +160,7 @@ test.describe('AppDaemon Studio', () => {
     })
     test.skip(!lspReady, 'LSP not available in this environment')
 
-    await page.getByText('motion_lights').click()
+    await page.locator('aside').getByText('motion_lights').click()
     await waitForEditor(page)
 
     await page.locator('.monaco-editor .view-lines').first().click()
@@ -233,7 +233,7 @@ test.describe('AppDaemon Studio', () => {
       })
     })
     await page.goto('/')
-    await page.getByText('motion_lights').click()
+    await page.locator('aside').getByText('motion_lights').click()
     await page.getByRole('button', { name: 'YAML' }).click()
     await page.waitForTimeout(800)
     // Type a space in the editor to make content dirty
@@ -267,7 +267,7 @@ test.describe('AppDaemon Studio', () => {
       })
     })
     await page.goto('/')
-    await page.getByText('motion_lights').click()
+    await page.locator('aside').getByText('motion_lights').click()
     await page.getByRole('button', { name: 'YAML' }).click()
     await page.waitForTimeout(800)
     // Type a space in the editor to make content dirty
@@ -307,7 +307,7 @@ test.describe('AppDaemon Studio', () => {
   // ── 11. Autocomplete: entity IDs inside string arguments ─────────────────────
   test('entity IDs appear inside string arguments', async ({ page }) => {
     await page.goto('/')
-    await page.getByText('motion_lights').click()
+    await page.locator('aside').getByText('motion_lights').click()
     await waitForEditor(page)
 
     // Wait for entities to load — skip if HA is not connected in test environment
