@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.76] - 2026-07-18
+
+- chore: update dependencies, fix dompurify XSS via monaco-editor
+
+
 ## [v0.3.75] - 2026-06-16
 
 - test(e2e): scope motion_lights selectors to sidebar
