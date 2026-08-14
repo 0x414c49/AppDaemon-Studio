@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.80] - 2026-08-14
+
+- fix: use python 3.13 for appdaemon lsp
+
+
 ## [v0.3.79] - 2026-08-14
 
 - fix: make lsp appdaemon install python 3.14 compatible
