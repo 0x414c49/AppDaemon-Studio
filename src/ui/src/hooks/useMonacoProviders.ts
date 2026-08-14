@@ -112,7 +112,39 @@ export function useMonacoProviders(
       },
     });
 
-    // ── 3. Signature help (Python) ────────────────────────────────────────
+    // ── 3. AppDaemon method completions (Python) ─────────────────────────
+    const appDaemonMethodProvider = monaco.languages.registerCompletionItemProvider('python', {
+      triggerCharacters: ['.'],
+      provideCompletionItems: (model: editor.ITextModel, position: Position) => {
+        const lineContent = model.getLineContent(position.lineNumber);
+        const textBeforeCursor = lineContent.substring(0, position.column - 1);
+
+        if (!/self\.\w*$/.test(textBeforeCursor)) {
+          return { suggestions: [] };
+        }
+
+        const wordUntilPosition = model.getWordUntilPosition(position);
+
+        return {
+          suggestions: Object.entries(APPDAEMON_SIGNATURES).map(([methodName, signature]) => ({
+            label: methodName,
+            kind: CompletionItemKind.Method,
+            insertText: methodName,
+            detail: signature.label,
+            documentation: signature.documentation,
+            sortText: `0_${methodName}`,
+            range: {
+              startLineNumber: position.lineNumber,
+              endLineNumber: position.lineNumber,
+              startColumn: wordUntilPosition.startColumn,
+              endColumn: position.column,
+            },
+          })),
+        };
+      },
+    });
+
+    // ── 4. Signature help (Python) ────────────────────────────────────────
     const signatureProvider = monaco.languages.registerSignatureHelpProvider('python', {
       signatureHelpTriggerCharacters: ['(', ','],
       provideSignatureHelp: (model: editor.ITextModel, position: Position) => {
@@ -163,7 +195,7 @@ export function useMonacoProviders(
       },
     });
 
-    // ── 4. YAML completions (apps.yaml) ───────────────────────────────────
+    // ── 5. YAML completions (apps.yaml) ───────────────────────────────────
     const yamlProvider = monaco.languages.registerCompletionItemProvider('yaml', {
       triggerCharacters: [':'],
       provideCompletionItems: (model: editor.ITextModel, position: Position) => {
@@ -191,6 +223,7 @@ export function useMonacoProviders(
     return () => {
       entityProvider.dispose();
       callServiceProvider.dispose();
+      appDaemonMethodProvider.dispose();
       signatureProvider.dispose();
       yamlProvider.dispose();
     };
