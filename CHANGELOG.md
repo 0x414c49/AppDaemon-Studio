@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.81] - 2026-08-14
+
+- test: verify bundled lsp runtime in docker
+
+
 ## [v0.3.80] - 2026-08-14
 
 - fix: use python 3.13 for appdaemon lsp
