@@ -263,6 +263,7 @@ jobs:
         with:
           context: .
           platforms: ${{ matrix.platform }}
+          target: ci
           push: true
           tags: ${{ env.REGISTRY }}/${{ needs.release.outputs.image_name }}:${{ needs.release.outputs.version }}-${{ steps.platform.outputs.name }}
           cache-from: type=gha,scope=build-${{ steps.platform.outputs.name }}
@@ -271,7 +272,6 @@ jobs:
           build-args: |
             BUILD_VERSION=${{ needs.release.outputs.version }}
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
-            FRONTEND_DIST_SOURCE=frontend-dist
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3

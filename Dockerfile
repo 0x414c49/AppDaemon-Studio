@@ -16,8 +16,8 @@ RUN npm run build
 
 # ── Stage 1b: Local frontend dist ────────────────────────────────────────────────
 # Local builds: copies dist from node-build above.
-# CI builds: set FRONTEND_DIST_SOURCE=frontend-dist to use the external context
-# passed via --build-context frontend-dist=./dist.
+# CI builds select the `ci` target and use the external context passed via
+# --build-context frontend-dist=./dist.
 FROM scratch AS local-frontend-dist
 COPY --from=node-build /app/dist/ /
 
@@ -41,12 +41,11 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
     -o /publish
 
 # ── Stage 3: Final image ───────────────────────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime-base
 
 # Re-declare ARGs so they're in scope for LABEL (global ARGs don't flow into stages)
 ARG BUILD_VERSION=unknown
 ARG BUILD_DATE=unknown
-ARG FRONTEND_DIST_SOURCE=local-frontend-dist
 
 LABEL org.opencontainers.image.title="AppDaemon Studio"
 LABEL org.opencontainers.image.description="Web IDE for AppDaemon apps"
@@ -72,9 +71,6 @@ RUN apk add --no-cache python3 py3-pip py3-virtualenv && \
 # .NET backend binary (arch-specific)
 COPY --from=backend /publish .
 
-# React frontend (same files for all architectures)
-COPY --from=${FRONTEND_DIST_SOURCE} / ./wwwroot
-
 ENV ASPNETCORE_URLS=http://+:3000 \
     DOTNET_RUNNING_IN_CONTAINER=true \
     PORT=3000
@@ -85,3 +81,12 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -qO- http://localhost:3000/api/health || exit 1
 
 ENTRYPOINT ["dotnet", "AppDaemonStudio.dll"]
+
+# CI builds inject the already-built frontend as a BuildKit context named
+# frontend-dist, so node-build/local-frontend-dist are skipped entirely.
+FROM runtime-base AS ci
+COPY --from=frontend-dist / ./wwwroot
+
+# Local builds default to the Docker-built frontend.
+FROM runtime-base AS final
+COPY --from=local-frontend-dist / ./wwwroot
