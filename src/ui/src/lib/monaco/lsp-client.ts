@@ -92,43 +92,140 @@ export function startLspClient(
     return u.toString();
   })();
 
-  const ws = new WebSocket(wsUrl);
-  const iws = toIWebSocket(ws);
-  const reader = new WebSocketMessageReader(iws);
-  const writer = new WebSocketMessageWriter(iws);
-  const conn = createMessageConnection(reader, writer);
-
   const disposables: Array<{ dispose(): void }> = [];
+  let conn: ReturnType<typeof createMessageConnection> | null = null;
+  let ws: WebSocket | null = null;
   let initialized = false;
   let pendingOpen: { uri: string; text: string } | null = null;
-  let currentOpenUri: string | null = null;
+  let currentDocument: { uri: string; text: string } | null = null;
+  let disposed = false;
+  let reconnectTimer: number | null = null;
+  let reconnectDelayMs = 500;
 
-  // ── Diagnostics → Monaco markers ─────────────────────────────────────────
-  conn.onNotification('textDocument/publishDiagnostics', (params: PublishDiagnosticsParams) => {
-    // Monaco model URIs are inmemory://model/N — match by language instead
-    const model = monacoInstance.editor.getModels().find(m => m.getLanguageId() === 'python');
-    if (!model) return;
+  const clearPylspMarkers = () => {
+    monacoInstance.editor.getModels().forEach(m => {
+      monacoInstance.editor.setModelMarkers(m, 'pylsp', []);
+    });
+  };
 
-    const markers = params.diagnostics.map(d => ({
-      startLineNumber: d.range.start.line + 1,
-      startColumn: d.range.start.character + 1,
-      endLineNumber: d.range.end.line + 1,
-      endColumn: d.range.end.character + 1,
-      message: d.message,
-      severity: lspSeverityToMonaco(monacoInstance, d.severity ?? 1),
-      source: d.source ?? 'pylsp',
-    }));
+  const scheduleReconnect = () => {
+    if (disposed || reconnectTimer !== null) return;
+    reconnectTimer = window.setTimeout(() => {
+      reconnectTimer = null;
+      connect();
+    }, reconnectDelayMs);
+    reconnectDelayMs = Math.min(reconnectDelayMs * 2, 5000);
+  };
 
-    monacoInstance.editor.setModelMarkers(model, 'pylsp', markers);
-  });
+  const connect = () => {
+    if (disposed) return;
+
+    initialized = false;
+    conn?.dispose();
+    ws?.close();
+
+    const nextWs = new WebSocket(wsUrl);
+    const iws = toIWebSocket(nextWs);
+    const reader = new WebSocketMessageReader(iws);
+    const writer = new WebSocketMessageWriter(iws);
+    const nextConn = createMessageConnection(reader, writer);
+
+    ws = nextWs;
+    conn = nextConn;
+
+    // ── Diagnostics → Monaco markers ───────────────────────────────────────
+    nextConn.onNotification('textDocument/publishDiagnostics', (params: PublishDiagnosticsParams) => {
+      // Monaco model URIs are inmemory://model/N — match by language instead
+      const model = monacoInstance.editor.getModels().find(m => m.getLanguageId() === 'python');
+      if (!model) return;
+
+      const markers = params.diagnostics.map(d => ({
+        startLineNumber: d.range.start.line + 1,
+        startColumn: d.range.start.character + 1,
+        endLineNumber: d.range.end.line + 1,
+        endColumn: d.range.end.character + 1,
+        message: d.message,
+        severity: lspSeverityToMonaco(monacoInstance, d.severity ?? 1),
+        source: d.source ?? 'pylsp',
+      }));
+
+      monacoInstance.editor.setModelMarkers(model, 'pylsp', markers);
+    });
+
+    nextConn.listen();
+
+    nextWs.addEventListener('open', async () => {
+      try {
+        await nextConn.sendRequest('initialize', {
+          processId: null,
+          rootUri: null,
+          capabilities: {
+            textDocument: {
+              hover: { contentFormat: ['markdown', 'plaintext'] },
+              completion: {
+                completionItem: {
+                  snippetSupport: true,
+                  documentationFormat: ['markdown', 'plaintext'],
+                },
+              },
+              publishDiagnostics: { relatedInformation: false },
+            },
+          },
+          initializationOptions: {
+            pylsp: {
+              plugins: {
+                jedi: { environment: '/opt/pylsp-venv' },
+                pycodestyle: { enabled: false },
+                mccabe: { enabled: false },
+              },
+            },
+          },
+        } satisfies InitializeParams);
+
+        if (disposed || conn !== nextConn) return;
+
+        nextConn.sendNotification('initialized', {});
+        initialized = true;
+        reconnectDelayMs = 500;
+
+        // Open the active document on every reconnect so completions have context.
+        const documentToOpen = pendingOpen ?? currentDocument;
+        if (documentToOpen) {
+          nextConn.sendNotification('textDocument/didOpen', {
+            textDocument: { uri: documentToOpen.uri, languageId: 'python', version: 1, text: documentToOpen.text } satisfies TextDocumentItem,
+          });
+          pendingOpen = null;
+        }
+      } catch {
+        initialized = false;
+        nextConn.dispose();
+        nextWs.close();
+        scheduleReconnect();
+      }
+    });
+
+    nextWs.addEventListener('close', () => {
+      if (ws !== nextWs) return;
+      initialized = false;
+      clearPylspMarkers();
+      scheduleReconnect();
+    });
+
+    nextWs.addEventListener('error', () => {
+      if (ws !== nextWs) return;
+      initialized = false;
+      clearPylspMarkers();
+      scheduleReconnect();
+    });
+  };
 
   // ── Hover provider ────────────────────────────────────────────────────────
   disposables.push(
     monacoInstance.languages.registerHoverProvider('python', {
       provideHover: async (model, position) => {
-        if (!initialized) return null;
+        if (!initialized || !conn) return null;
 
-        const uri = currentOpenUri ?? model.uri.toString();
+        const uri = currentDocument?.uri ?? model.uri.toString();
         const result = await conn.sendRequest('textDocument/hover', {
           textDocument: { uri },
           position: { line: position.lineNumber - 1, character: position.column - 1 },
@@ -152,9 +249,9 @@ export function startLspClient(
     monacoInstance.languages.registerCompletionItemProvider('python', {
       triggerCharacters: ['.', '(', ' '],
       provideCompletionItems: async (model, position) => {
-        if (!initialized) return { suggestions: [] };
+        if (!initialized || !conn) return { suggestions: [] };
 
-        const uri = currentOpenUri ?? model.uri.toString();
+        const uri = currentDocument?.uri ?? model.uri.toString();
         const result = await conn.sendRequest(
           'textDocument/completion',
           {
@@ -207,62 +304,12 @@ export function startLspClient(
   );
 
   // ── Connection lifecycle ──────────────────────────────────────────────────
-  conn.listen();
-
-  ws.addEventListener('open', async () => {
-    try {
-      await conn.sendRequest('initialize', {
-        processId: null,
-        rootUri: null,
-        capabilities: {
-          textDocument: {
-            hover: { contentFormat: ['markdown', 'plaintext'] },
-            completion: {
-              completionItem: {
-                snippetSupport: true,
-                documentationFormat: ['markdown', 'plaintext'],
-              },
-            },
-            publishDiagnostics: { relatedInformation: false },
-          },
-        },
-        initializationOptions: {
-          pylsp: {
-            plugins: {
-              jedi: { environment: '/opt/pylsp-venv' },
-              pycodestyle: { enabled: false },
-              mccabe: { enabled: false },
-            },
-          },
-        },
-      } satisfies InitializeParams);
-
-      conn.sendNotification('initialized', {});
-      initialized = true;
-
-      // Flush any document that was opened before the handshake completed
-      if (pendingOpen) {
-        conn.sendNotification('textDocument/didOpen', {
-          textDocument: { uri: pendingOpen.uri, languageId: 'python', version: 1, text: pendingOpen.text } satisfies TextDocumentItem,
-        });
-        pendingOpen = null;
-      }
-    } catch {
-      // LSP not available — silently degrade
-    }
-  });
-
-  ws.addEventListener('close', () => {
-    initialized = false;
-    monacoInstance.editor.getModels().forEach(m => {
-      monacoInstance.editor.setModelMarkers(m, 'pylsp', []);
-    });
-  });
+  connect();
 
   // ── Returned handle ───────────────────────────────────────────────────────
   return {
     notifyOpen(uri: string, text: string) {
-      currentOpenUri = uri;
+      currentDocument = { uri, text };
       if (!initialized) {
         pendingOpen = { uri, text };
         return;
@@ -274,7 +321,11 @@ export function startLspClient(
     },
 
     notifyChange(uri: string, version: number, text: string) {
-      if (!initialized) return;
+      currentDocument = { uri, text };
+      if (!initialized || !conn) {
+        pendingOpen = { uri, text };
+        return;
+      }
       conn.sendNotification('textDocument/didChange', {
         textDocument: { uri, version } satisfies VersionedTextDocumentIdentifier,
         contentChanges: [{ text }],
@@ -282,18 +333,21 @@ export function startLspClient(
     },
 
     notifyClose(uri: string) {
-      if (currentOpenUri === uri) currentOpenUri = null;
-      if (!initialized) return;
+      if (currentDocument?.uri === uri) currentDocument = null;
+      if (pendingOpen?.uri === uri) pendingOpen = null;
+      if (!initialized || !conn) return;
       conn.sendNotification('textDocument/didClose', {
         textDocument: { uri },
       });
     },
 
     dispose() {
+      disposed = true;
       initialized = false;
+      if (reconnectTimer !== null) window.clearTimeout(reconnectTimer);
       disposables.forEach(d => d.dispose());
-      conn.dispose();
-      ws.close();
+      conn?.dispose();
+      ws?.close();
     },
   };
 }
