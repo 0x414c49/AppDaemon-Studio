@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.78] - 2026-08-14
+
+- fix: select ci frontend docker target
+
+
 ## [v0.3.77] - 2026-08-14
 
 - chore: update dependencies
