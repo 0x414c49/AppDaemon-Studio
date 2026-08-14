@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.77] - 2026-08-14
+
+- chore: update dependencies
+
+
 ## [v0.3.76] - 2026-07-18
 
 - chore: update dependencies, fix dompurify XSS via monaco-editor
