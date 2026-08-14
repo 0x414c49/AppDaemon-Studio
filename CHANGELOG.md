@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.79] - 2026-08-14
+
+- fix: make lsp appdaemon install python 3.14 compatible
+
+
 ## [v0.3.78] - 2026-08-14
 
 - fix: select ci frontend docker target
