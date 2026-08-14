@@ -75,6 +75,8 @@ WORKDIR /app
 # Python runtime and venv with pylsp + AppDaemon for LSP support.
 COPY --from=pylsp /usr/local /usr/local
 COPY --from=pylsp /opt/pylsp-venv /opt/pylsp-venv
+RUN /opt/pylsp-venv/bin/python -c "import appdaemon.plugins.hass.hassapi as hass; print(hass.Hass.__name__)" && \
+    /opt/pylsp-venv/bin/pylsp --help > /dev/null
 
 # .NET backend binary (arch-specific)
 COPY --from=backend /publish .
