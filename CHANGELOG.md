@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.82] - 2026-08-14
+
+- fix: reconnect lsp client when pylsp becomes ready
+
+
 ## [v0.3.81] - 2026-08-14
 
 - test: verify bundled lsp runtime in docker
