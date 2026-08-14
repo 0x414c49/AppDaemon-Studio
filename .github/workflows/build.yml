@@ -271,6 +271,7 @@ jobs:
           build-args: |
             BUILD_VERSION=${{ needs.release.outputs.version }}
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            FRONTEND_DIST_SOURCE=frontend-dist
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3

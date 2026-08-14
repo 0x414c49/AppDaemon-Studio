@@ -14,11 +14,11 @@ COPY src/ui/ .
 RUN npm run build
 # Output: /app/dist (pure HTML/CSS/JS — no arch dependency)
 
-# ── Stage 1b: Frontend dist ─────────────────────────────────────────────────────
+# ── Stage 1b: Local frontend dist ────────────────────────────────────────────────
 # Local builds: copies dist from node-build above.
-# CI builds: replaced entirely via --build-context frontend-dist=./dist
-#   → node-build stage is skipped, Node is never pulled, npm never runs.
-FROM scratch AS frontend-dist
+# CI builds: set FRONTEND_DIST_SOURCE=frontend-dist to use the external context
+# passed via --build-context frontend-dist=./dist.
+FROM scratch AS local-frontend-dist
 COPY --from=node-build /app/dist/ /
 
 # ── Stage 2: Build .NET backend ────────────────────────────────────────────────
@@ -46,6 +46,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
 # Re-declare ARGs so they're in scope for LABEL (global ARGs don't flow into stages)
 ARG BUILD_VERSION=unknown
 ARG BUILD_DATE=unknown
+ARG FRONTEND_DIST_SOURCE=local-frontend-dist
 
 LABEL org.opencontainers.image.title="AppDaemon Studio"
 LABEL org.opencontainers.image.description="Web IDE for AppDaemon apps"
@@ -57,10 +58,12 @@ WORKDIR /app
 # Python venv with pylsp + appdaemon for LSP support
 # appdaemon installed so Jedi reads real source — full API completions, hover, go-to-def
 RUN apk add --no-cache python3 py3-pip py3-virtualenv && \
+    apk add --no-cache --virtual .pylsp-build-deps cargo build-base python3-dev && \
     python3 -m venv /opt/pylsp-venv && \
     /opt/pylsp-venv/bin/pip install --no-cache-dir \
-        "python-lsp-server[pyflakes,pycodestyle]==1.14.0" \
+        "python-lsp-server[pyflakes,pycodestyle]==1.15.0" \
         "appdaemon==4.5.13" && \
+    apk del .pylsp-build-deps && \
     # `import hassapi` works at runtime because AppDaemon adds its plugin dir to sys.path.
     # Jedi only sees site-packages, so add a shim so the editor resolves it correctly.
     echo "from appdaemon.plugins.hass.hassapi import Hass" \
@@ -70,7 +73,7 @@ RUN apk add --no-cache python3 py3-pip py3-virtualenv && \
 COPY --from=backend /publish .
 
 # React frontend (same files for all architectures)
-COPY --from=frontend-dist / ./wwwroot
+COPY --from=${FRONTEND_DIST_SOURCE} / ./wwwroot
 
 ENV ASPNETCORE_URLS=http://+:3000 \
     DOTNET_RUNNING_IN_CONTAINER=true \
