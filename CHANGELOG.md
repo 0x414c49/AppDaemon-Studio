@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.83] - 2026-08-14
+
+- fix: provide appdaemon self completions locally
+
+
 ## [v0.3.82] - 2026-08-14
 
 - fix: reconnect lsp client when pylsp becomes ready
